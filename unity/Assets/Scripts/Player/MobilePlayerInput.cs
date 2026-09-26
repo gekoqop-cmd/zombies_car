@@ -12,7 +12,7 @@ namespace ZombiCar.Player
     ///      one frame; the weapon then auto-aims at the nearest enemy (needs a target finder, e.g. an OverlapSphere
     ///      on an "Enemy" layer, feeding AimDirection for that shot);
     ///    - press + drag past the dead zone -> <see cref="AimActive"/> = true, <see cref="AimDirection"/> = stick
-    ///      direction converted from screen space to the ground using the camera yaw; the AimIndicator strip shows it;
+    ///      direction converted from screen space to the ground using the camera yaw;
     ///    - release after dragging -> <see cref="FireReleased"/> = true (one shot / burst in the aimed direction).
     ///    Automatic fire while holding can map to <see cref="FireHeld"/> if the design wants it.
     /// 3. Sticks live in a separate UI prefab (Prefabs/UI) added to UI_HUD only on mobile; they write their values here.

@@ -3,16 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TMPro;
+using Unity.AI.Navigation;
 using Unity.Cinemachine;
 using Unity.Cinemachine.TargetTracking;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using ZombiCar.Car;
 using ZombiCar.Core;
+using ZombiCar.Enemies;
 using ZombiCar.Player;
 using ZombiCar.UI;
 using ZombiCar.Waves;
@@ -24,7 +28,9 @@ namespace ZombiCar.EditorTools
     /// <summary>
     /// Tools/Build Scenes: Boot, MainMenu, UI_HUD and Map01 (assembled only from prefabs), plus Build Settings.
     /// Map01 follows referens/concept.png scaled up to the 44 x 30 m play area: workshop in the north-west, gas-station
-    /// sign and sedan in the north-east, the player car in the free centre, fences around, road and houses outside.
+    /// sign and sedan in the north-east, the player car in the free centre, fences around, roads outside. Nothing is
+    /// placed beyond what the game camera can see (MapConfig ground area). Zombies rise from spawn points along the
+    /// inside of the fences and walk on a NavMesh baked from the colliders.
     /// Flat layers are kept at least ~1 cm apart (see the c_*Height constants and PrefabBuilder) so they never z-fight.
     /// </summary>
     public static class SceneBuilder
@@ -36,6 +42,7 @@ namespace ZombiCar.EditorTools
         private const string c_VolumeProfile = EditorPaths.c_Settings + "/Map01_VolumeProfile.asset";
         private const string c_LightingSettings = EditorPaths.c_Settings + "/Lighting_Realtime.lighting";
         private const string c_FontAsset = EditorPaths.c_Fonts + "/UI_Font SDF.asset";
+        private const string c_NavMeshData = EditorPaths.c_Scenes + "/Map01_NavMesh.asset";
 
         // Map01 layout constants (metres). Fence lines sit just inside the play-area border (MapConfig).
         private const float c_FenceInset = 0.2f;
@@ -56,6 +63,18 @@ namespace ZombiCar.EditorTools
         public static readonly Vector3 PlayerSpawn = new Vector3(-1.5f, 0f, -3f);
         private static readonly Vector3 s_WorkshopPosition = new Vector3(-9f, 0f, 10.3f);
         private const float c_CarPlayerYaw = 120f;
+
+        /// <summary>
+        /// Zombie spawn points inside the fences (the lot is closed: the gate and the east exit are blocked), clear of
+        /// the workshop yard and the parked cars. The spawner snaps them to the NavMesh and skips those near the player.
+        /// </summary>
+        private static readonly Vector2[] s_ZombieSpawnPoints =
+        {
+            new Vector2(-17f, -12.6f), new Vector2(-8.5f, -12.6f), new Vector2(-1f, -12.8f), new Vector2(5.5f, -12.8f),
+            new Vector2(12f, -10.2f), new Vector2(-19.3f, -3.5f), new Vector2(-19.8f, 0.5f), new Vector2(19.8f, -5f),
+            new Vector2(19.8f, 0f), new Vector2(18.8f, 7.5f), new Vector2(5.7f, 12.8f), new Vector2(0f, 11.5f),
+            new Vector2(14f, 11.3f),
+        };
 
         // Look (sunset).
         private static readonly Color s_SunColor = new Color(1f, 0.86f, 0.7f);
@@ -282,14 +301,11 @@ namespace ZombiCar.EditorTools
             var systemsGo = new GameObject("MapSystems");
             systemsGo.transform.SetParent(systems, false);
             PrefabBuilder.Wire(systemsGo.AddComponent<MapBootstrap>(), ("m_Map", map));
-            PrefabBuilder.Wire(systemsGo.AddComponent<WaveTimerPlaceholder>(),
-                ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
-                ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)));
             PrefabBuilder.Wire(systemsGo.AddComponent<CrosshairCursor>(),
                 ("m_Crosshair", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Textures/UI/UI_Crosshair.png")));
 
             BuildLights(lighting);
-            BuildGround(environment, background);
+            BuildGround(environment, background, map);
             BuildFences(fences, map);
             BuildBuildingsAndSigns(environment);
             BuildProps(props);
@@ -298,12 +314,101 @@ namespace ZombiCar.EditorTools
 
             GameObject car = Place("Car_Player", gameplay, 0f, 0f, c_CarPlayerYaw);
             car.name = "Car_Player";
+            BuildCarHealthBar(car);
             GameObject player = Place("Player", gameplay, PlayerSpawn.x, PlayerSpawn.z, 0f);
             player.name = "Player";
             BuildCamera(cameraRoot, player.transform, map);
+            BuildZombieSystems(systemsGo, gameplay, car, player);
+            BuildNavMesh(systems);
 
             EditorSceneManager.SaveScene(scene, c_MapScene);
             ReportModelUsage(scene);
+        }
+
+        private static void BuildZombieSystems(GameObject systemsGo, Transform gameplay, GameObject car, GameObject player)
+        {
+            var points = new GameObject("ZombieSpawnPoints").transform;
+            points.SetParent(gameplay, false);
+            for (int i = 0; i < s_ZombieSpawnPoints.Length; i++)
+            {
+                var point = new GameObject($"SpawnPoint_{i + 1:00}").transform;
+                point.SetParent(points, false);
+                point.localPosition = new Vector3(s_ZombieSpawnPoints[i].x, 0f, s_ZombieSpawnPoints[i].y);
+            }
+
+            var spawner = systemsGo.AddComponent<ZombieSpawner>();
+            PrefabBuilder.Wire(spawner, ("m_Car", car.GetComponent<CarHealth>()), ("m_Player", player.GetComponent<PlayerHealth>()),
+                ("m_SpawnPoints", points));
+            PrefabBuilder.Wire(systemsGo.AddComponent<WaveDirector>(),
+                ("m_Config", DataAssetsBuilder.Load<WaveConfig>(DataAssetsBuilder.c_WaveConfig)),
+                ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
+                ("m_PlayerWeapon", player.GetComponent<PlayerWeapon>()),
+                ("m_Spawner", spawner));
+        }
+
+        // World-space durability bar floating above the player's car; high enough to clear the roof cargo.
+        private const float c_CarHealthBarHeight = 3.3f;
+        private static readonly Vector2 s_CarHealthBarSize = new Vector2(2.3f, 0.6f);
+
+        private static void BuildCarHealthBar(GameObject car)
+        {
+            var anchor = new GameObject("HealthBarAnchor");
+            anchor.transform.SetParent(car.transform, false);
+            anchor.transform.localPosition = new Vector3(0f, c_CarHealthBarHeight, 0f);
+            // Tilted to squarely face the fixed camera (unlike the upright character sprites, a flat panel
+            // would be seen edge-on if it only rotated to the camera's yaw and ignored its downward pitch).
+            Vector3 camForward = Quaternion.Euler(ViewConstants.c_CameraPitch, 0f, 0f) * Vector3.forward;
+            anchor.transform.rotation = Quaternion.LookRotation(camForward, Vector3.up);
+
+            var canvasGo = new GameObject("Canvas", typeof(RectTransform)) { layer = UiFactory.c_UiLayer };
+            canvasGo.transform.SetParent(anchor.transform, false);
+            var canvas = canvasGo.AddComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            var root = (RectTransform)canvas.transform;
+            root.sizeDelta = s_CarHealthBarSize;
+
+            Sprite panel = UiFactory.Sprite("UI_Panel");
+            Sprite bar = UiFactory.Sprite("UI_Bar");
+            UiFactory.Image(UiFactory.Stretch("Background", root), panel, new Color(0.05f, 0.06f, 0.08f, 0.85f), true);
+
+            var midLeft = new Vector2(0f, 0.5f);
+            var topLeft = new Vector2(0f, 1f);
+            RectTransform icon = UiFactory.Rect("Icon", root, midLeft, midLeft, new Vector2(0.07f, 0f), new Vector2(0.42f, 0.42f));
+            UiFactory.Image(icon, UiFactory.Sprite("UI_IconCar"), Color.white, false);
+
+            UiFactory.Label("Label", root, topLeft, topLeft, new Vector2(0.56f, -0.06f), new Vector2(1.6f, 0.24f),
+                "ПРОЧНОСТЬ МАШИНЫ", 0.19f, TextAlignmentOptions.Left, UiFactory.TextColor);
+
+            RectTransform barRt = UiFactory.Rect("Bar", root, topLeft, topLeft, new Vector2(0.56f, -0.32f), new Vector2(1.62f, 0.2f));
+            UiFactory.Image(barRt, bar, new Color(0.1f, 0.1f, 0.12f, 1f), true);
+            RectTransform fillRt = UiFactory.Stretch("Fill", barRt);
+            fillRt.offsetMin = new Vector2(0.02f, 0.02f);
+            fillRt.offsetMax = new Vector2(-0.02f, -0.02f);
+            Image fill = UiFactory.Fill(fillRt, bar, Color.green, 1f);
+
+            PrefabBuilder.Wire(canvasGo.AddComponent<CarHealthBar>(), ("m_Car", car.GetComponent<CarHealth>()), ("m_Fill", fill));
+        }
+
+        /// <summary>
+        /// Bakes the zombie NavMesh from the colliders on the Ground and Obstacle layers (default humanoid agent,
+        /// 0.5 m clearance) and stores it next to the scene.
+        /// </summary>
+        private static void BuildNavMesh(Transform parent)
+        {
+            var go = new GameObject("NavMesh");
+            go.transform.SetParent(parent, false);
+            var surface = go.AddComponent<NavMeshSurface>();
+            surface.collectObjects = CollectObjects.All;
+            surface.useGeometry = NavMeshCollectGeometry.PhysicsColliders;
+            surface.layerMask = Layers.NavMeshSources;
+            Physics.SyncTransforms();
+            surface.BuildNavMesh();
+            if (AssetDatabase.LoadAssetAtPath<NavMeshData>(c_NavMeshData) != null)
+                AssetDatabase.DeleteAsset(c_NavMeshData);
+            AssetDatabase.CreateAsset(surface.navMeshData, c_NavMeshData);
+            NavMeshTriangulation mesh = NavMesh.CalculateTriangulation();
+            Debug.Log($"[SceneBuilder] Map01 NavMesh: {mesh.vertices.Length} vertices, {mesh.indices.Length / 3} triangles.");
         }
 
         /// <summary>Logs every FBX-based prefab that Map01 does not use (all of them are expected to be placed).</summary>
@@ -336,7 +441,7 @@ namespace ZombiCar.EditorTools
                 for (int i = 0; i < filter.sharedMesh.subMeshCount; i++)
                     triangles += filter.sharedMesh.GetIndexCount(i) / 3;
             }
-            Debug.Log($"[SceneBuilder] Map01 stats: {renderers} renderers, {triangles} triangles in the whole map, " +
+            Debug.Log($"[SceneBuilder] Map01 stats: {renderers} mesh renderers, {triangles} triangles in the whole map, " +
                       $"{materials.Count} materials, 3 realtime point lights + sun.");
         }
 
@@ -506,31 +611,23 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ ground, roads, background
-        private static void BuildGround(Transform environment, Transform background)
+        private static void BuildGround(Transform environment, Transform background, MapConfig map)
         {
-            Place("Env_Ground", environment, 0f, 0f);
-            // North road (z 17.5..24.5) with sidewalks, east road (x 25..32) with sidewalks. The east road and its
-            // sidewalks stop at the north sidewalk (z 15.8) so no two strips overlap.
-            Place("Env_Road_100", background, 0f, 21f, 0f, 1f, c_RoadHeight);
-            Place("Env_Sidewalk_100", background, 0f, 16.65f, 0f, 1f, c_SidewalkHeight);
-            Place("Env_Sidewalk_100", background, 0f, 25.35f, 0f, 1f, c_SidewalkHeight);
-            const float eastStripZ = 15.8f - 62.5f * 0.5f;
-            Place("Env_Road_62", background, 28.5f, eastStripZ, 90f, 1f, c_RoadHeight);
-            Place("Env_Sidewalk_62", background, 24.15f, eastStripZ, 90f, 1f, c_SidewalkHeight);
-            Place("Env_Sidewalk_62", background, 32.85f, eastStripZ, 90f, 1f, c_SidewalkHeight);
-
-            string[] houses = { "House_Stub_1", "House_Stub_2", "House_Stub_3", "House_Stub_4" };
-            float[] northX = { -44f, -31.5f, -19f, -7f, 5f, 17f, 29f, 43f };
-            for (int i = 0; i < northX.Length; i++)
-                Place(houses[i % houses.Length], background, northX[i], 30f, 180f);
-            float[] eastZ = { -33f, -21f, -9f, 3f };
-            for (int i = 0; i < eastZ.Length; i++)
-                Place(houses[(i + 2) % houses.Length], background, 38.2f, eastZ[i], 90f);
+            Place("Env_Ground", environment, map.GroundCenter.x, map.GroundCenter.z);
+            // North road (z 17.5..24.5) with sidewalks across the whole ground, east road (x 25..32) with sidewalks
+            // from the north sidewalk (z 15.8, so no two strips overlap) to the south edge of the ground.
+            Place("Env_Road_North", background, map.GroundCenter.x, 21f, 0f, 1f, c_RoadHeight);
+            Place("Env_Sidewalk_North", background, map.GroundCenter.x, 16.65f, 0f, 1f, c_SidewalkHeight);
+            Place("Env_Sidewalk_North", background, map.GroundCenter.x, 25.35f, 0f, 1f, c_SidewalkHeight);
+            float eastStripZ = PrefabBuilder.c_NorthSidewalkEdge - PrefabBuilder.EastRoadLength(map) * 0.5f;
+            Place("Env_Road_East", background, 28.5f, eastStripZ, 90f, 1f, c_RoadHeight);
+            Place("Env_Sidewalk_East", background, 24.15f, eastStripZ, 90f, 1f, c_SidewalkHeight);
+            Place("Env_Sidewalk_East", background, 32.85f, eastStripZ, 90f, 1f, c_SidewalkHeight);
 
             // Street furniture outside the lot.
             foreach (float x in new[] { -38f, -16f, 11f, 40f })
                 Place("Lamp_Street", background, x, 16.7f, 90f);
-            foreach (float z in new[] { -30f, -12f, 6f })
+            foreach (float z in new[] { -12f, 6f })
                 Place("Pole_Power", background, 33.8f, z, 90f);
             foreach (float x in new[] { -32f, -12f, 8f })
                 Place("Pole_Power", background, x, -22f, 0f);
@@ -698,7 +795,6 @@ namespace ZombiCar.EditorTools
             Place("Rock1", parent, -18.9f, -12.1f, 20f);
             Place("Rock2", parent, 19.3f, -3.5f, 120f);
             Place("Rock3", parent, -5.5f, -12.6f);
-            Place("Rock1", parent, 18f, -31f, 200f, 1.4f);
             Place("Rock2", parent, -36f, -14f, 45f, 1.5f);
             Place("Rock3", parent, -32f, 19f, 90f, 1.3f);
 
@@ -715,13 +811,15 @@ namespace ZombiCar.EditorTools
                 PlaceGrass(parent, lotRnd, x, z, c_LotGrassScale);
                 placed++;
             }
-            // Outside the fences (verges).
+            // Outside the fences (verges), within the visible ground.
             var outRnd = new Random(8);
+            float groundX = map.GroundSize.x * 0.5f - 2f;
+            float groundSouth = map.GroundCenter.z - map.GroundSize.y * 0.5f + 1.5f;
             for (int i = 0; i < 45; i++)
             {
                 bool south = i % 2 == 0;
-                float x = south ? Mathf.Lerp(-48f, 48f, (float)outRnd.NextDouble()) : Mathf.Lerp(-40f, -23f, (float)outRnd.NextDouble());
-                float z = south ? Mathf.Lerp(-33f, -16f, (float)outRnd.NextDouble()) : Mathf.Lerp(-33f, 15f, (float)outRnd.NextDouble());
+                float x = south ? Mathf.Lerp(-groundX, groundX, (float)outRnd.NextDouble()) : Mathf.Lerp(-40f, -23f, (float)outRnd.NextDouble());
+                float z = south ? Mathf.Lerp(groundSouth, -16f, (float)outRnd.NextDouble()) : Mathf.Lerp(groundSouth, 15f, (float)outRnd.NextDouble());
                 if (x > 23f && x < 34f)
                     continue;                                                         // east road and its sidewalks
                 PlaceGrass(parent, outRnd, x, z, c_EdgeGrassScale);

@@ -88,18 +88,22 @@ namespace ZombiCar.EditorTools
             layers.GetArrayElementAtIndex(Layers.c_GroundIndex).stringValue = Layers.c_Ground;
             layers.GetArrayElementAtIndex(Layers.c_ProjectileIndex).stringValue = Layers.c_Projectile;
             layers.GetArrayElementAtIndex(Layers.c_CameraBoundsIndex).stringValue = Layers.c_CameraBounds;
+            layers.GetArrayElementAtIndex(Layers.c_EnemyIndex).stringValue = Layers.c_Enemy;
+            layers.GetArrayElementAtIndex(Layers.c_CarObstacleIndex).stringValue = Layers.c_CarObstacle;
             tagManager.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void ConfigurePhysicsMatrix()
         {
-            // Projectiles use casts only and the camera volume must never block anything.
+            // Projectiles use casts only and the camera volume must never block anything. Zombies are kinematic
+            // NavMesh agents (crowd avoidance keeps them apart) but still block the player's CharacterController.
             const int layerCount = 32;
             for (int i = 0; i < layerCount; i++)
             {
                 Physics.IgnoreLayerCollision(Layers.c_CameraBoundsIndex, i, true);
                 Physics.IgnoreLayerCollision(Layers.c_ProjectileIndex, i, true);
             }
+            Physics.IgnoreLayerCollision(Layers.c_EnemyIndex, Layers.c_EnemyIndex, true);
         }
 
         private static UniversalRenderPipelineAsset[] ConfigureRenderPipelines()

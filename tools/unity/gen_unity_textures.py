@@ -227,12 +227,7 @@ e = np.clip(1 - (ex ** 2 + ey ** 2), 0, 1)
 sh = np.zeros((S_H, S_W, 4)); sh[..., 3] = 0.72 * e ** 1.4
 save_rgba(sh, os.path.join(ENV, "T_ShadowBlob.png"))
 
-# ------------------------------------------------------------------ aim line (u = along, fades out) and bullet glow
-AL = np.zeros((32, 256, 4))
-u = np.linspace(0, 1, 256)[None, :]; vv = np.linspace(-1, 1, 32)[:, None]
-AL[..., :3] = 1.0
-AL[..., 3] = 0.9 * (1 - u) ** 0.7 * np.clip(1 - np.abs(vv) ** 3, 0, 1)
-save_rgba(AL, os.path.join(VFX, "T_AimLine.png"))
+# ------------------------------------------------------------------ bullet glow
 G = 64
 gy, gx = (np.mgrid[0:G, 0:G] - (G - 1) / 2) / (G / 2)
 gr = np.clip(1 - np.hypot(gx, gy), 0, 1)
@@ -284,6 +279,18 @@ for i, x in enumerate((140, 256, 372)):
     d.pieslice([x - 36, 80, x + 36, 282], 180, 360, fill=(214, 120, 60, 255))
     d.rectangle([x - 44, 176, x + 44, 196], fill=(70, 50, 20, 255))
 im.resize((128, 128), Image.LANCZOS).save(os.path.join(UI, "UI_IconAmmo.png"))
+
+# Car durability icon: simple side-view silhouette (badge for the car health bar above the player's car).
+im = Image.new("RGBA", (512, 512), (0, 0, 0, 0)); d = ImageDraw.Draw(im)
+body = (74, 46, 30, 255)
+d.rounded_rectangle([70, 230, 442, 330], radius=26, fill=body)
+d.polygon([(120, 230), (170, 150), (342, 150), (392, 230)], fill=body)
+d.rounded_rectangle([182, 168, 330, 228], radius=10, fill=(214, 232, 245, 255))
+d.rectangle([182, 196, 330, 228], fill=body)
+for cx in (168, 344):
+    d.ellipse([cx - 46, 296, cx + 46, 388], fill=(30, 22, 18, 255))
+    d.ellipse([cx - 24, 318, cx + 24, 366], fill=(150, 150, 155, 255))
+im.resize((128, 128), Image.LANCZOS).save(os.path.join(UI, "UI_IconCar.png"))
 
 P = 512
 im = Image.new("RGBA", (P, P), (0, 0, 0, 0)); d = ImageDraw.Draw(im)

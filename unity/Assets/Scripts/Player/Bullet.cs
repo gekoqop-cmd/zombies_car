@@ -1,11 +1,12 @@
 using System;
 using UnityEngine;
+using ZombiCar.Core;
 
 namespace ZombiCar.Player
 {
     /// <summary>
     /// Pooled projectile. Moves with a sphere cast each frame (no Rigidbody, no collider), stops at the first
-    /// obstacle or after its range, then returns itself to the pool.
+    /// obstacle or enemy (damaging the enemy) or after its range, then returns itself to the pool.
     /// </summary>
     public sealed class Bullet : MonoBehaviour
     {
@@ -13,6 +14,7 @@ namespace ZombiCar.Player
         private float m_Speed;
         private float m_Remaining;
         private float m_Radius;
+        private int m_Damage;
         private int m_BlockMask;
         private Action<Bullet> m_Release;
         private bool m_Active;
@@ -23,6 +25,7 @@ namespace ZombiCar.Player
             m_Speed = config.BulletSpeed;
             m_Remaining = config.Range;
             m_Radius = config.BulletRadius;
+            m_Damage = config.Damage;
             m_BlockMask = blockMask;
             m_Release = release;
             m_Active = true;
@@ -39,6 +42,9 @@ namespace ZombiCar.Player
                     QueryTriggerInteraction.Ignore))
             {
                 transform.position = hit.point;
+                bool enemy = ((1 << hit.collider.gameObject.layer) & Layers.Enemies) != 0;
+                if (enemy && hit.collider.TryGetComponent(out IDamageable target))
+                    target.TakeDamage(m_Damage, m_Direction);
                 Despawn();
                 return;
             }

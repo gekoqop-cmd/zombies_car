@@ -106,14 +106,6 @@ namespace ZombiCar.EditorTools
                     Surface = Surface.Transparent, Smoothness = 0f });
             list.Add(new Spec { Name = "M_ShadowBlob", Folder = "Environment", Texture = "Environment/T_ShadowBlob.png",
                 Surface = Surface.Transparent, Unlit = true, Tint = Color.white });
-            (string, Color)[] houses =
-            {
-                ("M_House_A", new Color(0.78f, 0.66f, 0.52f)), ("M_House_B", new Color(0.70f, 0.58f, 0.50f)),
-                ("M_House_C", new Color(0.62f, 0.60f, 0.56f)), ("M_House_D", new Color(0.80f, 0.72f, 0.60f)),
-                ("M_HouseRoof", new Color(0.55f, 0.24f, 0.18f)),
-            };
-            foreach (var (name, color) in houses)
-                list.Add(new Spec { Name = name, Folder = "Environment", Tint = color, Smoothness = 0f });
             // Stand-ins for concept objects without a model (tree, bicycle, fire hydrant): flat colour hints.
             (string, Color)[] stubs =
             {
@@ -123,11 +115,7 @@ namespace ZombiCar.EditorTools
             foreach (var (name, color) in stubs)
                 list.Add(new Spec { Name = name, Folder = "Stubs", Tint = color, Smoothness = 0f });
 
-            // Characters, VFX.
-            list.Add(new Spec { Name = "M_Player", Folder = "Characters", Tint = new Color(0.16f, 0.62f, 0.7f), Smoothness = 0.3f });
-            list.Add(new Spec { Name = "M_PlayerVisor", Folder = "Characters", Tint = new Color(0.1f, 0.1f, 0.12f), Smoothness = 0.5f });
-            list.Add(new Spec { Name = "M_AimLine", Folder = "VFX", Texture = "Assets/Art/VFX/T_AimLine.png",
-                Surface = Surface.Transparent, Unlit = true, Tint = new Color(1f, 0.93f, 0.78f, 0.85f) });
+            // VFX (characters are 2D sprites: URP Sprite-Unlit-Default, see CharacterBuilder).
             list.Add(new Spec { Name = "M_Bullet", Folder = "VFX", Unlit = true, Tint = new Color(6f, 4.2f, 1.4f, 1f) });
             return list.ToArray();
         }

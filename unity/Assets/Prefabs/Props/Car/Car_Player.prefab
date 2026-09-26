@@ -142,7 +142,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
       propertyPath: m_Layer
-      value: 9
+      value: 14
       objectReference: {fileID: 0}
     - target: {fileID: 1362907774129878780, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
       propertyPath: m_Layer
@@ -261,8 +261,16 @@ PrefabInstance:
       addedObject: {fileID: 4778558368002934372}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
       insertIndex: -1
+      addedObject: {fileID: 8621526005660897353}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
+      insertIndex: -1
       addedObject: {fileID: 8551527114278102661}
   m_SourcePrefab: {fileID: 100100000, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
+--- !u!1 &3980556820854529479 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8715697691120376850, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
+  m_PrefabInstance: {fileID: 5749310609986863573}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &4830337477836012676 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
@@ -289,6 +297,22 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 2.3, y: 2.2, z: 5.1}
   m_Center: {x: 0, y: 1.1, z: 0.12}
+--- !u!208 &8621526005660897353
+NavMeshObstacle:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4830337477836012676}
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Shape: 1
+  m_Extents: {x: 1.15, y: 1.1, z: 2.55}
+  m_MoveThreshold: 0.1
+  m_Carve: 1
+  m_CarveOnlyStationary: 1
+  m_Center: {x: 0, y: 1.1, z: 0.12}
+  m_TimeToStationary: 0.5
 --- !u!114 &8551527114278102661
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -301,8 +325,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45ece53ec29e6184eb62b068e52e3aec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Car.CarHealth
-  m_MaxHealth: 100
+  m_MaxHealth: 400
   m_DamageStageThresholds:
   - 0.75
   - 0.5
   - 0.25
+  m_DamageStageObjects:
+  - {fileID: 3980556820854529479}
+  - {fileID: 7481290104722394659}
+  - {fileID: 7424643792764322828}
+  m_Body: {fileID: 4778558368002934372}
+--- !u!1 &7424643792764322828 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2936353248235226585, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
+  m_PrefabInstance: {fileID: 5749310609986863573}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &7481290104722394659 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2889980824738418678, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
+  m_PrefabInstance: {fileID: 5749310609986863573}
+  m_PrefabAsset: {fileID: 0}

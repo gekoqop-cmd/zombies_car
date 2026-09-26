@@ -8,6 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using ZombiCar.Characters;
 using ZombiCar.Core;
 
 namespace ZombiCar.EditorTools
@@ -15,7 +16,8 @@ namespace ZombiCar.EditorTools
     /// <summary>
     /// Tools/Capture Map01 Screenshots: renders Map01 (+ the HUD scene) from the game camera into
     /// &lt;project&gt;/Screenshots — gameplay views at 16:9, 19.5:9 and 4:3, close-ups of the map areas and a wide
-    /// overview of the whole play area for comparison with referens/concept.png. Works in batch mode.
+    /// overview of the whole play area for comparison with referens/concept.png, and a line-up of every zombie type
+    /// in its idle / walk / attack / dead frames next to the player. Works in batch mode.
     /// </summary>
     public static class MapScreenshots
     {
@@ -32,7 +34,17 @@ namespace ZombiCar.EditorTools
             public int Width = 1920;
             public bool Hud;
             public bool Overview;
+            public bool Zombies;
         }
+
+        // Zombie line-up: one column per type, one row per pose (the frame shown is the clip's first or last one).
+        private static readonly (CharacterAnim anim, bool lastFrame)[] s_LineupPoses =
+        {
+            (CharacterAnim.Idle, false), (CharacterAnim.Move, false), (CharacterAnim.Attack, true), (CharacterAnim.Dead, true),
+        };
+        private const float c_LineupColumn = 3.4f;
+        private const float c_LineupRow = 2.5f;
+        private static readonly Vector3 s_LineupOrigin = new Vector3(-8.5f, 0f, -4.5f);
 
         private static readonly Shot[] s_Shots =
         {
@@ -44,6 +56,7 @@ namespace ZombiCar.EditorTools
             new Shot { Name = "Map01_North", LookAt = new Vector3(3f, 0f, 10f) },
             new Shot { Name = "Map01_South", LookAt = new Vector3(0f, 0f, -8f) },
             new Shot { Name = "Map01_Overview", LookAt = Vector3.zero, Distance = c_OverviewDistance, Overview = true },
+            new Shot { Name = "Map01_Zombies", LookAt = new Vector3(0f, 0f, -8f), Zombies = true },
         };
 
         [MenuItem("Tools/Capture Map01 Screenshots")]
@@ -83,8 +96,11 @@ namespace ZombiCar.EditorTools
                 if (urp != null)
                     urp.shadowDistance = shot.Overview ? c_OverviewShadowDistance : shadowDistance;
                 string path = Path.Combine(folder, shot.Name + ".png");
+                GameObject lineup = shot.Zombies ? BuildZombieLineup() : null;
                 Render(cam, shot.Width, c_Height, null);   // warm-up: shader variants, shadow maps, TMP meshes
                 Render(cam, shot.Width, c_Height, path);
+                if (lineup != null)
+                    Object.DestroyImmediate(lineup);
                 Debug.Log($"[MapScreenshots] {path}");
             }
 
@@ -95,6 +111,26 @@ namespace ZombiCar.EditorTools
             CaptureMenu(folder);
             ShaderUtil.allowAsyncCompilation = asyncCompilation;
             EditorSceneManager.OpenScene(SceneBuilder.c_MapScene, OpenSceneMode.Single);
+        }
+
+        private static GameObject BuildZombieLineup()
+        {
+            var root = new GameObject("[ZombieLineup]");
+            string[] prefabs = AssetDatabase.FindAssets("t:Prefab", new[] { EditorPaths.c_PrefabsEnemies })
+                .Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p).ToArray();
+            for (int column = 0; column < prefabs.Length; column++)
+            {
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabs[column]);
+                for (int row = 0; row < s_LineupPoses.Length; row++)
+                {
+                    GameObject zombie = Object.Instantiate(prefab, root.transform);
+                    zombie.transform.position = s_LineupOrigin + new Vector3(column * c_LineupColumn, 0f, -row * c_LineupRow);
+                    var animator = zombie.GetComponentInChildren<SpriteAnimator>();
+                    CharacterSprites.Clip clip = animator.Sprites.Get(s_LineupPoses[row].anim);
+                    animator.GetComponent<SpriteRenderer>().sprite = clip.Frames[s_LineupPoses[row].lastFrame ? clip.Frames.Length - 1 : 0];
+                }
+            }
+            return root;
         }
 
         private static void CaptureMenu(string folder)
@@ -114,7 +150,8 @@ namespace ZombiCar.EditorTools
             Debug.Log($"[MapScreenshots] {path}");
         }
 
-        private static void Render(Camera cam, int width, int height, string path)
+        /// <summary>Renders <paramref name="cam"/> into a PNG at <paramref name="path"/> (null = warm-up only).</summary>
+        public static void Render(Camera cam, int width, int height, string path)
         {
             var rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             rt.Create();

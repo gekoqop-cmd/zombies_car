@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Rendering;
 using ZombiCar.Car;
 using ZombiCar.Core;
@@ -14,8 +15,9 @@ namespace ZombiCar.EditorTools
 {
     /// <summary>
     /// Tools/Build Prefabs: a prefab (variant) for every FBX with simple Box/Capsule colliders (no mesh colliders),
-    /// static flags on buildings/fences/signs/nature, plus generated environment prefabs (ground, roads, houses,
-    /// decals), the bullet and the player. The map is assembled only from these prefabs.
+    /// static flags on buildings/fences/signs/nature, plus generated environment prefabs (ground, roads, decals),
+    /// the bullet, the 2D characters (zombies, see <see cref="CharacterBuilder"/>) and the player. The map is assembled
+    /// only from these prefabs.
     /// </summary>
     public static class PrefabBuilder
     {
@@ -42,20 +44,12 @@ namespace ZombiCar.EditorTools
         public static readonly Vector3 CarPlayerColliderCenter = new Vector3(0f, 1.1f, 0.12f);
         public static readonly Vector3 CarPlayerColliderSize = new Vector3(2.3f, 2.2f, 5.1f);
 
-        private sealed class HouseSpec
-        {
-            public string Name;
-            public Vector3 Size;
-            public string Material;
-        }
+        // Roads (placed by SceneBuilder.BuildGround): the north road crosses the whole ground, the east road runs from
+        // the north sidewalk down to the south edge of the ground.
+        public const float c_NorthSidewalkEdge = 15.8f;
 
-        private static readonly HouseSpec[] s_Houses =
-        {
-            new HouseSpec { Name = "House_Stub_1", Size = new Vector3(9f, 6f, 7f), Material = "M_House_A" },
-            new HouseSpec { Name = "House_Stub_2", Size = new Vector3(8f, 5f, 7f), Material = "M_House_B" },
-            new HouseSpec { Name = "House_Stub_3", Size = new Vector3(10f, 7.5f, 8f), Material = "M_House_C" },
-            new HouseSpec { Name = "House_Stub_4", Size = new Vector3(7f, 4.5f, 6f), Material = "M_House_D" },
-        };
+        public static float EastRoadLength(MapConfig map) =>
+            c_NorthSidewalkEdge - (map.GroundCenter.z - map.GroundSize.y * 0.5f);
 
         /// <summary>
         /// Concept objects without a model: stand-in cubes of the real size (listed in the build log / report).
@@ -82,9 +76,10 @@ namespace ZombiCar.EditorTools
             BuildGeneratedEnvironment();
             BuildStubs();
             Bullet bullet = BuildBullet();
+            CharacterBuilder.BuildAll();
             BuildPlayer(bullet);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[PrefabBuilder] {models} model prefabs + generated environment, bullet, player.");
+            Debug.Log($"[PrefabBuilder] {models} model prefabs + generated environment, bullet, zombies, player.");
         }
 
         // ------------------------------------------------------------------ FBX -> prefab variants
@@ -229,7 +224,19 @@ namespace ZombiCar.EditorTools
             var box = go.AddComponent<BoxCollider>();
             box.center = CarPlayerColliderCenter;
             box.size = CarPlayerColliderSize;
-            go.AddComponent<CarHealth>();
+            // Its own layer: bullets (Obstacle|Enemy blockers) pass through so the player can shoot zombies
+            // hiding behind the car, while it still blocks the player's CharacterController (default layer
+            // collision) and carves the zombie NavMesh below.
+            go.layer = Layers.c_CarObstacleIndex;
+            var navObstacle = go.AddComponent<NavMeshObstacle>();
+            navObstacle.shape = NavMeshObstacleShape.Box;
+            navObstacle.center = CarPlayerColliderCenter;
+            navObstacle.size = CarPlayerColliderSize;
+            navObstacle.carving = true;
+            var stages = new GameObject[s_CarDamageParts.Length];
+            for (int i = 0; i < stages.Length; i++)
+                stages[i] = FindDeep(go.transform, s_CarDamageParts[i])?.gameObject;
+            CharacterBuilder.SetProps(go.AddComponent<CarHealth>(), ("m_DamageStageObjects", stages), ("m_Body", box));
         }
 
         private static void ConfigureWorkshop(GameObject go)
@@ -269,9 +276,8 @@ namespace ZombiCar.EditorTools
             SetStaticRecursively(groundGo, StaticEditorFlags.BatchingStatic);
             SavePrefab(groundGo, $"{folder}/Env_Ground.prefab");
 
-            foreach (float length in new[] { 100f, 62.5f })
+            foreach ((string suffix, float length) in new[] { ("North", map.GroundSize.x), ("East", EastRoadLength(map)) })
             {
-                string suffix = Mathf.RoundToInt(length).ToString();
                 Mesh road = SaveMesh(StripMesh(length, c_RoadWidth, c_RoadWidth, true), $"SM_Road_{suffix}");
                 GameObject roadGo = MeshObject($"Env_Road_{suffix}", road, MaterialLibrary.Get("M_Road"), false);
                 SetStaticRecursively(roadGo, StaticEditorFlags.BatchingStatic);
@@ -297,23 +303,6 @@ namespace ZombiCar.EditorTools
                 visual.transform.localScale = new Vector3(size, 1f, size);
                 SetStaticRecursively(root, StaticEditorFlags.BatchingStatic);
                 SavePrefab(root, $"{folder}/{name}.prefab");
-            }
-
-            Mesh cube = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
-            foreach (HouseSpec h in s_Houses)
-            {
-                var root = new GameObject(h.Name);
-                GameObject body = MeshObject("Body", cube, MaterialLibrary.Get(h.Material), true);
-                body.transform.SetParent(root.transform, false);
-                body.transform.localPosition = new Vector3(0f, h.Size.y * 0.5f, 0f);
-                body.transform.localScale = h.Size;
-                const float roofOverhang = 0.6f, roofThickness = 0.5f;
-                GameObject roof = MeshObject("Roof", cube, MaterialLibrary.Get("M_HouseRoof"), true);
-                roof.transform.SetParent(root.transform, false);
-                roof.transform.localPosition = new Vector3(0f, h.Size.y + roofThickness * 0.5f, 0f);
-                roof.transform.localScale = new Vector3(h.Size.x + roofOverhang, roofThickness, h.Size.z + roofOverhang);
-                SetStaticRecursively(root, StaticEditorFlags.BatchingStatic);
-                SavePrefab(root, $"{folder}/{h.Name}.prefab");
             }
         }
 
@@ -376,23 +365,10 @@ namespace ZombiCar.EditorTools
             cc.stepOffset = 0.35f;
             cc.slopeLimit = 45f;
 
-            GameObject body = MeshObject("Body", Resources.GetBuiltinResource<Mesh>("Capsule.fbx"), MaterialLibrary.Get("M_Player"), true);
-            body.transform.SetParent(root.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.8f, 0.9f, 0.8f);
-            Mesh cube = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
-            GameObject visor = MeshObject("Visor", cube, MaterialLibrary.Get("M_PlayerVisor"), true);
-            visor.transform.SetParent(root.transform, false);
-            visor.transform.localPosition = new Vector3(0f, 1.45f, 0.3f);
-            visor.transform.localScale = new Vector3(0.5f, 0.18f, 0.22f);
-            GameObject gun = MeshObject("Gun", cube, MaterialLibrary.Get("M_PlayerVisor"), true);
-            gun.transform.SetParent(root.transform, false);
-            gun.transform.localPosition = new Vector3(0.32f, 1.05f, 0.42f);
-            gun.transform.localScale = new Vector3(0.12f, 0.12f, 0.6f);
+            // Bullets leave from here (turns with the aim); the body is the 2D sprite built by CharacterBuilder.
             var muzzle = new GameObject("Muzzle");
             muzzle.transform.SetParent(root.transform, false);
             muzzle.transform.localPosition = new Vector3(0.32f, 1.05f, 0.78f);
-            SetLayerRecursively(root, Layers.c_PlayerIndex);
 
             var desktop = root.AddComponent<DesktopPlayerInput>();
             var mobile = root.AddComponent<MobilePlayerInput>();
@@ -400,11 +376,6 @@ namespace ZombiCar.EditorTools
             var controller = root.AddComponent<PlayerController>();
             var pool = root.AddComponent<BulletPool>();
             var weapon = root.AddComponent<PlayerWeapon>();
-
-            GameObject aim = MeshObject("AimIndicator", null, MaterialLibrary.Get("M_AimLine"), false);
-            aim.transform.SetParent(root.transform, false);
-            aim.GetComponent<MeshRenderer>().receiveShadows = false;
-            var indicator = aim.AddComponent<AimIndicator>();
 
             Wire(desktop, ("m_AimOrigin", root.transform));
             Wire(provider, ("m_Desktop", desktop), ("m_Mobile", mobile));
@@ -414,7 +385,8 @@ namespace ZombiCar.EditorTools
             Wire(weapon, ("m_Config", DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig)),
                 ("m_InputProvider", provider), ("m_Muzzle", muzzle.transform), ("m_Pool", pool),
                 ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)));
-            Wire(indicator, ("m_InputProvider", provider), ("m_Weapon", weapon), ("m_Follow", root.transform));
+            CharacterBuilder.BuildPlayerView(root, provider, weapon);
+            SetLayerRecursively(root, Layers.c_PlayerIndex);
 
             SavePrefab(root, $"{EditorPaths.c_PrefabsCharacters}/Player.prefab");
         }

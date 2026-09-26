@@ -20,6 +20,8 @@ namespace ZombiCar.Player
         [SerializeField] private float m_AimPlaneHeight;
         [Tooltip("Cursor closer than this to the player keeps the previous direction (avoids jitter).")]
         [SerializeField, Min(0f)] private float m_MinAimDistance = 0.3f;
+        [Tooltip("Maximum turn speed of the aim direction, degrees per second: smooths mouse jitter into a steady aim without feeling laggy.")]
+        [SerializeField, Min(0f)] private float m_AimTurnSpeed = 2200f;
 
         private InputAction m_MoveAction;
         private InputAction m_FireAction;
@@ -117,7 +119,10 @@ namespace ZombiCar.Player
             Vector3 toCursor = AimPoint - m_AimOrigin.position;
             toCursor.y = 0f;
             if (toCursor.sqrMagnitude >= m_MinAimDistance * m_MinAimDistance)
-                m_AimDirection = toCursor.normalized;
+            {
+                float maxRadians = m_AimTurnSpeed * Mathf.Deg2Rad * Time.deltaTime;
+                m_AimDirection = Vector3.RotateTowards(m_AimDirection, toCursor.normalized, maxRadians, 0f);
+            }
         }
     }
 }

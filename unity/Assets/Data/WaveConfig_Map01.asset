@@ -15,5 +15,27 @@ MonoBehaviour:
   m_WaveCount: 10
   m_WaveDuration: 60
   m_BreakBetweenWaves: 10
+  m_FirstWaveDelay: 5
   m_EnemiesFirstWave: 8
   m_EnemiesGrowthPerWave: 4
+  m_SpawnWindow: 0.6
+  m_MaxAlive: 30
+  m_Enemies:
+  - m_Zombie: {fileID: 11400000, guid: b9accf8975114a04cbd6286e9b314e5b, type: 2}
+    m_FromWave: 1
+    m_Weight: 5
+  - m_Zombie: {fileID: 11400000, guid: 6b9e7af8de63afa44a61012e1ee5206a, type: 2}
+    m_FromWave: 2
+    m_Weight: 2
+  - m_Zombie: {fileID: 11400000, guid: c09e01af4e06f4d47b00f7bf209cf08b, type: 2}
+    m_FromWave: 2
+    m_Weight: 2
+  - m_Zombie: {fileID: 11400000, guid: 0068ac740452c624895f090ebb7cdfd6, type: 2}
+    m_FromWave: 3
+    m_Weight: 1.5
+  - m_Zombie: {fileID: 11400000, guid: bbc78e3049cc4584587ba080c0dff3b6, type: 2}
+    m_FromWave: 4
+    m_Weight: 1.2
+  - m_Zombie: {fileID: 11400000, guid: 9ef02c5b47402e24284a7d915ed1996a, type: 2}
+    m_FromWave: 5
+    m_Weight: 0.5

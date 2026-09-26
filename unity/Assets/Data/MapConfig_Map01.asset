@@ -17,6 +17,7 @@ MonoBehaviour:
   m_WaveThreshold: 10
   m_PlayAreaCenter: {x: 0, y: 0, z: 0}
   m_PlayAreaSize: {x: 44, y: 30}
-  m_GroundSize: {x: 100, y: 80}
+  m_GroundCenter: {x: 0, y: 0, z: 5}
+  m_GroundSize: {x: 92, y: 58}
   m_FreeZoneRadius: 8
   m_CameraEdgeMargin: 4

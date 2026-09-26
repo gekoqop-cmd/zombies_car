@@ -14,7 +14,10 @@ namespace ZombiCar.Core
         [Header("Areas (metres, X = east, Y = north)")]
         [SerializeField] private Vector3 m_PlayAreaCenter = Vector3.zero;
         [SerializeField] private Vector2 m_PlayAreaSize = new Vector2(44f, 30f);
-        [SerializeField] private Vector2 m_GroundSize = new Vector2(100f, 80f);
+        [Tooltip("Asphalt ground under the whole view: covers what the game camera can see from any point of its " +
+                 "confined range on 4:3 .. 21:9 screens (x +-44, z -22.5..32 on Map01) plus a small margin.")]
+        [SerializeField] private Vector3 m_GroundCenter = new Vector3(0f, 0f, 5f);
+        [SerializeField] private Vector2 m_GroundSize = new Vector2(92f, 58f);
         [Tooltip("Radius of the empty circle around the car in the middle of the map.")]
         [SerializeField, Min(0f)] private float m_FreeZoneRadius = 8f;
         [Tooltip("How far inside the play area the camera look point is allowed to go.")]
@@ -25,6 +28,7 @@ namespace ZombiCar.Core
         public int WaveThreshold => m_WaveThreshold;
         public Vector3 PlayAreaCenter => m_PlayAreaCenter;
         public Vector2 PlayAreaSize => m_PlayAreaSize;
+        public Vector3 GroundCenter => m_GroundCenter;
         public Vector2 GroundSize => m_GroundSize;
         public float FreeZoneRadius => m_FreeZoneRadius;
         public float CameraEdgeMargin => m_CameraEdgeMargin;

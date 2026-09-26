@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2cc33ec1de4b514c9bf7749084e9d87, type: 3}
+  m_Name: Walker_Sprites
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Characters.CharacterSprites
+  m_Clips:
+  - m_Anim: 0
+    m_Frames:
+    - {fileID: 21300000, guid: 6962435bf70df514c9a0357760031584, type: 3}
+    - {fileID: 21300000, guid: d96ddaa84405c0b438efb8e4f424eef5, type: 3}
+    m_Fps: 2
+    m_Loop: 1
+  - m_Anim: 1
+    m_Frames:
+    - {fileID: 21300000, guid: 53ff7b926d942d64f984d327070bfc8b, type: 3}
+    - {fileID: 21300000, guid: d96ddaa84405c0b438efb8e4f424eef5, type: 3}
+    m_Fps: 3.5
+    m_Loop: 1
+  - m_Anim: 2
+    m_Frames:
+    - {fileID: 21300000, guid: 1f5f0d820e2737c48ac99f8438cb075b, type: 3}
+    - {fileID: 21300000, guid: d23187f9f243b4544931f60fe0b5509a, type: 3}
+    m_Fps: 5
+    m_Loop: 0
+  - m_Anim: 3
+    m_Frames:
+    - {fileID: 21300000, guid: 6cc2feafe2646b14b9322388b66575f0, type: 3}
+    m_Fps: 1
+    m_Loop: 1
+  - m_Anim: 4
+    m_Frames:
+    - {fileID: 21300000, guid: 6cc2feafe2646b14b9322388b66575f0, type: 3}
+    - {fileID: 21300000, guid: ad6fd5b5f3b6a6e4c850f515676bac45, type: 3}
+    m_Fps: 5
+    m_Loop: 0

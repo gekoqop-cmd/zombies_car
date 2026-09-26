@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda7e6ab08fc935448bd15d9114c69d0, type: 3}
+  m_Name: Zombie_RedCap
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.ZombieConfig
+  m_Prefab: {fileID: 5596770323178279545, guid: 2260703c171ed48488118038549005ac, type: 3}
+  m_MaxHealth: 25
+  m_MoveSpeed: 2.1
+  m_SpeedVariation: 0.15
+  m_Damage: 4
+  m_AttackInterval: 1.1
+  m_AttackRange: 0.6
+  m_AttackAnimSpeed: 1.2
+  m_Preference: 0
+  m_AggroRadius: 6
+  m_StaggerTime: 0.2
+  m_Knockback: 0.25

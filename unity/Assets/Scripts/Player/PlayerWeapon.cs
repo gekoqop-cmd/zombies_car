@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using ZombiCar.Core;
 
@@ -6,7 +7,7 @@ namespace ZombiCar.Player
     /// <summary>
     /// Placeholder gun: fires pooled bullets along <see cref="IPlayerInput.AimDirection"/> while fire is held,
     /// with fire rate, magazine, reserve and automatic reload from <see cref="WeaponConfig"/>.
-    /// Publishes ammo to <see cref="AmmoState"/> for the HUD.
+    /// Publishes ammo to <see cref="AmmoState"/> for the HUD and raises <see cref="Fired"/> for the player's sprite.
     /// </summary>
     public sealed class PlayerWeapon : MonoBehaviour
     {
@@ -25,6 +26,10 @@ namespace ZombiCar.Player
         private int m_BlockMask;
 
         public WeaponConfig Config => m_Config;
+        public bool IsReloading => m_IsReloading;
+
+        /// <summary>Raised on every shot (muzzle flash, shooting pose).</summary>
+        public event Action Fired;
 
         private void Start()
         {
@@ -71,6 +76,16 @@ namespace ZombiCar.Player
 
             m_InMagazine--;
             m_NextShotTime = Time.time + m_Config.ShotInterval;
+            Publish();
+            Fired?.Invoke();
+        }
+
+        /// <summary>Tops up the reserve, capped at <see cref="WeaponConfig.MaxReserve"/> (the car resupplying the player between waves).</summary>
+        public void Resupply(int amount)
+        {
+            if (amount <= 0)
+                return;
+            m_Reserve = Mathf.Min(m_Reserve + amount, m_Config.MaxReserve);
             Publish();
         }
 

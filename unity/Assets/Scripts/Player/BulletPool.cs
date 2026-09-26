@@ -48,7 +48,11 @@ namespace ZombiCar.Player
                 createFunc: () => Instantiate(m_Prefab, m_Container),
                 actionOnGet: b => b.gameObject.SetActive(true),
                 actionOnRelease: b => b.gameObject.SetActive(false),
-                actionOnDestroy: b => Destroy(b.gameObject),
+                actionOnDestroy: b =>
+                {
+                    if (b != null)                           // already gone with the scene (pools are reset on exit)
+                        Destroy(b.gameObject);
+                },
                 collectionCheck: false,
                 defaultCapacity: Mathf.Max(1, capacity),
                 maxSize: c_MaxPoolSize);

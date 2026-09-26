@@ -6,16 +6,19 @@ namespace ZombiCar.EditorTools
     /// <summary>
     /// Import rules for everything under Assets/Art: FBX at scale 1 without cameras/lights/animation,
     /// textures sized and compressed for WebGL, sprites/cursor/normal maps typed by folder and name.
+    /// Character frames (tools/characters) are sprites with the pivot at the feet (bottom centre).
     /// </summary>
     public sealed class ArtImportPostprocessor : AssetPostprocessor
     {
         private const string c_ArtRoot = "Assets/Art/";
         private const string c_ModelsRoot = "Assets/Art/Models/";
         private const string c_UiRoot = "Assets/Art/Textures/UI/";
+        private const string c_CharactersRoot = EditorPaths.c_CharacterTextures + "/";
         private const string c_VfxRoot = "Assets/Art/VFX/";
         private const string c_WebGL = "WebGL";
 
         public const int c_MaxAtlasSize = 2048;
+        public const float c_CharacterPixelsPerUnit = 100f;
         private const int c_MaxUiSize = 512;
         private const int c_GroundAniso = 4;
         private const float c_AlphaTestReference = 0.5f;
@@ -87,6 +90,12 @@ namespace ZombiCar.EditorTools
                 importer.alphaIsTransparency = true;
                 importer.wrapMode = TextureWrapMode.Clamp;
             }
+            else if (assetPath.StartsWith(c_CharactersRoot))
+            {
+                ConfigureCharacterSprite(importer, file);
+                maxSize = c_MaxUiSize;
+                compression = TextureImporterCompression.CompressedHQ;   // thin painted outlines
+            }
             else if (file.EndsWith("_N"))
             {
                 importer.textureType = TextureImporterType.NormalMap;
@@ -127,6 +136,23 @@ namespace ZombiCar.EditorTools
                 textureCompression = compression,
                 crunchedCompression = false,
             });
+        }
+
+        private static void ConfigureCharacterSprite(TextureImporter importer, string file)
+        {
+            var settings = new TextureImporterSettings();
+            importer.ReadTextureSettings(settings);
+            settings.textureType = TextureImporterType.Sprite;
+            settings.spriteMode = (int)SpriteImportMode.Single;
+            // Frames have the feet on the bottom row; the muzzle flash starts at its centre (the gun tip).
+            settings.spriteAlignment = (int)(file.EndsWith("MuzzleFlash") ? SpriteAlignment.Center : SpriteAlignment.BottomCenter);
+            settings.spritePixelsPerUnit = c_CharacterPixelsPerUnit;
+            settings.spriteMeshType = SpriteMeshType.Tight;           // less overdraw when zombies crowd
+            settings.spriteGenerateFallbackPhysicsShape = false;
+            importer.SetTextureSettings(settings);
+            importer.mipmapEnabled = true;
+            importer.alphaIsTransparency = true;
+            importer.wrapMode = TextureWrapMode.Clamp;
         }
 
         private static Vector4 SpriteBorderFor(string file)
