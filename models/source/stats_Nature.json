@@ -1,0 +1,206 @@
+{
+ "Bush1": {
+  "group": "Nature",
+  "tris": 16,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Bush1_Body"
+  ],
+  "part_tris": {
+   "Bush1_Body": 16
+  }
+ },
+ "Bush2": {
+  "group": "Nature",
+  "tris": 16,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Bush2_Body"
+  ],
+  "part_tris": {
+   "Bush2_Body": 16
+  }
+ },
+ "Bush3": {
+  "group": "Nature",
+  "tris": 16,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Bush3_Body"
+  ],
+  "part_tris": {
+   "Bush3_Body": 16
+  }
+ },
+ "Bush4": {
+  "group": "Nature",
+  "tris": 16,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Bush4_Body"
+  ],
+  "part_tris": {
+   "Bush4_Body": 16
+  }
+ },
+ "Bush5": {
+  "group": "Nature",
+  "tris": 16,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Bush5_Body"
+  ],
+  "part_tris": {
+   "Bush5_Body": 16
+  }
+ },
+ "Grass1": {
+  "group": "Nature",
+  "tris": 12,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Grass1_Body"
+  ],
+  "part_tris": {
+   "Grass1_Body": 12
+  }
+ },
+ "Grass2": {
+  "group": "Nature",
+  "tris": 12,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Grass2_Body"
+  ],
+  "part_tris": {
+   "Grass2_Body": 12
+  }
+ },
+ "Grass3": {
+  "group": "Nature",
+  "tris": 12,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Grass3_Body"
+  ],
+  "part_tris": {
+   "Grass3_Body": 12
+  }
+ },
+ "Grass4": {
+  "group": "Nature",
+  "tris": 12,
+  "materials": [
+   "M_Nature_Foliage"
+  ],
+  "parts": [
+   "Grass4_Body"
+  ],
+  "part_tris": {
+   "Grass4_Body": 12
+  }
+ },
+ "Rock1": {
+  "group": "Nature",
+  "tris": 192,
+  "materials": [
+   "M_Nature_Foliage",
+   "M_Rocks"
+  ],
+  "parts": [
+   "Rock1_Body",
+   "Rock1_Grass"
+  ],
+  "part_tris": {
+   "Rock1_Body": 176,
+   "Rock1_Grass": 16
+  }
+ },
+ "Rock2": {
+  "group": "Nature",
+  "tris": 236,
+  "materials": [
+   "M_Nature_Foliage",
+   "M_Rocks"
+  ],
+  "parts": [
+   "Rock2_Body",
+   "Rock2_Grass"
+  ],
+  "part_tris": {
+   "Rock2_Body": 220,
+   "Rock2_Grass": 16
+  }
+ },
+ "Rock3": {
+  "group": "Nature",
+  "tris": 266,
+  "materials": [
+   "M_Nature_Foliage",
+   "M_Rocks"
+  ],
+  "parts": [
+   "Rock3_Body",
+   "Rock3_Grass"
+  ],
+  "part_tris": {
+   "Rock3_Body": 250,
+   "Rock3_Grass": 16
+  }
+ },
+ "Decal_Stone1": {
+  "group": "Nature/Decals",
+  "tris": 2,
+  "materials": [
+   "M_Decal_Stone1"
+  ],
+  "parts": [
+   "Decal_Stone1_Body"
+  ],
+  "part_tris": {
+   "Decal_Stone1_Body": 2
+  }
+ },
+ "Decal_Stone2": {
+  "group": "Nature/Decals",
+  "tris": 2,
+  "materials": [
+   "M_Decal_Stone2"
+  ],
+  "parts": [
+   "Decal_Stone2_Body"
+  ],
+  "part_tris": {
+   "Decal_Stone2_Body": 2
+  }
+ },
+ "Decal_Stone3": {
+  "group": "Nature/Decals",
+  "tris": 2,
+  "materials": [
+   "M_Decal_Stone3"
+  ],
+  "parts": [
+   "Decal_Stone3_Body"
+  ],
+  "part_tris": {
+   "Decal_Stone3_Body": 2
+  }
+ }
+}

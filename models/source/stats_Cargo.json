@@ -1,0 +1,168 @@
+{
+ "Crate_Big": {
+  "group": "Cargo",
+  "tris": 204,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Crate_Big_Body"
+  ],
+  "part_tris": {
+   "Crate_Big_Body": 204
+  }
+ },
+ "Crate_Small1": {
+  "group": "Cargo",
+  "tris": 272,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Crate_Small1_Body"
+  ],
+  "part_tris": {
+   "Crate_Small1_Body": 272
+  }
+ },
+ "Crate_Small2": {
+  "group": "Cargo",
+  "tris": 80,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Crate_Small2_Body"
+  ],
+  "part_tris": {
+   "Crate_Small2_Body": 80
+  }
+ },
+ "Crate_Small3": {
+  "group": "Cargo",
+  "tris": 156,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Crate_Small3_Body"
+  ],
+  "part_tris": {
+   "Crate_Small3_Body": 156
+  }
+ },
+ "Jerrycan_Red": {
+  "group": "Cargo",
+  "tris": 154,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Jerrycan_Red_Body"
+  ],
+  "part_tris": {
+   "Jerrycan_Red_Body": 154
+  }
+ },
+ "Jerrycan_Green": {
+  "group": "Cargo",
+  "tris": 154,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Jerrycan_Green_Body"
+  ],
+  "part_tris": {
+   "Jerrycan_Green_Body": 154
+  }
+ },
+ "Cart_Cargo": {
+  "group": "Cargo",
+  "tris": 708,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Cart_Cargo_Body",
+   "Cart_Cargo_Load"
+  ],
+  "part_tris": {
+   "Cart_Cargo_Body": 440,
+   "Cart_Cargo_Load": 268
+  }
+ },
+ "Toolbox_Red": {
+  "group": "Furniture",
+  "tris": 528,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Toolbox_Red_Body"
+  ],
+  "part_tris": {
+   "Toolbox_Red_Body": 528
+  }
+ },
+ "Shelf_Red": {
+  "group": "Furniture",
+  "tris": 784,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Shelf_Red_Body",
+   "Shelf_Red_Items"
+  ],
+  "part_tris": {
+   "Shelf_Red_Body": 252,
+   "Shelf_Red_Items": 532
+  }
+ },
+ "Cart_Tools": {
+  "group": "Furniture",
+  "tris": 580,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Cart_Tools_Body",
+   "Cart_Tools_Items"
+  ],
+  "part_tris": {
+   "Cart_Tools_Body": 356,
+   "Cart_Tools_Items": 224
+  }
+ },
+ "Workbench": {
+  "group": "Furniture",
+  "tris": 708,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Workbench_Body",
+   "Workbench_Items"
+  ],
+  "part_tris": {
+   "Workbench_Body": 368,
+   "Workbench_Items": 340
+  }
+ },
+ "Shelf_Metal": {
+  "group": "Furniture",
+  "tris": 676,
+  "materials": [
+   "M_Cargo_Atlas"
+  ],
+  "parts": [
+   "Shelf_Metal_Body",
+   "Shelf_Metal_Items"
+  ],
+  "part_tris": {
+   "Shelf_Metal_Body": 224,
+   "Shelf_Metal_Items": 452
+  }
+ }
+}

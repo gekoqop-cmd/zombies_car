@@ -1,0 +1,92 @@
+{
+ "Barrel_RedWhite": {
+  "group": "Street",
+  "tris": 522,
+  "materials": [
+   "M_Street_Atlas"
+  ],
+  "parts": [
+   "Barrel_RedWhite_Body",
+   "Barrel_RedWhite_Grass"
+  ],
+  "part_tris": {
+   "Barrel_RedWhite_Body": 396,
+   "Barrel_RedWhite_Grass": 126
+  }
+ },
+ "Barrel_Grey": {
+  "group": "Street",
+  "tris": 522,
+  "materials": [
+   "M_Street_Atlas"
+  ],
+  "parts": [
+   "Barrel_Grey_Body",
+   "Barrel_Grey_Grass"
+  ],
+  "part_tris": {
+   "Barrel_Grey_Body": 396,
+   "Barrel_Grey_Grass": 126
+  }
+ },
+ "Tires_Stack": {
+  "group": "Street",
+  "tris": 708,
+  "materials": [
+   "M_Street_Atlas"
+  ],
+  "parts": [
+   "Tires_Stack_Body",
+   "Tires_Stack_Grass"
+  ],
+  "part_tris": {
+   "Tires_Stack_Body": 576,
+   "Tires_Stack_Grass": 132
+  }
+ },
+ "Tire_Single": {
+  "group": "Street",
+  "tris": 312,
+  "materials": [
+   "M_Street_Atlas"
+  ],
+  "parts": [
+   "Tire_Single_Body",
+   "Tire_Single_Grass"
+  ],
+  "part_tris": {
+   "Tire_Single_Body": 192,
+   "Tire_Single_Grass": 120
+  }
+ },
+ "Cone": {
+  "group": "Street",
+  "tris": 272,
+  "materials": [
+   "M_Street_Atlas"
+  ],
+  "parts": [
+   "Cone_Body",
+   "Cone_Grass"
+  ],
+  "part_tris": {
+   "Cone_Body": 152,
+   "Cone_Grass": 120
+  }
+ },
+ "Barrier": {
+  "group": "Street",
+  "tris": 400,
+  "materials": [
+   "M_Street_Atlas"
+  ],
+  "parts": [
+   "Barrier_Body",
+   "Barrier_Grass"
+  ],
+  "part_tris": {
+   "Barrier_Body": 208,
+   "Barrier_Grass": 192
+  }
+ }
+}

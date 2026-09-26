@@ -1,0 +1,69 @@
+{
+ "Fence_Straight1": {
+  "group": "Fences",
+  "tris": 188,
+  "materials": [
+   "M_Fences_Atlas"
+  ],
+  "parts": [
+   "Fence_Straight1_Body"
+  ],
+  "part_tris": {
+   "Fence_Straight1_Body": 188
+  }
+ },
+ "Fence_Straight2": {
+  "group": "Fences",
+  "tris": 216,
+  "materials": [
+   "M_Fences_Atlas"
+  ],
+  "parts": [
+   "Fence_Straight2_Body"
+  ],
+  "part_tris": {
+   "Fence_Straight2_Body": 216
+  }
+ },
+ "Fence_Broken": {
+  "group": "Fences",
+  "tris": 236,
+  "materials": [
+   "M_Fences_Atlas"
+  ],
+  "parts": [
+   "Fence_Broken_Body"
+  ],
+  "part_tris": {
+   "Fence_Broken_Body": 236
+  }
+ },
+ "Fence_Corner": {
+  "group": "Fences",
+  "tris": 244,
+  "materials": [
+   "M_Fences_Atlas"
+  ],
+  "parts": [
+   "Fence_Corner_Body"
+  ],
+  "part_tris": {
+   "Fence_Corner_Body": 244
+  }
+ },
+ "Fence_Gate": {
+  "group": "Fences",
+  "tris": 456,
+  "materials": [
+   "M_Fences_Atlas"
+  ],
+  "parts": [
+   "Fence_Gate_Door",
+   "Fence_Gate_Frame"
+  ],
+  "part_tris": {
+   "Fence_Gate_Door": 156,
+   "Fence_Gate_Frame": 300
+  }
+ }
+}

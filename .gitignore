@@ -60,3 +60,9 @@ desktop.ini
 
 # Claude Code local
 .claude/settings.local.json
+
+# Blender backups
+*.blend1
+
+# Python cache
+__pycache__/

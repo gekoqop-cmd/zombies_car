@@ -1,0 +1,52 @@
+{
+ "Sign_Gas": {
+  "group": "Signs",
+  "tris": 1140,
+  "materials": [
+   "M_Signs_Atlas",
+   "M_Signs_Emissive"
+  ],
+  "parts": [
+   "Sign_Gas_Board",
+   "Sign_Gas_Lamps",
+   "Sign_Gas_Plate",
+   "Sign_Gas_Posts"
+  ]
+ },
+ "Sign_Road": {
+  "group": "Signs",
+  "tris": 280,
+  "materials": [
+   "M_Signs_Atlas"
+  ],
+  "parts": [
+   "Sign_Road_Plate",
+   "Sign_Road_Post"
+  ]
+ },
+ "Lamp_Street": {
+  "group": "Signs",
+  "tris": 632,
+  "materials": [
+   "M_Signs_Atlas",
+   "M_Signs_Emissive"
+  ],
+  "parts": [
+   "Lamp_Street_Head",
+   "Lamp_Street_Pole"
+  ]
+ },
+ "Pole_Power": {
+  "group": "Signs",
+  "tris": 892,
+  "materials": [
+   "M_Signs_Atlas"
+  ],
+  "parts": [
+   "Pole_Power_Box",
+   "Pole_Power_Insulators",
+   "Pole_Power_Pole",
+   "Pole_Power_Wires"
+  ]
+ }
+}
