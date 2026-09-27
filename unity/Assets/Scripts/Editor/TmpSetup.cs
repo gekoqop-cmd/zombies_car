@@ -12,14 +12,24 @@ using UnityEngine.TextCore.LowLevel;
 namespace ZombiCar.EditorTools
 {
     /// <summary>
-    /// Imports TextMesh Pro essentials (once) and creates a dynamic SDF font with Cyrillic from LiberationSans
-    /// (SIL OFL). Latin/Cyrillic/digits are pre-rendered into the atlas, anything else is added at runtime.
+    /// Imports TextMesh Pro essentials (once) and creates a dynamic SDF font with Cyrillic from Inter SemiBold
+    /// (SIL OFL, Art/Fonts; a dense face that stays readable over the bright map). Latin/Cyrillic/digits are
+    /// pre-rendered into the atlas, anything else is added at runtime. <see cref="OutlineMaterial"/> is the HUD's
+    /// variant with a black outline and drop shadow.
     /// </summary>
     public static class TmpSetup
     {
         private const string c_TmpSettings = "Assets/TextMesh Pro/Resources/TMP Settings.asset";
-        private const string c_SourceFont = "Assets/TextMesh Pro/Fonts/LiberationSans.ttf";
+        private const string c_SourceFont = EditorPaths.c_Fonts + "/Inter-SemiBold.ttf";
         private const string c_FontAsset = EditorPaths.c_Fonts + "/UI_Font SDF.asset";
+        private const string c_OutlineMaterial = EditorPaths.c_Fonts + "/UI_Font SDF Outline.mat";
+        // Outline / shadow in SDF units (a share of the glyph's distance range): ~2-3 px at the HUD's text sizes.
+        private const float c_OutlineWidth = 0.22f;
+        private const float c_FaceDilate = 0.08f;
+        private static readonly Color s_OutlineColor = new Color(0f, 0f, 0f, 0.95f);
+        private static readonly Color s_ShadowColor = new Color(0f, 0f, 0f, 0.6f);
+        private const float c_ShadowOffset = 0.9f;
+        private const float c_ShadowSoftness = 0.25f;
         private const int c_SamplingSize = 72;
         private const int c_Padding = 8;
         private const int c_AtlasSize = 1024;
@@ -35,11 +45,47 @@ namespace ZombiCar.EditorTools
         {
             ImportEssentials();
             var font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(c_FontAsset);
+            if (font != null && AssetDatabase.GetAssetPath(font.sourceFontFile) != c_SourceFont)
+            {
+                AssetDatabase.DeleteAsset(c_FontAsset);             // made from another face: rebuild it
+                AssetDatabase.DeleteAsset(c_OutlineMaterial);
+                font = null;
+            }
             if (font == null)
                 font = CreateFont();
             if (font != null)
                 MakeDefaultFont(font);
             return font;
+        }
+
+        /// <summary>
+        /// The font's material with a black outline and a soft drop shadow, for text drawn straight over the map
+        /// (HUD). Rebuilt from the font material each time, so it follows the font atlas.
+        /// </summary>
+        public static Material OutlineMaterial()
+        {
+            TMP_FontAsset font = EnsureFont();
+            var material = AssetDatabase.LoadAssetAtPath<Material>(c_OutlineMaterial);
+            if (material == null)
+            {
+                material = new Material(font.material);
+                AssetDatabase.CreateAsset(material, c_OutlineMaterial);
+            }
+            else
+            {
+                material.shader = font.material.shader;
+                material.CopyPropertiesFromMaterial(font.material);
+            }
+            material.SetFloat(ShaderUtilities.ID_FaceDilate, c_FaceDilate);
+            material.SetFloat(ShaderUtilities.ID_OutlineWidth, c_OutlineWidth);
+            material.SetColor(ShaderUtilities.ID_OutlineColor, s_OutlineColor);
+            material.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            material.SetColor(ShaderUtilities.ID_UnderlayColor, s_ShadowColor);
+            material.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, c_ShadowOffset * 0.5f);
+            material.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -c_ShadowOffset);
+            material.SetFloat(ShaderUtilities.ID_UnderlaySoftness, c_ShadowSoftness);
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         /// <summary>New TextMeshPro objects get the Cyrillic font too (the stock LiberationSans SDF has no Cyrillic).</summary>

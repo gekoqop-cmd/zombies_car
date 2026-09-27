@@ -209,7 +209,7 @@ namespace ZombiCar.EditorTools
             {
                 Transform t = FindDeep(go.transform, part);
                 if (t != null)
-                    t.gameObject.SetActive(false);   // damage stages are switched on by CarHealth later
+                    t.gameObject.SetActive(false);   // shown by CarDamageView from their stage on
             }
             foreach ((string name, float x, float z) in s_CarCargo)
             {
@@ -233,10 +233,99 @@ namespace ZombiCar.EditorTools
             navObstacle.center = CarPlayerColliderCenter;
             navObstacle.size = CarPlayerColliderSize;
             navObstacle.carving = true;
-            var stages = new GameObject[s_CarDamageParts.Length];
+            var health = go.AddComponent<CarHealth>();
+            Wire(health, ("m_Config", DataAssetsBuilder.Load<CarConfig>(DataAssetsBuilder.c_CarConfig)), ("m_Body", box));
+            BuildCarDamageView(go, health);
+        }
+
+        // Damage stages of Car_Player (tools/car/build_car.py): the damaged / wrecked atlases share the intact UVs;
+        // each DMG part replaces an intact one (dented hood, bent bumper, fallen red can + crate + spare).
+        private static readonly string[] s_CarDamagedShow = { "DMG1_Hood_Dented", "DMG2_Bumper_Bent" };
+        private static readonly string[] s_CarDamagedHide = { "Hood", "Bumper_Front" };
+        private static readonly string[] s_CarWreckedShow = { "DMG1_Hood_Dented", "DMG2_Bumper_Bent", "DMG3_Cargo_Fallen", "EngineSmoke" };
+        private static readonly string[] s_CarWreckedHide =
+            { "Hood", "Bumper_Front", "Cargo_Jerrycan_Red", "Cargo_Crate", "Cargo_SpareTire" };
+
+        private static void BuildCarDamageView(GameObject car, CarHealth health)
+        {
+            Material intact = MaterialLibrary.Get("M_Car_Intact");
+            Renderer[] body = car.GetComponentsInChildren<Renderer>(true)
+                .Where(r => r.sharedMaterials.Length > 0 && r.sharedMaterials[0] == intact).ToArray();
+            BuildEngineSmoke(car);
+            var view = car.AddComponent<CarDamageView>();
+            var so = new SerializedObject(view);
+            so.FindProperty("m_Health").objectReferenceValue = health;
+            so.FindProperty("m_UltraSet").objectReferenceValue = AssetDatabase.LoadAssetAtPath<UltraMaterialSet>(UltraQualityBuilder.c_MaterialSet);
+            SerializedProperty renderers = so.FindProperty("m_BodyRenderers");
+            renderers.arraySize = body.Length;
+            for (int i = 0; i < body.Length; i++)
+                renderers.GetArrayElementAtIndex(i).objectReferenceValue = body[i];
+            (CarDamageStage stage, string paint, string[] show, string[] hide)[] stages =
+            {
+                (CarDamageStage.Intact, "M_Car_Intact", Array.Empty<string>(), Array.Empty<string>()),
+                (CarDamageStage.Damaged, "M_Car_Damaged", s_CarDamagedShow, s_CarDamagedHide),
+                (CarDamageStage.Wrecked, "M_Car_Wrecked", s_CarWreckedShow, s_CarWreckedHide),
+            };
+            SerializedProperty list = so.FindProperty("m_Stages");
+            list.arraySize = stages.Length;
             for (int i = 0; i < stages.Length; i++)
-                stages[i] = FindDeep(go.transform, s_CarDamageParts[i])?.gameObject;
-            CharacterBuilder.SetProps(go.AddComponent<CarHealth>(), ("m_DamageStageObjects", stages), ("m_Body", box));
+            {
+                SerializedProperty element = list.GetArrayElementAtIndex(i);
+                element.FindPropertyRelative("Stage").enumValueIndex = (int)stages[i].stage;
+                element.FindPropertyRelative("Paint").objectReferenceValue = MaterialLibrary.Get(stages[i].paint);
+                SetObjects(element.FindPropertyRelative("Show"), car, stages[i].show);
+                SetObjects(element.FindPropertyRelative("Hide"), car, stages[i].hide);
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log($"[PrefabBuilder] Car damage view: {body.Length} painted renderers, stages Intact / Damaged / Wrecked.");
+        }
+
+        private static void SetObjects(SerializedProperty array, GameObject car, string[] names)
+        {
+            array.arraySize = names.Length;
+            for (int i = 0; i < names.Length; i++)
+            {
+                Transform t = FindDeep(car.transform, names[i]);
+                if (t == null)
+                    Debug.LogError($"[PrefabBuilder] Car_Player has no part {names[i]}");
+                array.GetArrayElementAtIndex(i).objectReferenceValue = t != null ? t.gameObject : null;
+            }
+        }
+
+        // Thin dark smoke rising from under the hood while the car is wrecked (off until then).
+        private static void BuildEngineSmoke(GameObject car)
+        {
+            Transform hood = FindDeep(car.transform, "Hood");
+            Vector3 at = hood != null && hood.TryGetComponent(out Renderer r) ? r.bounds.center + Vector3.up * 0.15f : car.transform.position + Vector3.up;
+            ParticleSystem ps = UltraQualityBuilder.Particles("EngineSmoke", car.transform,
+                UltraQualityBuilder.ParticleMaterial("M_FX_EngineSmoke", new Color(0.36f, 0.35f, 0.34f, 0.8f), false), false);
+            ps.transform.position = at;
+            ps.transform.rotation = Quaternion.LookRotation(Vector3.up);
+            ParticleSystem.MainModule main = ps.main;
+            main.loop = true;
+            main.playOnAwake = true;
+            main.startLifetime = new ParticleSystem.MinMaxCurve(1.4f, 2.2f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.5f, 0.9f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.6f, 0.95f);
+            main.startRotation = new ParticleSystem.MinMaxCurve(0f, Mathf.PI * 2f);
+            main.maxParticles = 40;
+            ParticleSystem.EmissionModule emission = ps.emission;
+            emission.rateOverTime = 12f;
+            ParticleSystem.ShapeModule shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = 14f;
+            shape.radius = 0.25f;
+            ParticleSystem.SizeOverLifetimeModule size = ps.sizeOverLifetime;
+            size.enabled = true;
+            size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.Linear(0f, 0.7f, 1f, 2.4f));
+            ParticleSystem.ColorOverLifetimeModule colour = ps.colorOverLifetime;
+            colour.enabled = true;
+            colour.color = UltraQualityBuilder.Fade(Color.white);
+            ParticleSystem.NoiseModule noise = ps.noise;
+            noise.enabled = true;
+            noise.strength = 0.3f;
+            noise.frequency = 0.4f;
+            ps.gameObject.SetActive(false);
         }
 
         private static void ConfigureWorkshop(GameObject go)
@@ -346,7 +435,7 @@ namespace ZombiCar.EditorTools
             var go = new GameObject("Bullet") { layer = Layers.c_ProjectileIndex };
             GameObject visual = MeshObject("Visual", Resources.GetBuiltinResource<Mesh>("Sphere.fbx"), MaterialLibrary.Get("M_Bullet"), false);
             visual.transform.SetParent(go.transform, false);
-            visual.transform.localScale = new Vector3(0.12f, 0.12f, 0.55f);
+            visual.transform.localScale = new Vector3(0.07f, 0.07f, 0.24f);   // a short tracer, not a laser bolt
             visual.layer = Layers.c_ProjectileIndex;
             visual.GetComponent<MeshRenderer>().receiveShadows = false;
             go.AddComponent<Bullet>();

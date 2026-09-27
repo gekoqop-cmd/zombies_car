@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using ZombiCar.Car;
 using ZombiCar.Core;
 using ZombiCar.Player;
 using ZombiCar.Waves;
@@ -15,6 +16,7 @@ namespace ZombiCar.EditorTools
         public const string c_WeaponConfig = EditorPaths.c_Data + "/WeaponConfig_Default.asset";
         public const string c_WaveConfig = EditorPaths.c_Data + "/WaveConfig_Map01.asset";
         public const string c_CameraConfig = EditorPaths.c_Data + "/CameraConfig.asset";
+        public const string c_CarConfig = EditorPaths.c_Data + "/CarConfig.asset";
         public const string c_AmmoState = EditorPaths.c_DataState + "/AmmoState.asset";
         public const string c_PlayerStats = EditorPaths.c_DataState + "/PlayerStats.asset";
         public const string c_WaveState = EditorPaths.c_DataState + "/WaveState.asset";
@@ -30,6 +32,7 @@ namespace ZombiCar.EditorTools
             Ensure<WeaponConfig>(c_WeaponConfig);
             Ensure<WaveConfig>(c_WaveConfig);
             Ensure<CameraConfig>(c_CameraConfig);
+            Ensure<CarConfig>(c_CarConfig);
             Ensure<AmmoState>(c_AmmoState);
             Ensure<PlayerStats>(c_PlayerStats);
             Ensure<WaveState>(c_WaveState);

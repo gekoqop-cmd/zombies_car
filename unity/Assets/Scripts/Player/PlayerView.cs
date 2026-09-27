@@ -6,10 +6,13 @@ namespace ZombiCar.Player
     /// <summary>
     /// 2D look of the player (frames cut from refsanim/Player/*.mp4): drives the Animator (Idle / Run by speed,
     /// Shot while standing, Reload stretched to <see cref="WeaponConfig.ReloadTime"/>), mirrors the sprite left/right
-    /// by the aim (never rotates it in its plane), shows the muzzle flash with a short recoil kick on every shot
-    /// (also while running, when the Run clip keeps playing), and plays the shot / reload / footstep sounds.
+    /// by the aim (never rotates it in its plane), shows a short muzzle flash (a few frames of a compact star,
+    /// a soft glow and a puff of smoke) with a recoil kick on every shot (also while running, when the Run clip
+    /// keeps playing), and plays the shot / reload / footstep sounds. The flash sits under the Muzzle, so it flips
+    /// with the body; the smoke stays where the shot was fired.
     /// Reads input only through <see cref="IPlayerInput"/>.
     /// </summary>
+    [DefaultExecutionOrder(-50)]   // facing is set before PlayerWeapon fires from the (mirrored) muzzle
     public sealed class PlayerView : MonoBehaviour
     {
         private static readonly int s_Speed = Animator.StringToHash("Speed");
@@ -24,6 +27,9 @@ namespace ZombiCar.Player
         [SerializeField] private Animator m_Animator;
         [SerializeField] private SpriteRenderer m_Body;
         [SerializeField] private SpriteRenderer m_MuzzleFlash;
+        [SerializeField] private SpriteRenderer m_MuzzleGlow;
+        [Tooltip("Smoke puffs used in turn (world-placed at the muzzle when fired).")]
+        [SerializeField] private SpriteRenderer[] m_Smoke = System.Array.Empty<SpriteRenderer>();
         [SerializeField] private CharacterController m_Controller;
         [SerializeField] private PlayerInputProvider m_InputProvider;
         [SerializeField] private PlayerWeapon m_Weapon;
@@ -40,11 +46,25 @@ namespace ZombiCar.Player
         [SerializeField] private Color m_Tint = Color.white;
         [Tooltip("Horizontal speed (m/s) above which the character counts as running.")]
         [SerializeField, Min(0f)] private float m_RunThreshold = 0.3f;
-        [SerializeField, Min(0f)] private float m_MuzzleFlashTime = 0.06f;
         [Tooltip("Recoil kick of the body against the facing on every shot, metres.")]
         [SerializeField, Min(0f)] private float m_RecoilDistance = 0.05f;
         [SerializeField, Min(0.01f)] private float m_RecoilTime = 0.08f;
         [SerializeField, Min(0f)] private float m_HurtTime = 0.2f;
+
+        [Header("Muzzle flash")]
+        [Tooltip("Frames of the flash, brightest first; each shows for Flash Frame Time.")]
+        [SerializeField] private Sprite[] m_FlashFrames = System.Array.Empty<Sprite>();
+        [SerializeField, Min(0.005f)] private float m_FlashFrameTime = 0.025f;
+        [Tooltip("Random turn of the flash in its plane each shot, degrees.")]
+        [SerializeField, Range(0f, 45f)] private float m_FlashTwist = 12f;
+        [SerializeField] private Vector2 m_FlashScaleRange = new Vector2(0.9f, 1.1f);
+        [SerializeField, Range(0f, 1f)] private float m_GlowAlpha = 0.7f;
+        [SerializeField, Min(0.01f)] private float m_SmokeTime = 0.35f;
+        [SerializeField, Range(0f, 1f)] private float m_SmokeAlpha = 0.35f;
+        [Tooltip("How far a smoke puff rises while it fades, metres.")]
+        [SerializeField, Min(0f)] private float m_SmokeRise = 0.25f;
+        [Tooltip("Smoke puff scale at the start and the end of its life (times its built scale).")]
+        [SerializeField] private Vector2 m_SmokeScale = new Vector2(0.5f, 1.1f);
 
         [Header("Sounds")]
         [SerializeField] private AudioClip m_ShotSound;
@@ -56,18 +76,30 @@ namespace ZombiCar.Player
 
         private IPlayerInput m_Input;
         private int m_Facing = 1;
-        private float m_FlashUntil;
+        private float m_FlashStart = float.NegativeInfinity;
+        private int m_NextSmoke;
+        private float[] m_SmokeStart = System.Array.Empty<float>();
+        private Vector3 m_FlashBaseScale;
+        private Vector3 m_SmokeBaseScale;
         private float m_RecoilStart = float.NegativeInfinity;
         private float m_HurtUntil;
-        private Vector3 m_FlashScale;
         private float m_Speed;
 
         private void Awake()
         {
             if (m_MuzzleFlash != null)
             {
-                m_FlashScale = m_MuzzleFlash.transform.localScale;
+                m_FlashBaseScale = m_MuzzleFlash.transform.localScale;
                 m_MuzzleFlash.enabled = false;
+            }
+            if (m_MuzzleGlow != null)
+                m_MuzzleGlow.enabled = false;
+            m_SmokeStart = new float[m_Smoke.Length];
+            for (int i = 0; i < m_Smoke.Length; i++)
+            {
+                m_SmokeStart[i] = float.NegativeInfinity;
+                m_Smoke[i].enabled = false;
+                m_SmokeBaseScale = m_Smoke[i].transform.localScale;
             }
         }
 
@@ -102,15 +134,23 @@ namespace ZombiCar.Player
 
         private void OnFired()
         {
-            m_FlashUntil = Time.time + m_MuzzleFlashTime;
+            m_FlashStart = Time.time;
             m_RecoilStart = Time.time;
             if (m_MuzzleFlash != null)
             {
-                // A different flash every shot: random length, mirrored up/down.
-                Vector3 scale = m_FlashScale;
-                scale.x *= Random.Range(0.85f, 1.15f);
+                // A different flash every shot: size, a small twist, mirrored up/down.
+                Transform t = m_MuzzleFlash.transform;
+                Vector3 scale = m_FlashBaseScale * Random.Range(m_FlashScaleRange.x, m_FlashScaleRange.y);
                 scale.y *= Random.value < 0.5f ? -1f : 1f;
-                m_MuzzleFlash.transform.localScale = scale;
+                t.localScale = scale;
+                t.localRotation = Quaternion.Euler(0f, 0f, Random.Range(-m_FlashTwist, m_FlashTwist));
+            }
+            if (m_Smoke.Length > 0 && m_MuzzleFlash != null)
+            {
+                int i = m_NextSmoke;
+                m_NextSmoke = (m_NextSmoke + 1) % m_Smoke.Length;
+                m_SmokeStart[i] = Time.time;
+                m_Smoke[i].transform.position = m_MuzzleFlash.transform.parent.position;   // the muzzle
             }
             if (m_Speed < m_RunThreshold)
                 m_Animator.SetTrigger(s_Shoot);                          // the whole Shot clip only while standing
@@ -122,6 +162,25 @@ namespace ZombiCar.Player
         {
             if (AudioManager.Instance != null && m_Weapon != null)
                 AudioManager.Instance.PlayFitted(m_ReloadSound, m_Weapon.Config.ReloadTime, m_ReloadVolume);
+        }
+
+        // Facing before the weapon's Update: a shot fired on the frame the player turns leaves from the new side.
+        private void Update()
+        {
+            UpdateFacing();
+            m_Body.transform.localScale = new Vector3(m_Scale.x * m_Facing, m_Scale.y, 1f);
+        }
+
+        private void UpdateFacing()
+        {
+            // Aim when aiming (mouse / fire stick), otherwise the movement; the camera looks along +Z, so world x is
+            // screen x.
+            Vector3 velocity = m_Controller != null ? m_Controller.velocity : Vector3.zero;
+            float side = m_Input != null && m_Input.AimActive ? m_Input.AimDirection.x : velocity.x;
+            if (side > 0.05f)
+                m_Facing = 1;
+            else if (side < -0.05f)
+                m_Facing = -1;
         }
 
         private void LateUpdate()
@@ -146,22 +205,49 @@ namespace ZombiCar.Player
                 m_Animator.SetFloat(s_ShotSpeed, Mathf.Max(1f, m_ShotClipLength / weapon.ShotInterval));
             }
 
-            // Facing: aim when aiming (mouse / fire stick), otherwise the movement; the camera looks along +Z, so
-            // world x is screen x.
-            float side = m_Input != null && m_Input.AimActive ? m_Input.AimDirection.x : velocity.x;
-            if (side > 0.05f)
-                m_Facing = 1;
-            else if (side < -0.05f)
-                m_Facing = -1;
-
+            UpdateFacing();
             float recoil = 1f - Mathf.Clamp01((Time.time - m_RecoilStart) / m_RecoilTime);
             Transform body = m_Body.transform;
             body.localScale = new Vector3(m_Scale.x * m_Facing, m_Scale.y, 1f);
             body.localPosition = new Vector3(-m_Facing * m_RecoilDistance * recoil * recoil, 0f, 0f);
             m_Body.color = Time.time < m_HurtUntil ? s_HurtColor * m_Tint : m_Tint;
 
+            UpdateMuzzleEffects();
+        }
+
+        private void UpdateMuzzleEffects()
+        {
+            float age = Time.time - m_FlashStart;
+            int frame = m_FlashFrames.Length > 0 ? Mathf.FloorToInt(age / m_FlashFrameTime) : -1;
+            bool flashing = frame >= 0 && frame < m_FlashFrames.Length;
             if (m_MuzzleFlash != null)
-                m_MuzzleFlash.enabled = Time.time < m_FlashUntil;
+            {
+                m_MuzzleFlash.enabled = flashing;
+                if (flashing)
+                    m_MuzzleFlash.sprite = m_FlashFrames[frame];
+            }
+            if (m_MuzzleGlow != null)
+            {
+                float life = m_FlashFrames.Length * m_FlashFrameTime * 1.5f;
+                float k = 1f - Mathf.Clamp01(age / life);
+                m_MuzzleGlow.enabled = k > 0f;
+                Color c = m_MuzzleGlow.color;
+                c.a = m_GlowAlpha * k;
+                m_MuzzleGlow.color = c;
+            }
+            for (int i = 0; i < m_Smoke.Length; i++)
+            {
+                float p = (Time.time - m_SmokeStart[i]) / m_SmokeTime;
+                SpriteRenderer smoke = m_Smoke[i];
+                smoke.enabled = p >= 0f && p < 1f;
+                if (!smoke.enabled)
+                    continue;
+                smoke.transform.position += Vector3.up * (m_SmokeRise / m_SmokeTime * Time.deltaTime);
+                smoke.transform.localScale = m_SmokeBaseScale * Mathf.Lerp(m_SmokeScale.x, m_SmokeScale.y, p);
+                Color c = smoke.color;
+                c.a = m_SmokeAlpha * (1f - p) * (1f - p);
+                smoke.color = c;
+            }
         }
     }
 }

@@ -21,6 +21,17 @@ namespace ZombiCar.Core
 
         public Pair[] Pairs => m_Pairs;
 
+        /// <summary>The Ultra version of <paramref name="regular"/>, or <paramref name="regular"/> itself if it has none.</summary>
+        public Material UltraOf(Material regular)
+        {
+            foreach (Pair pair in m_Pairs)
+            {
+                if (pair.Regular == regular && pair.Ultra != null)
+                    return pair.Ultra;
+            }
+            return regular;
+        }
+
 #if UNITY_EDITOR
         public void EditorSetPairs(Pair[] pairs) => m_Pairs = pairs;
 #endif

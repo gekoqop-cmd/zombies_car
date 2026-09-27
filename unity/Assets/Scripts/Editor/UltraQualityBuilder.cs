@@ -263,7 +263,7 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ particles
-        private static Material ParticleMaterial(string name, Color color, bool additive)
+        internal static Material ParticleMaterial(string name, Color color, bool additive)
         {
             EditorPaths.EnsureFolder(c_MaterialFolder);
             string path = $"{c_MaterialFolder}/{name}.mat";
@@ -282,7 +282,7 @@ namespace ZombiCar.EditorTools
             return mat;
         }
 
-        private static ParticleSystem Particles(string name, Transform parent, Material material, bool stretched)
+        internal static ParticleSystem Particles(string name, Transform parent, Material material, bool stretched)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -304,7 +304,7 @@ namespace ZombiCar.EditorTools
             return ps;
         }
 
-        private static Gradient Fade(Color color)
+        internal static Gradient Fade(Color color)
         {
             var g = new Gradient();
             g.SetKeys(new[] { new GradientColorKey(color, 0f), new GradientColorKey(color, 1f) },

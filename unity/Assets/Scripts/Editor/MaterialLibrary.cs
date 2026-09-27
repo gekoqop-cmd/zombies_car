@@ -128,7 +128,7 @@ namespace ZombiCar.EditorTools
                 list.Add(new Spec { Name = name, Folder = "Nature", Tint = color, Smoothness = 0f });
 
             // VFX (characters are 2D sprites: URP Sprite-Unlit-Default, see CharacterBuilder).
-            list.Add(new Spec { Name = "M_Bullet", Folder = "VFX", Unlit = true, Tint = new Color(6f, 4.2f, 1.4f, 1f) });
+            list.Add(new Spec { Name = "M_Bullet", Folder = "VFX", Unlit = true, Tint = new Color(3.2f, 2.3f, 0.9f, 1f) });
             return list.ToArray();
         }
 

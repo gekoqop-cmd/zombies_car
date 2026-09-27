@@ -6,7 +6,9 @@ namespace ZombiCar.Car
 {
     /// <summary>
     /// World-space durability plate above the player's car (built by SceneBuilder): icon, title, a green → yellow → red
-    /// bar with the HP number. The bar eases to the new value while a light "lost" segment trails behind it, and the
+    /// bar with the HP number. With <c>Stage Colours</c> on, the bar's colour steps at the damage-stage thresholds of
+    /// <see cref="CarConfig"/>, so it always agrees with the look of the car body (green = intact, yellow-orange =
+    /// damaged, red = wrecked). The bar eases to the new value while a light "lost" segment trails behind it, and the
     /// plate flashes on every hit. The plate always faces the camera and keeps the same size on screen whatever the
     /// camera distance or FOV; its materials skip the depth test, so it draws over the car and zombies without
     /// being cut by them.
@@ -25,6 +27,8 @@ namespace ZombiCar.Car
 
         [Header("Look")]
         [SerializeField] private Gradient m_Colors = DefaultColors();
+        [Tooltip("Build the bar colours from the car's damage-stage thresholds (replaces Colors at start).")]
+        [SerializeField] private bool m_StageColours = true;
         [Tooltip("Plate height as a fraction of the screen height.")]
         [SerializeField, Range(0.02f, 0.3f)] private float m_ScreenHeight = 0.07f;
 
@@ -62,6 +66,28 @@ namespace ZombiCar.Car
             return g;
         }
 
+        // Intact: green; damaged: yellow to orange; wrecked: orange-red to red; steps exactly at the thresholds.
+        private static Gradient StageColours(CarConfig config)
+        {
+            float max = config.MaxHealth;
+            float damaged = config.DamagedAtOrBelow / max;
+            float wrecked = config.WreckedAtOrBelow / max;
+            const float step = 0.002f;
+            var g = new Gradient { mode = GradientMode.Blend };
+            g.SetKeys(
+                new[]
+                {
+                    new GradientColorKey(new Color(0.78f, 0.14f, 0.12f), 0f),
+                    new GradientColorKey(new Color(0.95f, 0.36f, 0.14f), wrecked),
+                    new GradientColorKey(new Color(0.98f, 0.6f, 0.16f), Mathf.Min(1f, wrecked + step)),
+                    new GradientColorKey(new Color(0.97f, 0.8f, 0.2f), damaged),
+                    new GradientColorKey(new Color(0.46f, 0.82f, 0.28f), Mathf.Min(1f, damaged + step)),
+                    new GradientColorKey(new Color(0.34f, 0.82f, 0.3f), 1f),
+                },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) });
+            return g;
+        }
+
         private void OnEnable()
         {
             if (m_Car != null)
@@ -74,6 +100,8 @@ namespace ZombiCar.Car
         // CarHealth sets its health in Awake, which may run after this OnEnable: read it again and show it without easing.
         private void Start()
         {
+            if (m_StageColours && m_Car != null && m_Car.Config != null)
+                m_Colors = StageColours(m_Car.Config);
             m_LastHealth = -1;
             OnChanged();
             m_Shown = m_Trailing = m_Target;
@@ -128,11 +156,24 @@ namespace ZombiCar.Car
         {
             if (m_Fill != null)
             {
-                m_Fill.fillAmount = m_Shown;
+                SetAmount(m_Fill, m_Shown);
                 m_Fill.color = m_Colors.Evaluate(m_Shown);
             }
             if (m_Trail != null)
-                m_Trail.fillAmount = Mathf.Max(m_Trailing, m_Shown);
+                SetAmount(m_Trail, Mathf.Max(m_Trailing, m_Shown));
+        }
+
+        // Filled images use fillAmount; sliced (rounded) bars change width, so their round ends are never cut off.
+        private static void SetAmount(Image image, float amount)
+        {
+            if (image.type == Image.Type.Filled)
+            {
+                image.fillAmount = amount;
+                return;
+            }
+            RectTransform rt = image.rectTransform;
+            rt.anchorMax = new Vector2(Mathf.Clamp01(amount), rt.anchorMax.y);
+            image.enabled = amount > 0.001f;
         }
 
         // Parallel to the screen and scaled so the plate is m_ScreenHeight of the view at its distance.

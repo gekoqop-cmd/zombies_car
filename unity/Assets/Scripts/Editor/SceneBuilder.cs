@@ -240,6 +240,10 @@ namespace ZombiCar.EditorTools
                 ("m_HealthFill", healthFill), ("m_HealthValue", healthValue), ("m_LevelFill", levelFill), ("m_LevelLabel", levelLabel),
                 ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_ReloadHint", reload.gameObject), ("m_ReloadFill", reloadFill),
                 ("m_SettingsButton", settingsButton), ("m_SettingsPanel", settings));
+            // Every HUD text gets the black outline + shadow: the panels are translucent over a bright map.
+            Material outline = TmpSetup.OutlineMaterial();
+            foreach (TMP_Text text in canvas.GetComponentsInChildren<TMP_Text>(true))
+                text.fontSharedMaterial = outline;
             ShowStartState(hud);
             SaveUiPrefab(canvas.gameObject, "HUD");
             UiFactory.EventSystem();
@@ -386,8 +390,8 @@ namespace ZombiCar.EditorTools
         // World-space durability plate above the player's car (anchor height; the plate sits on it, facing the camera).
         private const float c_CarHealthBarHeight = 2.8f;
         // Canvas units (UI-sized, the plate component scales it to a fixed share of the screen height).
-        private static readonly Vector2 s_CarHealthBarSize = new Vector2(460f, 120f);
-        private const float c_CarHealthBarScreenHeight = 0.07f;   // twice the old 2.3 x 0.6 m plate at the default camera distance
+        private static readonly Vector2 s_CarHealthBarSize = new Vector2(520f, 150f);
+        private const float c_CarHealthBarScreenHeight = 0.085f;  // share of the screen height (two rows: title, bar)
         private const int c_CarHealthBarSortingOrder = 100;          // after every sprite of the scene
         private const string c_UiOverlayShader = "ZombiCar/UI World Overlay";
         private const string c_TmpOverlayShader = "TextMeshPro/Mobile/Distance Field Overlay";
@@ -414,40 +418,60 @@ namespace ZombiCar.EditorTools
             root.pivot = new Vector2(0.5f, 0f);                         // stands on the anchor, clear of the roof
 
             Material imageMaterial = OverlayMaterial("M_UI_WorldOverlay", Shader.Find(c_UiOverlayShader), null);
-            Material textMaterial = OverlayMaterial("M_TMP_WorldOverlay", Shader.Find(c_TmpOverlayShader), UiFactory.Font.material);
+            // Text keeps the HUD's black outline + shadow, on the no-depth-test overlay shader.
+            Material textMaterial = OverlayMaterial("M_TMP_WorldOverlay", Shader.Find(c_TmpOverlayShader), TmpSetup.OutlineMaterial());
 
             Sprite panel = UiFactory.Sprite("UI_Panel");
             Sprite bar = UiFactory.Sprite("UI_Bar");
-            var midLeft = new Vector2(0f, 0.5f);
             var topLeft = new Vector2(0f, 1f);
             var bottomLeft = new Vector2(0f, 0f);
-            var midRight = new Vector2(1f, 0.5f);
+            var center = new Vector2(0.5f, 0.5f);
             var images = new List<Image>();
             var texts = new List<TMP_Text>();
 
-            images.Add(UiFactory.Image(UiFactory.Stretch("Background", root), panel, new Color(0.06f, 0.07f, 0.09f, 0.9f), true));
-            RectTransform iconFrame = UiFactory.Rect("IconFrame", root, midLeft, midLeft, new Vector2(12f, 0f), new Vector2(96f, 96f));
+            // Panel: soft drop shadow, thin light rim, dark translucent body (reads over the bright ground and roof).
+            RectTransform shadow = UiFactory.Stretch("Shadow", root);
+            shadow.offsetMin = new Vector2(6f, -9f);
+            shadow.offsetMax = new Vector2(6f, -9f);
+            images.Add(UiFactory.Image(shadow, panel, new Color(0f, 0f, 0f, 0.45f), true));
+            RectTransform rim = UiFactory.Stretch("Rim", root);
+            rim.offsetMin = new Vector2(-3f, -3f);
+            rim.offsetMax = new Vector2(3f, 3f);
+            images.Add(UiFactory.Image(rim, panel, new Color(1f, 0.88f, 0.66f, 0.45f), true));
+            images.Add(UiFactory.Image(UiFactory.Stretch("Background", root), panel, new Color(0.05f, 0.06f, 0.08f, 0.88f), true));
+
+            // Row 1: icon tile + title (auto-sized, never clipped).
+            RectTransform iconFrame = UiFactory.Rect("IconFrame", root, topLeft, topLeft, new Vector2(16f, -12f), new Vector2(50f, 50f));
             images.Add(UiFactory.Image(iconFrame, panel, UiFactory.TextColor, true));   // light tile: the brown icon reads on it
-            RectTransform icon = UiFactory.Stretch("Icon", iconFrame);
-            icon.offsetMin = new Vector2(10f, 10f);
-            icon.offsetMax = new Vector2(-10f, -10f);
+            RectTransform icon = Inset(UiFactory.Stretch("Icon", iconFrame), 5f);
             images.Add(UiFactory.Image(icon, UiFactory.Sprite("UI_IconCar"), Color.white, false));
+            TextMeshProUGUI title = UiFactory.Label("Title", root, topLeft, topLeft, new Vector2(78f, -12f),
+                new Vector2(s_CarHealthBarSize.x - 94f, 50f), "ПРОЧНОСТЬ МАШИНЫ", 32f, TextAlignmentOptions.Left, UiFactory.TextColor);
+            title.enableAutoSizing = true;
+            title.fontSizeMin = 18f;
+            title.fontSizeMax = 32f;
+            texts.Add(title);
 
-            texts.Add(UiFactory.Label("Title", root, topLeft, topLeft, new Vector2(122f, -10f), new Vector2(326f, 44f),
-                "ПРОЧНОСТЬ МАШИНЫ", 30f, TextAlignmentOptions.Left, UiFactory.TextColor));
-
-            RectTransform barRt = UiFactory.Rect("Bar", root, bottomLeft, bottomLeft, new Vector2(122f, 14f), new Vector2(324f, 50f));
-            images.Add(UiFactory.Image(barRt, bar, new Color(0.03f, 0.03f, 0.04f, 1f), true));
-            RectTransform trailRt = Inset(UiFactory.Stretch("Trail", barRt), 4f);
-            Image trail = UiFactory.Fill(trailRt, bar, new Color(1f, 0.93f, 0.8f, 0.85f), 1f);
+            // Row 2: rounded bar — dark trough with an inner shadow, light "lost" trail, gradient fill with a gloss,
+            // the HP number centred on top.
+            RectTransform barRt = UiFactory.Rect("Bar", root, bottomLeft, bottomLeft, new Vector2(16f, 14f),
+                new Vector2(s_CarHealthBarSize.x - 32f, 62f));
+            images.Add(UiFactory.Image(barRt, bar, new Color(0.02f, 0.02f, 0.03f, 1f), true));
+            RectTransform lane = Inset(UiFactory.Stretch("Lane", barRt), 4f);
+            Image trail = UiFactory.Image(UiFactory.Stretch("Trail", lane), bar, new Color(1f, 0.93f, 0.8f, 0.85f), true);
             images.Add(trail);
-            RectTransform fillRt = Inset(UiFactory.Stretch("Fill", barRt), 4f);
-            Image fill = UiFactory.Fill(fillRt, bar, new Color(0.36f, 0.82f, 0.3f, 1f), 1f);   // CarHealthBar gradient at full
+            Image fill = UiFactory.Image(UiFactory.Stretch("Fill", lane), bar, new Color(0.36f, 0.82f, 0.3f, 1f), true);   // gradient at full
             images.Add(fill);
-            TextMeshProUGUI value = UiFactory.Label("Value", barRt, midRight, midRight, new Vector2(-12f, 0f), new Vector2(300f, 50f),
-                string.Empty, 28f, TextAlignmentOptions.Right, Color.white);
-            value.outlineWidth = 0.2f;
-            value.outlineColor = new Color32(0, 0, 0, 200);
+            RectTransform gloss = UiFactory.Stretch("Gloss", fill.rectTransform);
+            gloss.anchorMin = new Vector2(0f, 0.55f);
+            gloss.offsetMin = new Vector2(6f, 0f);
+            gloss.offsetMax = new Vector2(-6f, -4f);
+            images.Add(UiFactory.Image(gloss, bar, new Color(1f, 1f, 1f, 0.22f), true));
+            RectTransform innerShadow = UiFactory.Stretch("InnerShadow", lane);
+            innerShadow.anchorMin = new Vector2(0f, 0.6f);
+            images.Add(UiFactory.Image(innerShadow, bar, new Color(0f, 0f, 0f, 0.35f), true));
+            TextMeshProUGUI value = UiFactory.Label("Value", barRt, center, center, Vector2.zero, new Vector2(300f, 62f),
+                string.Empty, 32f, TextAlignmentOptions.Center, Color.white);
             texts.Add(value);
 
             Image flash = UiFactory.Image(UiFactory.Stretch("Flash", root), panel, new Color(1f, 0.45f, 0.35f, 0f), true);
@@ -493,6 +517,8 @@ namespace ZombiCar.EditorTools
                 material.CopyPropertiesFromMaterial(source);
             }
             material.shader = shader;
+            if (source != null)
+                material.shaderKeywords = source.shaderKeywords;   // e.g. the text shadow (underlay)
             EditorUtility.SetDirty(material);
             return material;
         }
@@ -698,7 +724,7 @@ namespace ZombiCar.EditorTools
             follow.TrackerSettings.BindingMode = BindingMode.WorldSpace;
             follow.TrackerSettings.PositionDamping = cameraConfig.WorldDamping;
             PrefabBuilder.Wire(followTargetGo.AddComponent<CameraFollowTarget>(), ("m_Config", cameraConfig), ("m_Player", target),
-                ("m_Controller", target.GetComponent<CharacterController>()), ("m_InputProvider", target.GetComponent<PlayerInputProvider>()),
+                ("m_InputProvider", target.GetComponent<PlayerInputProvider>()),
                 ("m_Weapon", target.GetComponent<PlayerWeapon>()), ("m_Follow", follow));
             vcamGo.AddComponent<CameraAspectAdapter>();
 

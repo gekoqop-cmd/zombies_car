@@ -2,7 +2,6 @@
 
 Input : work/raw/<clip>/NNNN.png (ffmpeg frames, 24 fps) and work/mask/<clip>/NNNN.png (rembg alpha, masks.py).
 Output: unity/Assets/Art/Textures/Characters/Player/Player_<Clip>_NN.png   aligned frames, feet at the bottom centre
-        unity/Assets/Art/Textures/Characters/Player/Player_MuzzleFlash.png  flash cut out of the shot, gun tip at centre
         unity/Assets/Art/Textures/UI/UI_PortraitPlayer.png                   head and shoulders of the first idle frame
         unity/Assets/Data/Characters/Player_Frames.json                      clips, fps, gun tip per frame, run speed
         work/checksheet.png                                                  6 frames per clip on dark and light
@@ -228,9 +227,6 @@ def main():
     selection = {"Idle": ("idle", idle_sel, 12.0, True), "Run": ("run", run_sel, 12.0, True),
                  "Shot": ("shot", shot_sel, 24.0, False), "Reload": ("reload", reload_sel, len(reload_sel) / 1.4, False)}
 
-    # Muzzle flash sprite from the flash frame (full resolution, before the flash is erased from the frames).
-    flash_rgb, a = clips["shot"][f0]
-    fl_alpha = np.where(flash_mask(a, shot_tip), a, 0.0)
 
     # Canvas: symmetric around the anchor (bottom-centre pivot) and large enough for every exported frame.
     half, top = 0.0, 0.0
@@ -301,17 +297,7 @@ def main():
         pick = np.linspace(0, len(previews) - 1, min(6, len(previews))).round().astype(int)
         sheet_rows.append([previews[p] for p in pick])
 
-    # Flash sprite: centred on the barrel end (left half empty), matching the Center pivot import rule.
-    fy, fx = np.nonzero(fl_alpha > 0.03)
-    tx, ty = shot_tip
-    reach = int(max(fx.max() - tx, 8)) + 2
-    vert = int(max(ty - fy.min(), fy.max() - ty, 8)) + 2
-    box = (int(tx) - reach, int(ty) - vert, int(tx) + reach, int(ty) + vert)
-    src = np.dstack([bleed(flash_rgb, fl_alpha), fl_alpha])
-    flash = Image.fromarray((src * 255).astype(np.uint8), "RGBA").crop(box)
-    flash = flash.resize((max(2, round(flash.width * scale)), max(2, round(flash.height * scale))), Image.LANCZOS)
-    flash.save(os.path.join(OUT_FRAMES, "Player_MuzzleFlash.png"), optimize=True)
-    meta["muzzleFlashSize"] = [flash.width, flash.height]
+    # The flash sprite itself is drawn by tools/characters/muzzle_flash.py (compact star, not the video streak).
 
     # Native run speed: source px/s -> metres/s with the standing height = 1.75 m.
     meta["runSpeedMetresPerSecond"] = run_speed_px * scale / TARGET_HEIGHT * 1.75

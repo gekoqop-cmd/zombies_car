@@ -5,7 +5,8 @@ namespace ZombiCar.Core
 {
     /// <summary>
     /// On the Ultra tier puts the Ultra version of every material listed in <see cref="UltraMaterialSet"/> on the
-    /// renderers of this scene (asphalt, car metal, lamps); any other tier gets the regular materials back.
+    /// renderers of this scene (asphalt, car metal, lamps); any other tier gets the regular materials back. Slots an
+    /// <see cref="IMaterialSlotOwner"/> above the renderer switches itself (the car paint per damage stage) are skipped.
     /// </summary>
     public sealed class UltraMaterialSwap : MonoBehaviour, IQualityTierListener
     {
@@ -63,9 +64,12 @@ namespace ZombiCar.Core
             foreach (GameObject root in gameObject.scene.GetRootGameObjects())
             foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
             {
+                var owner = renderer.GetComponentInParent<IMaterialSlotOwner>(true);
                 renderer.GetSharedMaterials(m_Buffer);
                 for (int i = 0; i < m_Buffer.Count; i++)
                 {
+                    if (owner != null && owner.OwnsSlot(renderer, i))
+                        continue;
                     if (m_Buffer[i] != null && map.TryGetValue(m_Buffer[i], out Material ultra))
                         m_Slots.Add(new Slot { Renderer = renderer, Index = i, Regular = m_Buffer[i], Ultra = ultra });
                 }

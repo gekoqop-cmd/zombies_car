@@ -34,7 +34,16 @@ namespace ZombiCar.EditorTools
         private const float c_StandingHeight = 1.75f;
         private const float c_RunThreshold = 0.3f;
         private const int c_BodySortingOrder = 0;
-        private const int c_FlashSortingOrder = 1;
+        private const int c_SmokeSortingOrder = 1;
+        private const int c_GlowSortingOrder = 2;
+        private const int c_FlashSortingOrder = 3;
+        private const int c_FlashFrames = 3;
+        private const int c_SmokePuffs = 2;
+        private const float c_FlashScale = 1.35f;          // body space: ~0.5 m wide star
+        private const float c_GlowScale = 1.3f;            // ~0.9 m soft halo
+        private const float c_SmokeSize = 0.45f;           // world, ~0.55 m puff
+        private const float c_FlashCoreOffsetPx = 7.7f;    // star core behind the sprite centre (muzzle_flash.py: 0.44 of 128 px)
+        private static readonly Color s_FlashColor = new Color(1.4f, 1.3f, 1.15f, 1f);   // over 1: the bloom picks the flash up
         private static readonly Vector2 s_Shadow = new Vector2(1.3f, 0.6f);   // blob width / depth, metres
         private const int c_AtlasMaxSize = 2048;
         private const int c_CrunchQuality = 60;
@@ -103,7 +112,8 @@ namespace ZombiCar.EditorTools
                 BuildAtlas(clip.name, sprites);
                 clips[clip.name] = BuildClip(clip, sprites);
             }
-            BuildAtlas("MuzzleFlash", new[] { Frame("Player_MuzzleFlash") });
+            BuildAtlas("MuzzleFlash", Enumerable.Range(0, c_FlashFrames).Select(i => Frame($"Player_MuzzleFlash_{i}"))
+                .Append(Frame("Player_MuzzleGlow")).Append(Frame("Player_MuzzleSmoke")).ToArray());
             BuildController(clips);
 
             // Barrel height (world) for aiming = average barrel height of the clips the player shoots from.
@@ -302,14 +312,24 @@ namespace ZombiCar.EditorTools
             var muzzle = new GameObject("Muzzle").transform;
             muzzle.SetParent(bodyGo.transform, false);
             muzzle.localPosition = new Vector3(idleMeta.gunTips[0].x, idleMeta.gunTips[0].y, 0f) / ArtImportPostprocessor.c_CharacterPixelsPerUnit;
-            var flashGo = new GameObject("MuzzleFlash");
-            flashGo.transform.SetParent(muzzle, false);
-            var flash = flashGo.AddComponent<SpriteRenderer>();
-            flash.sprite = Frame("Player_MuzzleFlash");
-            flash.sharedMaterial = spriteMaterial;
-            flash.sortingOrder = c_FlashSortingOrder;
-            flash.shadowCastingMode = ShadowCastingMode.Off;
-            flash.enabled = false;
+            // Muzzle flash (tools/characters/muzzle_flash.py): frames + glow under the barrel end, so they flip with
+            // the body; the star's core sits c_FlashCoreOffsetPx behind the sprite centre, the sprite is moved forward
+            // so the core is on the muzzle. Scales are in body space (which already carries the pitch stretch).
+            Sprite[] flashFrames = Enumerable.Range(0, c_FlashFrames).Select(i => Frame($"Player_MuzzleFlash_{i}")).ToArray();
+            SpriteRenderer glow = EffectSprite("MuzzleGlow", muzzle, Frame("Player_MuzzleGlow"), spriteMaterial, c_GlowSortingOrder,
+                c_GlowScale, new Color(1f, 0.75f, 0.45f, 0f));
+            SpriteRenderer flash = EffectSprite("MuzzleFlash", muzzle, flashFrames[0], spriteMaterial, c_FlashSortingOrder,
+                c_FlashScale, s_FlashColor);
+            flash.transform.localPosition = new Vector3(c_FlashCoreOffsetPx / ArtImportPostprocessor.c_CharacterPixelsPerUnit * c_FlashScale, 0f, 0f);
+            // Smoke puffs: children of the upright view (not flipped, not stretched by the body); placed in the world
+            // at the muzzle on each shot.
+            var smoke = new SpriteRenderer[c_SmokePuffs];
+            for (int i = 0; i < smoke.Length; i++)
+            {
+                smoke[i] = EffectSprite($"MuzzleSmoke{i + 1}", view, Frame("Player_MuzzleSmoke"), spriteMaterial, c_SmokeSortingOrder,
+                    1f, new Color(1f, 1f, 1f, 0f));
+                smoke[i].transform.localScale = new Vector3(c_SmokeSize, c_SmokeSize * CharacterBuilder.PitchCompensation, 1f);
+            }
 
             var shadowGo = new GameObject("Shadow");
             shadowGo.transform.SetParent(view, false);
@@ -333,13 +353,15 @@ namespace ZombiCar.EditorTools
             ClipMeta shotMeta = meta.clips.First(c => c.name == "Shot");
             ClipMeta reloadMeta = meta.clips.First(c => c.name == "Reload");
             var playerView = view.gameObject.AddComponent<PlayerView>();
-            PrefabBuilder.Wire(playerView, ("m_Animator", animator), ("m_Body", body), ("m_MuzzleFlash", flash), ("m_Controller", cc),
+            PrefabBuilder.Wire(playerView, ("m_Animator", animator), ("m_Body", body), ("m_MuzzleFlash", flash), ("m_MuzzleGlow", glow),
+                ("m_Controller", cc),
                 ("m_InputProvider", input), ("m_Weapon", weapon),
                 ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
                 ("m_ShotSound", Sound("Player_Shot")), ("m_ReloadSound", Sound("Player_Reload")));
             CharacterBuilder.SetProps(playerView, ("m_Scale", scale), ("m_Tint", CharacterBuilder.s_SpriteTint),
                 ("m_ShotClipLength", shotMeta.frames.Length / shotMeta.fps), ("m_ReloadClipLength", reloadMeta.frames.Length / reloadMeta.fps),
-                ("m_StepSounds", new Object[] { Sound("Player_Step1"), Sound("Player_Step2"), Sound("Player_Step3") }));
+                ("m_StepSounds", new Object[] { Sound("Player_Step1"), Sound("Player_Step2"), Sound("Player_Step3") }),
+                ("m_FlashFrames", flashFrames.Cast<Object>().ToArray()), ("m_Smoke", smoke.Cast<Object>().ToArray()));
             PrefabBuilder.Wire(bodyGo.AddComponent<PlayerAnimationEvents>(), ("m_View", playerView));
 
             WeaponConfig config = DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig);
@@ -347,6 +369,23 @@ namespace ZombiCar.EditorTools
             CharacterBuilder.SetProps(desktop, ("m_AimPlaneHeight", config.MuzzleHeight));
             var health = root.AddComponent<PlayerHealth>();
             PrefabBuilder.Wire(health, ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)), ("m_View", playerView));
+        }
+
+        private static SpriteRenderer EffectSprite(string name, Transform parent, Sprite sprite, Material material, int order,
+            float scale, Color color)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.localScale = new Vector3(scale, scale, 1f);
+            var renderer = go.AddComponent<SpriteRenderer>();
+            renderer.sprite = sprite;
+            renderer.sharedMaterial = material;
+            renderer.sortingOrder = order;
+            renderer.color = color;
+            renderer.shadowCastingMode = ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+            renderer.enabled = false;
+            return renderer;
         }
 
         public static AudioClip Sound(string name)
