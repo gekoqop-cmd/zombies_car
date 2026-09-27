@@ -58,12 +58,27 @@ namespace ZombiCar.EditorTools
                 {
                     if (property.propertyType != SerializedPropertyType.ObjectReference || property.objectReferenceValue != null)
                         continue;
+                    if (IsOptional(component.GetType(), property.name))
+                        continue;
                     string kind = property.objectReferenceEntityIdValue.IsValid() ? "broken" : "empty";
                     Debug.LogError($"[SceneValidator] {sceneName}: {kind} reference {component.GetType().Name}.{property.name} on {PathOf(go)}");
                     problems++;
                 }
             }
             return problems;
+        }
+
+        // [OptionalReference] fields may be empty on purpose.
+        private static bool IsOptional(System.Type type, string field)
+        {
+            for (; type != null; type = type.BaseType)
+            {
+                var info = type.GetField(field, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
+                                                System.Reflection.BindingFlags.NonPublic);
+                if (info != null)
+                    return info.IsDefined(typeof(ZombiCar.Core.OptionalReferenceAttribute), false);
+            }
+            return false;
         }
 
         private static string PathOf(GameObject go)

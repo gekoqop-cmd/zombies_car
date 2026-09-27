@@ -1,4 +1,5 @@
 using UnityEngine;
+using ZombiCar.Core;
 
 namespace ZombiCar.Characters
 {
@@ -122,6 +123,7 @@ namespace ZombiCar.Characters
             Color color = m_Tint;
             if (Time.time < m_FlashEnd)
                 color = Color.Lerp(m_Tint, m_FlashColor, (m_FlashEnd - Time.time) / m_FlashDuration);
+            color *= SceneTint.Characters;
             color.a = m_Alpha;
             m_Renderer.color = color;
         }

@@ -5,21 +5,45 @@ using ZombiCar.Core;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// Settings window: quality tier (Low / Medium / High / Ultra) and close. Highlights the active tier.
-    /// Ultra is hidden on mobile (<see cref="SettingsService.IsUltraAllowed"/>).
+    /// Settings pop-up (main menu and HUD gear button): master / music / effects volume sliders (the mixer groups via
+    /// <see cref="SettingsService"/>), quality tier (Low / Medium / High / Ultra; Ultra hidden on mobile,
+    /// <see cref="SettingsService.IsUltraAllowed"/>), Back and — in the game only — "To menu", which leaves the map for
+    /// the main menu. Fades in and out (unscaled time).
     /// </summary>
+    [RequireComponent(typeof(CanvasGroup))]
     public sealed class SettingsPanel : MonoBehaviour
     {
+        [Header("Volume")]
+        [SerializeField] private Slider m_MasterSlider;
+        [SerializeField] private Slider m_MusicSlider;
+        [SerializeField] private Slider m_SfxSlider;
+
+        [Header("Quality")]
         [SerializeField] private Button m_LowButton;
         [SerializeField] private Button m_MediumButton;
         [SerializeField] private Button m_HighButton;
         [SerializeField] private Button m_UltraButton;
-        [SerializeField] private Button m_CloseButton;
         [SerializeField] private Color m_NormalColor = new Color(0.16f, 0.17f, 0.2f, 0.95f);
         [SerializeField] private Color m_SelectedColor = new Color(0.9f, 0.45f, 0.12f, 1f);
 
-        private void Awake()
+        [SerializeField] private Button m_CloseButton;
+        [Tooltip("Leaves the map for the main menu (only the HUD's pop-up has it).")]
+        [SerializeField, OptionalReference] private Button m_MenuButton;
+        [SerializeField, Min(0.01f)] private float m_FadeTime = 0.15f;
+
+        private CanvasGroup m_Group;
+        private float m_Target;
+        private bool m_Initialised;
+
+        private void Awake() => Init();
+
+        private void Init()
         {
+            if (m_Initialised)
+                return;
+            m_Initialised = true;
+            m_Group = GetComponent<CanvasGroup>();
+            SettingsService.EnsureLoaded();
             m_LowButton.onClick.AddListener(() => Select(QualityTier.Low));
             m_MediumButton.onClick.AddListener(() => Select(QualityTier.Medium));
             m_HighButton.onClick.AddListener(() => Select(QualityTier.High));
@@ -29,15 +53,55 @@ namespace ZombiCar.UI
                 m_UltraButton.onClick.AddListener(() => Select(QualityTier.Ultra));
             }
             m_CloseButton.onClick.AddListener(Hide);
+            if (m_MenuButton != null)
+                m_MenuButton.onClick.AddListener(ToMenu);
+            m_MasterSlider.onValueChanged.AddListener(SettingsService.SetMasterVolume);
+            m_MusicSlider.onValueChanged.AddListener(SettingsService.SetMusicVolume);
+            m_SfxSlider.onValueChanged.AddListener(SettingsService.SetSfxVolume);
         }
+
+        public bool IsOpen => gameObject.activeSelf && m_Target > 0f;
 
         public void Show()
         {
+            Init();
             gameObject.SetActive(true);
+            m_MasterSlider.SetValueWithoutNotify(SettingsService.MasterVolume);
+            m_MusicSlider.SetValueWithoutNotify(SettingsService.MusicVolume);
+            m_SfxSlider.SetValueWithoutNotify(SettingsService.SfxVolume);
             Highlight(SettingsService.Quality);
+            m_Target = 1f;
+            m_Group.interactable = m_Group.blocksRaycasts = true;
         }
 
-        public void Hide() => gameObject.SetActive(false);
+        public void Hide()
+        {
+            m_Target = 0f;
+            if (m_Group != null)
+                m_Group.interactable = m_Group.blocksRaycasts = false;
+        }
+
+        /// <summary>Shows or hides at once (tools, screenshots).</summary>
+        public void Snap()
+        {
+            if (m_Group != null)
+                m_Group.alpha = m_Target;
+            if (m_Target <= 0f)
+                gameObject.SetActive(false);
+        }
+
+        private void Update()
+        {
+            m_Group.alpha = Mathf.MoveTowards(m_Group.alpha, m_Target, Time.unscaledDeltaTime / m_FadeTime);
+            if (m_Target <= 0f && m_Group.alpha <= 0f)
+                gameObject.SetActive(false);
+        }
+
+        private void ToMenu()
+        {
+            m_MenuButton.interactable = false;
+            SceneLoader.EnsureExists().LoadMainMenu();
+        }
 
         private void Select(QualityTier tier)
         {

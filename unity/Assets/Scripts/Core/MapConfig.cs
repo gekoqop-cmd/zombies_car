@@ -22,6 +22,8 @@ namespace ZombiCar.Core
         [SerializeField, Min(0f)] private float m_FreeZoneRadius = 8f;
         [Tooltip("How far inside the play area the camera look point is allowed to go.")]
         [SerializeField, Min(0f)] private float m_CameraEdgeMargin = 4f;
+        [Tooltip("Multiplies the character sprites' colour (they are unlit): white by day, cool at night.")]
+        [SerializeField] private Color m_CharacterTint = Color.white;
 
         public string SceneName => m_SceneName;
         public int MapNumber => m_MapNumber;
@@ -32,6 +34,7 @@ namespace ZombiCar.Core
         public Vector2 GroundSize => m_GroundSize;
         public float FreeZoneRadius => m_FreeZoneRadius;
         public float CameraEdgeMargin => m_CameraEdgeMargin;
+        public Color CharacterTint => m_CharacterTint;
 
         public Bounds PlayAreaBounds => new Bounds(m_PlayAreaCenter, new Vector3(m_PlayAreaSize.x, 0f, m_PlayAreaSize.y));
     }

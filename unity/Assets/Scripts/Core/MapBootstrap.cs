@@ -12,7 +12,11 @@ namespace ZombiCar.Core
 
         public MapConfig Map => m_Map;
 
-        private void Awake() => SettingsService.EnsureLoaded();
+        private void Awake()
+        {
+            SettingsService.EnsureLoaded();
+            SceneTint.Characters = m_Map != null ? m_Map.CharacterTint : Color.white;
+        }
 
         private void Start()
         {

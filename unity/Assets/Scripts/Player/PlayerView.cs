@@ -210,7 +210,7 @@ namespace ZombiCar.Player
             Transform body = m_Body.transform;
             body.localScale = new Vector3(m_Scale.x * m_Facing, m_Scale.y, 1f);
             body.localPosition = new Vector3(-m_Facing * m_RecoilDistance * recoil * recoil, 0f, 0f);
-            m_Body.color = Time.time < m_HurtUntil ? s_HurtColor * m_Tint : m_Tint;
+            m_Body.color = (Time.time < m_HurtUntil ? s_HurtColor * m_Tint : m_Tint) * SceneTint.Characters;
 
             UpdateMuzzleEffects();
         }

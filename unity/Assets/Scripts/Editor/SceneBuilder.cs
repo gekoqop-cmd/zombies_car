@@ -33,11 +33,12 @@ namespace ZombiCar.EditorTools
     /// inside of the fences and walk on a NavMesh baked from the colliders.
     /// Flat layers are kept at least ~1 cm apart (see the c_*Height constants and PrefabBuilder) so they never z-fight.
     /// </summary>
-    public static class SceneBuilder
+    public static partial class SceneBuilder
     {
         public const string c_BootScene = EditorPaths.c_Scenes + "/Boot.unity";
         public const string c_MenuScene = EditorPaths.c_Scenes + "/MainMenu.unity";
         public const string c_MapScene = EditorPaths.c_Scenes + "/Map01.unity";
+        public const string c_NightMapScene = EditorPaths.c_Scenes + "/Map02.unity";
         public const string c_HudScene = EditorPaths.c_Scenes + "/UI_HUD.unity";
         private const string c_VolumeProfile = EditorPaths.c_Settings + "/Map01_VolumeProfile.asset";
         private const string c_LightingSettings = EditorPaths.c_Settings + "/Lighting_Realtime.lighting";
@@ -77,13 +78,42 @@ namespace ZombiCar.EditorTools
         };
 
         // Look (sunset).
-        private static readonly Color s_SunColor = new Color(1f, 0.86f, 0.7f);
-        private const float c_SunIntensity = 2f;
-        private static readonly Vector3 s_SunEuler = new Vector3(40f, 70f, 0f);
-        private static readonly Color s_AmbientSky = new Color(0.46f, 0.52f, 0.66f);
-        private static readonly Color s_AmbientEquator = new Color(0.42f, 0.40f, 0.40f);   // deeper shadows, like the concept
-        private static readonly Color s_AmbientGround = new Color(0.28f, 0.24f, 0.22f);
-        private static readonly Color s_FogColor = new Color(0.68f, 0.58f, 0.52f);
+        /// <summary>Lighting of a map build: the same lot as an evening (Map01) or a moonlit night (Map02).</summary>
+        private sealed class MapLook
+        {
+            public Color SunColor;
+            public float SunIntensity;
+            public Vector3 SunEuler;
+            public Color AmbientSky, AmbientEquator, AmbientGround;
+            public Color FogColor;
+            [Tooltip("Multiplies the intensity / range of every point light (lamps carry the night).")]
+            public float LampIntensity = 1f, LampRange = 1f;
+            public bool Night;
+        }
+
+        private static readonly MapLook s_EveningLook = new MapLook
+        {
+            SunColor = new Color(1f, 0.86f, 0.7f), SunIntensity = 2f, SunEuler = new Vector3(40f, 70f, 0f),
+            AmbientSky = new Color(0.46f, 0.52f, 0.66f),
+            AmbientEquator = new Color(0.42f, 0.40f, 0.40f),   // deeper shadows, like the concept
+            AmbientGround = new Color(0.28f, 0.24f, 0.22f),
+            FogColor = new Color(0.68f, 0.58f, 0.52f),
+        };
+
+        // Moonlight (cool, low, from the moon's side in map2.png), dark blue haze, lamps much stronger.
+        private static readonly MapLook s_NightLook = new MapLook
+        {
+            // Low moon: long soft shadows.
+            SunColor = new Color(0.62f, 0.7f, 0.95f), SunIntensity = 0.6f, SunEuler = new Vector3(28f, -35f, 0f),
+            AmbientSky = new Color(0.21f, 0.21f, 0.33f),              // muted dark blue-violet
+            AmbientEquator = new Color(0.16f, 0.16f, 0.23f),
+            AmbientGround = new Color(0.09f, 0.09f, 0.12f),
+            FogColor = new Color(0.08f, 0.09f, 0.14f),
+            LampIntensity = 2.4f, LampRange = 1.35f, Night = true,
+        };
+
+        private static MapLook s_Look = s_EveningLook;
+        private const int c_NightLayoutSeed = 100;               // added to the layout seeds: a different arrangement at night
         private const float c_FogStart = 28f;                  // only the far top of the view gets a warm haze
         private const float c_FogEnd = 95f;
         private static readonly Color s_LampColor = new Color(1f, 0.62f, 0.3f);
@@ -99,14 +129,16 @@ namespace ZombiCar.EditorTools
             BuildBoot();
             BuildMainMenu();
             BuildHud();
-            BuildMap01();
+            BuildMap(c_MapScene, DataAssetsBuilder.c_MapConfig, s_EveningLook);
+            BuildMap(c_NightMapScene, DataAssetsBuilder.c_NightMapConfig, s_NightLook);
             EditorBuildSettings.scenes = new[]
             {
                 new EditorBuildSettingsScene(c_BootScene, true), new EditorBuildSettingsScene(c_MenuScene, true),
-                new EditorBuildSettingsScene(c_MapScene, true), new EditorBuildSettingsScene(c_HudScene, true),
+                new EditorBuildSettingsScene(c_MapScene, true), new EditorBuildSettingsScene(c_NightMapScene, true),
+                new EditorBuildSettingsScene(c_HudScene, true),
             };
             AssetDatabase.SaveAssets();
-            Debug.Log("[SceneBuilder] Boot, MainMenu, UI_HUD, Map01 built and added to Build Settings.");
+            Debug.Log("[SceneBuilder] Boot, MainMenu, UI_HUD, Map01 (evening), Map02 (night) built and added to Build Settings.");
         }
 
         // ================================================================== Boot / MainMenu / HUD
@@ -117,137 +149,6 @@ namespace ZombiCar.EditorTools
             var boot = new GameObject("Boot").AddComponent<BootLoader>();
             PrefabBuilder.Wire(boot, ("m_Settings", DataAssetsBuilder.Load<GameSettings>(DataAssetsBuilder.c_GameSettings)));
             EditorSceneManager.SaveScene(scene, c_BootScene);
-        }
-
-        private static void BuildMainMenu()
-        {
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            CreateUiCamera(new Color(0.11f, 0.09f, 0.09f));
-            Canvas canvas = UiFactory.Canvas("MenuCanvas", 0);
-            RectTransform safe = UiFactory.Stretch("SafeArea", canvas.transform);
-            safe.gameObject.AddComponent<SafeAreaFitter>();
-
-            var center = new Vector2(0.5f, 0.5f);
-            UiFactory.Label("Title", safe, center, center, new Vector2(0f, 250f), new Vector2(1500f, 200f),
-                "ZOMBIES CAR", 150f, TextAlignmentOptions.Center, UiFactory.AccentColor);
-            UiFactory.Label("Subtitle", safe, center, center, new Vector2(0f, 120f), new Vector2(1400f, 70f),
-                "Защити машину от волн зомби", 44f, TextAlignmentOptions.Center, UiFactory.TextColor, false);
-            Button play = UiFactory.Button("PlayButton", safe, center, center, new Vector2(0f, -60f), new Vector2(480f, 150f),
-                "ИГРАТЬ", 70f, UiFactory.AccentColor, new Color(0.12f, 0.08f, 0.06f));
-            var bottom = new Vector2(0.5f, 0f);
-            UiFactory.Label("Controls", safe, bottom, bottom, new Vector2(0f, 60f), new Vector2(1600f, 60f),
-                "WASD — движение   ·   мышь — прицел   ·   ЛКМ — огонь", 36f, TextAlignmentOptions.Center,
-                new Color(0.75f, 0.72f, 0.68f), false);
-
-            var menu = canvas.gameObject.AddComponent<MainMenuController>();
-            PrefabBuilder.Wire(menu, ("m_Map", DataAssetsBuilder.Load<MapConfig>(DataAssetsBuilder.c_MapConfig)), ("m_PlayButton", play));
-            SaveUiPrefab(canvas.gameObject, "MainMenu");
-            UiFactory.EventSystem();
-            EditorSceneManager.SaveScene(scene, c_MenuScene);
-        }
-
-        private static void BuildHud()
-        {
-            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            Canvas canvas = UiFactory.Canvas("HUDCanvas", 10);
-            RectTransform safe = UiFactory.Stretch("SafeArea", canvas.transform);
-            safe.gameObject.AddComponent<SafeAreaFitter>();
-            Sprite panel = UiFactory.Sprite("UI_Panel");
-            Sprite bar = UiFactory.Sprite("UI_Bar");
-            var topLeft = new Vector2(0f, 1f);
-            var topRight = new Vector2(1f, 1f);
-            var topCenter = new Vector2(0.5f, 1f);
-            var midLeft = new Vector2(0f, 0.5f);
-            var midRight = new Vector2(1f, 0.5f);
-            // Match-height scaling keeps 1080 units of height, so a 4:3 screen is only 1440 units wide: the three top
-            // panels + settings button (24 + 520 | 250 | 410 + 24 + 112 + 24) are sized to fit it without overlap.
-            const float margin = 24f;
-            const float buttonSize = 112f;
-
-            // Health + level (top-left).
-            RectTransform health = UiFactory.Rect("HealthPanel", safe, topLeft, topLeft, new Vector2(margin, -margin), new Vector2(520f, 150f));
-            UiFactory.Image(health, panel, UiFactory.PanelColor, true);
-            RectTransform frame = UiFactory.Rect("PortraitFrame", health, topLeft, topLeft, new Vector2(14f, -14f), new Vector2(122f, 122f));
-            UiFactory.Image(frame, panel, new Color(0.32f, 0.14f, 0.09f, 1f), true);
-            RectTransform portrait = UiFactory.Stretch("Portrait", frame);
-            portrait.offsetMin = new Vector2(6f, 6f);
-            portrait.offsetMax = new Vector2(-6f, -6f);
-            UiFactory.Image(portrait, UiFactory.Sprite("UI_PortraitPlayer"), Color.white, false);
-            UiFactory.Label("HealthLabel", health, topLeft, topLeft, new Vector2(150f, -12f), new Vector2(240f, 40f),
-                "ЗДОРОВЬЕ", 28f, TextAlignmentOptions.Left, UiFactory.TextColor);
-            RectTransform healthBar = UiFactory.Rect("HealthBar", health, topLeft, topLeft, new Vector2(150f, -54f), new Vector2(354f, 40f));
-            UiFactory.Image(healthBar, bar, new Color(0.22f, 0.06f, 0.05f, 1f), true);
-            RectTransform healthFillRt = UiFactory.Stretch("Fill", healthBar);
-            healthFillRt.offsetMin = new Vector2(4f, 4f);
-            healthFillRt.offsetMax = new Vector2(-4f, -4f);
-            // Values are left empty here: HudController.Refresh fills them from the state assets below.
-            Image healthFill = UiFactory.Fill(healthFillRt, bar, new Color(0.86f, 0.2f, 0.16f, 1f), 1f);
-            TextMeshProUGUI healthValue = UiFactory.Label("HealthValue", healthBar, midRight, midRight, new Vector2(-12f, 0f),
-                new Vector2(180f, 40f), string.Empty, 26f, TextAlignmentOptions.Right, Color.white);
-            TextMeshProUGUI levelLabel = UiFactory.Label("LevelLabel", health, topLeft, topLeft, new Vector2(150f, -102f),
-                new Vector2(150f, 36f), string.Empty, 23f, TextAlignmentOptions.Left, UiFactory.TextColor);
-            RectTransform levelBar = UiFactory.Rect("LevelBar", health, topLeft, topLeft, new Vector2(300f, -108f), new Vector2(204f, 24f));
-            UiFactory.Image(levelBar, bar, new Color(0.08f, 0.12f, 0.2f, 1f), true);
-            RectTransform levelFillRt = UiFactory.Stretch("Fill", levelBar);
-            levelFillRt.offsetMin = new Vector2(3f, 3f);
-            levelFillRt.offsetMax = new Vector2(-3f, -3f);
-            Image levelFill = UiFactory.Fill(levelFillRt, bar, new Color(0.26f, 0.62f, 0.98f, 1f), 0f);
-
-            // Wave + timer (top-centre).
-            RectTransform wave = UiFactory.Rect("WavePanel", safe, topCenter, topCenter, new Vector2(0f, -margin), new Vector2(250f, 130f));
-            UiFactory.Image(wave, panel, UiFactory.PanelColor, true);
-            TextMeshProUGUI waveLabel = UiFactory.Label("WaveLabel", wave, topCenter, topCenter, new Vector2(0f, -8f),
-                new Vector2(236f, 56f), string.Empty, 42f, TextAlignmentOptions.Center, UiFactory.TextColor);
-            var bottomCenter = new Vector2(0.5f, 0f);
-            TextMeshProUGUI waveTimer = UiFactory.Label("WaveTimer", wave, bottomCenter, bottomCenter, new Vector2(0f, 10f),
-                new Vector2(236f, 60f), string.Empty, 48f, TextAlignmentOptions.Center, UiFactory.TextColor);
-
-            // Ammo (top-right, left of the settings button).
-            RectTransform ammo = UiFactory.Rect("AmmoPanel", safe, topRight, topRight, new Vector2(-(margin * 2f + buttonSize), -margin),
-                new Vector2(410f, 90f));
-            UiFactory.Image(ammo, panel, UiFactory.PanelColor, true);
-            RectTransform ammoIcon = UiFactory.Rect("AmmoIcon", ammo, midLeft, midLeft, new Vector2(12f, 0f), new Vector2(64f, 64f));
-            UiFactory.Image(ammoIcon, UiFactory.Sprite("UI_IconAmmo"), Color.white, false);
-            UiFactory.Label("AmmoLabel", ammo, midLeft, midLeft, new Vector2(84f, 0f), new Vector2(150f, 50f),
-                "ПАТРОНЫ", 24f, TextAlignmentOptions.Left, UiFactory.TextColor);
-            TextMeshProUGUI ammoValue = UiFactory.Label("AmmoValue", ammo, midRight, midRight, new Vector2(-16f, 0f),
-                new Vector2(160f, 50f), string.Empty, 36f, TextAlignmentOptions.Right, UiFactory.TextColor);
-            // Reload: label + progress bar under the ammo panel, shown while reloading.
-            RectTransform reload = UiFactory.Rect("ReloadHint", safe, topRight, topRight, new Vector2(-(margin * 2f + buttonSize), -122f),
-                new Vector2(410f, 64f));
-            UiFactory.Label("ReloadLabel", reload, topRight, topRight, Vector2.zero, new Vector2(410f, 34f),
-                "ПЕРЕЗАРЯДКА", 26f, TextAlignmentOptions.Right, UiFactory.AccentColor);
-            RectTransform reloadBar = UiFactory.Rect("ReloadBar", reload, topRight, topRight, new Vector2(0f, -38f), new Vector2(410f, 22f));
-            UiFactory.Image(reloadBar, bar, new Color(0.18f, 0.12f, 0.06f, 0.9f), true);
-            RectTransform reloadFillRt = UiFactory.Stretch("Fill", reloadBar);
-            reloadFillRt.offsetMin = new Vector2(3f, 3f);
-            reloadFillRt.offsetMax = new Vector2(-3f, -3f);
-            Image reloadFill = UiFactory.Fill(reloadFillRt, bar, UiFactory.AccentColor, 0f);
-
-            // Settings button: 112 visible, touch area >= 48 dp (the visible panel keeps the 24 margin) and window.
-            float touchInset = (UiFactory.c_MinTouchTarget - buttonSize) * 0.5f;
-            Button settingsButton = UiFactory.IconButton("SettingsButton", safe, topRight, topRight,
-                new Vector2(-(margin - touchInset), -(margin - touchInset)), buttonSize, UiFactory.Sprite("UI_IconGear"), 20f,
-                UiFactory.PanelColor, UiFactory.TextColor);
-
-            SettingsPanel settings = BuildSettingsPanel(safe, panel);
-
-            var hud = canvas.gameObject.AddComponent<HudController>();
-            PrefabBuilder.Wire(hud,
-                ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
-                ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
-                ("m_AmmoState", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)),
-                ("m_HealthFill", healthFill), ("m_HealthValue", healthValue), ("m_LevelFill", levelFill), ("m_LevelLabel", levelLabel),
-                ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_ReloadHint", reload.gameObject), ("m_ReloadFill", reloadFill),
-                ("m_SettingsButton", settingsButton), ("m_SettingsPanel", settings));
-            // Every HUD text gets the black outline + shadow: the panels are translucent over a bright map.
-            Material outline = TmpSetup.OutlineMaterial();
-            foreach (TMP_Text text in canvas.GetComponentsInChildren<TMP_Text>(true))
-                text.fontSharedMaterial = outline;
-            ShowStartState(hud);
-            SaveUiPrefab(canvas.gameObject, "HUD");
-            UiFactory.EventSystem();
-            EditorSceneManager.SaveScene(scene, c_HudScene);
         }
 
         /// <summary>
@@ -262,41 +163,6 @@ namespace ZombiCar.EditorTools
             DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState).Set(1, Mathf.CeilToInt(waves.FirstWaveDelay));
             DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState).Set(weapon.MagazineSize, weapon.StartReserve, false);
             hud.Refresh();
-        }
-
-        private static SettingsPanel BuildSettingsPanel(RectTransform parent, Sprite panel)
-        {
-            RectTransform root = UiFactory.Stretch("SettingsPanel", parent);
-            UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.55f), false, true);   // dims and blocks clicks behind
-            var center = new Vector2(0.5f, 0.5f);
-            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, new Vector2(1000f, 580f));
-            UiFactory.Image(window, panel, new Color(0.1f, 0.11f, 0.13f, 0.97f), true, true);
-            var top = new Vector2(0.5f, 1f);
-            UiFactory.Label("Title", window, top, top, new Vector2(0f, -36f), new Vector2(800f, 70f), "НАСТРОЙКИ", 58f,
-                TextAlignmentOptions.Center, UiFactory.TextColor);
-            UiFactory.Label("Subtitle", window, top, top, new Vector2(0f, -120f), new Vector2(800f, 50f), "Качество графики", 36f,
-                TextAlignmentOptions.Center, new Color(0.75f, 0.72f, 0.68f), false);
-            var normal = new Color(0.16f, 0.17f, 0.2f, 0.95f);
-            // Tier buttons in a centred row: when Ultra is hidden (mobile) the other three stay centred.
-            RectTransform row = UiFactory.Rect("TierButtons", window, top, top, new Vector2(0f, -200f), new Vector2(960f, UiFactory.c_MinTouchTarget));
-            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 20f;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = layout.childControlHeight = false;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-            var size = new Vector2(220f, UiFactory.c_MinTouchTarget);
-            Button low = UiFactory.Button("LowButton", row, top, top, Vector2.zero, size, "НИЗКОЕ", 32f, normal, UiFactory.TextColor);
-            Button medium = UiFactory.Button("MediumButton", row, top, top, Vector2.zero, size, "СРЕДНЕЕ", 32f, normal, UiFactory.TextColor);
-            Button high = UiFactory.Button("HighButton", row, top, top, Vector2.zero, size, "ВЫСОКОЕ", 32f, normal, UiFactory.TextColor);
-            Button ultra = UiFactory.Button("UltraButton", row, top, top, Vector2.zero, size, "УЛЬТРА", 32f, normal, UiFactory.TextColor);
-            var bottom = new Vector2(0.5f, 0f);
-            Button close = UiFactory.Button("CloseButton", window, bottom, bottom, new Vector2(0f, 36f), new Vector2(340f, UiFactory.c_MinTouchTarget), "ЗАКРЫТЬ", 40f,
-                UiFactory.AccentColor, new Color(0.12f, 0.08f, 0.06f));
-            var settings = root.gameObject.AddComponent<SettingsPanel>();
-            PrefabBuilder.Wire(settings, ("m_LowButton", low), ("m_MediumButton", medium), ("m_HighButton", high), ("m_UltraButton", ultra),
-                ("m_CloseButton", close));
-            root.gameObject.SetActive(false);
-            return settings;
         }
 
         /// <summary>Stores a scene canvas as Prefabs/UI/&lt;name&gt; and keeps the scene object as its instance.</summary>
@@ -318,10 +184,14 @@ namespace ZombiCar.EditorTools
         }
 
         // ================================================================== Map01
-        private static void BuildMap01()
+        /// <summary>The lot (same layout for every map) with <paramref name="look"/>'s lighting, saved to <paramref name="path"/>.</summary>
+        private static void BuildMap(string path, string mapConfig, MapLook look)
         {
+            s_Look = look;
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            MapConfig map = DataAssetsBuilder.Load<MapConfig>(DataAssetsBuilder.c_MapConfig);
+            // Loaded after NewScene: opening a scene unloads assets nothing references, which would leave a
+            // config loaded before it readable but saved into the scene as an empty reference.
+            MapConfig map = DataAssetsBuilder.Load<MapConfig>(mapConfig);
             SetupLighting();
 
             Transform systems = Root("Systems");
@@ -350,6 +220,11 @@ namespace ZombiCar.EditorTools
             BuildProps(props);
             BuildNature(nature, map);
             BuildDecals(decals);
+            if (look.Night)
+            {
+                VaryLayout(props, nature, map, c_NightLayoutSeed);
+                AddNightLotLamps(props);
+            }
 
             GameObject car = Place("Car_Player", gameplay, 0f, 0f, c_CarPlayerYaw);
             car.name = "Car_Player";
@@ -360,9 +235,23 @@ namespace ZombiCar.EditorTools
             BuildZombieSystems(systemsGo, gameplay, car, player);
             BuildNavMesh(systems);
             UltraQualityBuilder.AddToMap(map, lighting, nature, cameraRoot, systemsGo, player, (x, z) => IsFreeForGrass(x, z, map));
+            foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
+            {
+                if (light.type != LightType.Point)
+                    continue;
+                light.intensity *= look.LampIntensity;
+                light.range *= look.LampRange;
+            }
+            if (look.Night)
+            {
+                NightStreetLamps(lighting);
+                SwapNightMaterials();
+                AddCarLights(car);
+            }
 
-            EditorSceneManager.SaveScene(scene, c_MapScene);
+            EditorSceneManager.SaveScene(scene, path);
             ReportModelUsage(scene);
+            s_Look = s_EveningLook;
         }
 
         private static void BuildZombieSystems(GameObject systemsGo, Transform gameplay, GameObject car, GameObject player)
@@ -595,18 +484,18 @@ namespace ZombiCar.EditorTools
 
             RenderSettings.skybox = null;
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = s_AmbientSky;
-            RenderSettings.ambientEquatorColor = s_AmbientEquator;
-            RenderSettings.ambientGroundColor = s_AmbientGround;
+            RenderSettings.ambientSkyColor = s_Look.AmbientSky;
+            RenderSettings.ambientEquatorColor = s_Look.AmbientEquator;
+            RenderSettings.ambientGroundColor = s_Look.AmbientGround;
             var sh = new SphericalHarmonicsL2();
-            sh.AddAmbientLight(s_AmbientEquator);
-            sh.AddDirectionalLight(Vector3.up, s_AmbientSky - s_AmbientEquator, 0.5f);
-            sh.AddDirectionalLight(Vector3.down, s_AmbientGround - s_AmbientEquator, 0.5f);
+            sh.AddAmbientLight(s_Look.AmbientEquator);
+            sh.AddDirectionalLight(Vector3.up, s_Look.AmbientSky - s_Look.AmbientEquator, 0.5f);
+            sh.AddDirectionalLight(Vector3.down, s_Look.AmbientGround - s_Look.AmbientEquator, 0.5f);
             RenderSettings.ambientProbe = sh;
             RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.Linear;
-            RenderSettings.fogColor = s_FogColor;
+            RenderSettings.fogColor = s_Look.FogColor;
             RenderSettings.fogStartDistance = c_FogStart;
             RenderSettings.fogEndDistance = c_FogEnd;
         }
@@ -615,11 +504,11 @@ namespace ZombiCar.EditorTools
         {
             var sunGo = new GameObject("Sun");
             sunGo.transform.SetParent(parent, false);
-            sunGo.transform.rotation = Quaternion.Euler(s_SunEuler);
+            sunGo.transform.rotation = Quaternion.Euler(s_Look.SunEuler);
             var sun = sunGo.AddComponent<Light>();
             sun.type = LightType.Directional;
-            sun.color = s_SunColor;
-            sun.intensity = c_SunIntensity;
+            sun.color = s_Look.SunColor;
+            sun.intensity = s_Look.SunIntensity;
             sun.shadows = LightShadows.Soft;
             sun.shadowStrength = 0.8f;
             RenderSettings.sun = sun;
@@ -692,7 +581,7 @@ namespace ZombiCar.EditorTools
             cam.nearClipPlane = ViewConstants.c_NearClip;
             cam.farClipPlane = ViewConstants.c_FarClip;
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = s_FogColor;
+            cam.backgroundColor = s_Look.FogColor;
             UniversalAdditionalCameraData camData = cam.GetUniversalAdditionalCameraData();
             camData.renderPostProcessing = true;
             camData.antialiasing = AntialiasingMode.FastApproximateAntialiasing;
@@ -703,7 +592,7 @@ namespace ZombiCar.EditorTools
             volumeGo.transform.SetParent(parent, false);
             var volume = volumeGo.AddComponent<Volume>();
             volume.isGlobal = true;
-            volume.sharedProfile = BuildVolumeProfile();
+            volume.sharedProfile = s_Look.Night ? BuildNightVolumeProfile() : BuildVolumeProfile();
             PrefabBuilder.Wire(camGo.AddComponent<QualityPostProcessApplier>(), ("m_Volume", volume), ("m_CameraData", camData));
 
             var vcamGo = new GameObject("CM_FollowPlayer");
@@ -846,7 +735,7 @@ namespace ZombiCar.EditorTools
         private static (float from, float to) FenceRun(Transform parent, bool alongX, float line, float from, float to, float yaw,
             int seed, (float a, float b) gap = default)
         {
-            var rnd = new Random(seed);
+            var rnd = new Random(seed + (s_Look.Night ? c_NightLayoutSeed : 0));
             float openFrom = float.MaxValue, openTo = float.MinValue;
             for (float c = from + c_FenceSection * 0.5f; c <= to - c_FenceSection * 0.5f + 0.01f; c += c_FenceSection)
             {

@@ -11,6 +11,7 @@ namespace ZombiCar.EditorTools
     public static class DataAssetsBuilder
     {
         public const string c_MapConfig = EditorPaths.c_Data + "/MapConfig_Map01.asset";
+        public const string c_NightMapConfig = EditorPaths.c_Data + "/MapConfig_Map02.asset";
         public const string c_GameSettings = EditorPaths.c_Data + "/GameSettings.asset";
         public const string c_PlayerConfig = EditorPaths.c_Data + "/PlayerConfig.asset";
         public const string c_WeaponConfig = EditorPaths.c_Data + "/WeaponConfig_Default.asset";
@@ -27,6 +28,7 @@ namespace ZombiCar.EditorTools
             EditorPaths.EnsureFolder(EditorPaths.c_Data);
             EditorPaths.EnsureFolder(EditorPaths.c_DataState);
             Ensure<MapConfig>(c_MapConfig);
+            EnsureNightMap();
             Ensure<GameSettings>(c_GameSettings);
             Ensure<PlayerConfig>(c_PlayerConfig);
             Ensure<WeaponConfig>(c_WeaponConfig);
@@ -37,6 +39,18 @@ namespace ZombiCar.EditorTools
             Ensure<PlayerStats>(c_PlayerStats);
             Ensure<WaveState>(c_WaveState);
             AssetDatabase.SaveAssets();
+        }
+
+        // Map02: the same lot as Map01 at night — a copy of its config pointing at the Map02 scene.
+        private static void EnsureNightMap()
+        {
+            if (AssetDatabase.LoadAssetAtPath<MapConfig>(c_NightMapConfig) == null)
+                AssetDatabase.CopyAsset(c_MapConfig, c_NightMapConfig);
+            var so = new SerializedObject(AssetDatabase.LoadAssetAtPath<MapConfig>(c_NightMapConfig));
+            so.FindProperty("m_SceneName").stringValue = SceneNames.c_Map02;
+            so.FindProperty("m_MapNumber").intValue = 2;
+            so.FindProperty("m_CharacterTint").colorValue = new Color(0.74f, 0.8f, 1f, 1f);
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         public static T Load<T>(string path) where T : ScriptableObject => AssetDatabase.LoadAssetAtPath<T>(path);

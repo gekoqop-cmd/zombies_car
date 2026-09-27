@@ -171,14 +171,14 @@ namespace ZombiCar.EditorTools
             return $"{sum.x:F0} {sum.y:F0} {sum.z:F0}";
         }
 
-        private static void PlaceCamera(Camera cam, Vector3 lookAt)
+        internal static void PlaceCamera(Camera cam, Vector3 lookAt)
         {
             Quaternion rotation = Quaternion.Euler(ViewConstants.c_CameraPitch, 0f, 0f);
             cam.transform.SetPositionAndRotation(lookAt + rotation * new Vector3(0f, 0f, -ViewConstants.c_CameraDistance), rotation);
         }
 
         /// <summary>Switches the quality level and lets every tier-aware component of the scene react (as in the game).</summary>
-        private static void Apply(Scene scene, QualityTier tier)
+        internal static void Apply(Scene scene, QualityTier tier)
         {
             SettingsService.ApplyQuality(tier);
             foreach (GameObject root in scene.GetRootGameObjects())

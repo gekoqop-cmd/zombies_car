@@ -4,13 +4,15 @@ using UnityEngine;
 namespace ZombiCar.Core
 {
     /// <summary>
-    /// Loads, applies and saves user settings (quality tier, master volume).
+    /// Loads, applies and saves user settings (quality tier; master, music and effects volume).
     /// Loaded once by the Boot scene; scenes started directly in the Editor call <see cref="EnsureLoaded"/>.
     /// </summary>
     public static class SettingsService
     {
         private const string c_QualityKey = "settings.quality";
         private const string c_VolumeKey = "settings.volume";
+        private const string c_MusicVolumeKey = "settings.volume.music";
+        private const string c_SfxVolumeKey = "settings.volume.sfx";
         private const QualityTier c_FallbackDesktopQuality = QualityTier.Medium;
         private const QualityTier c_FallbackMobileQuality = QualityTier.Low;
         private const float c_FallbackVolume = 1f;
@@ -27,8 +29,13 @@ namespace ZombiCar.Core
         /// <summary>Master volume 0..1 changed (applied to the mixer by <see cref="AudioManager"/>).</summary>
         public static event Action<float> VolumeChanged;
 
+        /// <summary>Any of the three volumes changed (master, music, effects).</summary>
+        public static event Action VolumesChanged;
+
         public static QualityTier Quality { get; private set; } = c_FallbackDesktopQuality;
         public static float MasterVolume { get; private set; } = c_FallbackVolume;
+        public static float MusicVolume { get; private set; } = c_FallbackVolume;
+        public static float SfxVolume { get; private set; } = c_FallbackVolume;
 
         public static void Load(GameSettings defaults)
         {
@@ -40,12 +47,15 @@ namespace ZombiCar.Core
             int maxTier = Mathf.Max(0, QualitySettings.names.Length - 1);
             Quality = Allowed((QualityTier)Mathf.Clamp(PlayerPrefs.GetInt(c_QualityKey, (int)defaultTier), 0, maxTier));
             MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_VolumeKey, defaultVolume));
+            MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_MusicVolumeKey, c_FallbackVolume));
+            SfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_SfxVolumeKey, c_FallbackVolume));
 
             // Let the browser drive the frame pacing on the Web (requestAnimationFrame).
             Application.targetFrameRate = -1;
             ApplyQuality(Quality);
             s_Loaded = true;
             VolumeChanged?.Invoke(MasterVolume);
+            VolumesChanged?.Invoke();
             QualityChanged?.Invoke(Quality);   // components enabled before the load pick up the stored tier
         }
 
@@ -76,6 +86,23 @@ namespace ZombiCar.Core
             PlayerPrefs.SetFloat(c_VolumeKey, MasterVolume);
             PlayerPrefs.Save();
             VolumeChanged?.Invoke(MasterVolume);
+            VolumesChanged?.Invoke();
+        }
+
+        public static void SetMusicVolume(float volume)
+        {
+            MusicVolume = Mathf.Clamp01(volume);
+            PlayerPrefs.SetFloat(c_MusicVolumeKey, MusicVolume);
+            PlayerPrefs.Save();
+            VolumesChanged?.Invoke();
+        }
+
+        public static void SetSfxVolume(float volume)
+        {
+            SfxVolume = Mathf.Clamp01(volume);
+            PlayerPrefs.SetFloat(c_SfxVolumeKey, SfxVolume);
+            PlayerPrefs.Save();
+            VolumesChanged?.Invoke();
         }
 
         /// <summary>

@@ -9,7 +9,8 @@ using ZombiCar.Core;
 namespace ZombiCar.EditorTools
 {
     /// <summary>
-    /// The game mixer (Audio/GameMixer.mixer: Master → SFX, volumes exposed as "MasterVolume" / "SfxVolume") and the
+    /// The game mixer (Audio/GameMixer.mixer: Master → Music + SFX, volumes exposed as "MasterVolume" / "MusicVolume" /
+    /// "SfxVolume", driven by the settings sliders) and the
     /// scene's <see cref="AudioManager"/>. Unity has no public API for authoring mixers, so the asset is made through
     /// the editor's internal AudioMixerController; if that API changes the build logs it and the AudioManager falls
     /// back to AudioListener.volume.
@@ -20,6 +21,8 @@ namespace ZombiCar.EditorTools
         private const string c_MasterVolume = "MasterVolume";
         private const string c_SfxVolume = "SfxVolume";
         private const string c_SfxGroup = "SFX";
+        private const string c_MusicGroup = "Music";
+        private const string c_MusicVolume = "MusicVolume";
         private const BindingFlags c_Any = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
         [MenuItem("Tools/Build Audio Mixer")]
@@ -28,7 +31,8 @@ namespace ZombiCar.EditorTools
         public static AudioMixer EnsureMixer()
         {
             var existing = AssetDatabase.LoadAssetAtPath<AudioMixer>(c_Mixer);
-            if (existing != null && existing.FindMatchingGroups(c_SfxGroup).Length > 0)
+            if (existing != null && existing.FindMatchingGroups(c_SfxGroup).Length > 0 &&
+                existing.FindMatchingGroups(c_MusicGroup).Length > 0)
                 return existing;
             if (existing != null)
                 AssetDatabase.DeleteAsset(c_Mixer);
@@ -46,10 +50,12 @@ namespace ZombiCar.EditorTools
                 object master = controllerType.GetProperty("masterGroup", c_Any).GetValue(mixer);
                 object sfx = controllerType.GetMethod("CreateNewGroup", c_Any).Invoke(mixer, new object[] { c_SfxGroup, false });
                 controllerType.GetMethod("AddChildToParent", c_Any).Invoke(mixer, new[] { sfx, master });
+                object music = controllerType.GetMethod("CreateNewGroup", c_Any).Invoke(mixer, new object[] { c_MusicGroup, false });
+                controllerType.GetMethod("AddChildToParent", c_Any).Invoke(mixer, new[] { music, master });
 
                 MethodInfo expose = controllerType.GetMethods(c_Any).First(m => m.Name == "AddExposedParameter" &&
                     m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == pathType);
-                foreach ((object group, string name) in new[] { (master, c_MasterVolume), (sfx, c_SfxVolume) })
+                foreach ((object group, string name) in new[] { (master, c_MasterVolume), (sfx, c_SfxVolume), (music, c_MusicVolume) })
                 {
                     object guid = groupType.GetMethod("GetGUIDForVolume", c_Any).Invoke(group, null);
                     object path = Activator.CreateInstance(groupPathType, group, guid);

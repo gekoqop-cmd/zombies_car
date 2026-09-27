@@ -6,7 +6,7 @@ namespace ZombiCar.Core
 {
     /// <summary>
     /// One-shot sound effects from a fixed pool of AudioSources routed to the SFX group of the game mixer
-    /// (Master / SFX). Browsers only allow audio after a user gesture, so nothing plays until the first click,
+    /// (Master / Music / SFX). Browsers only allow audio after a user gesture, so nothing plays until the first click,
     /// key press or touch. Lives in the scene that needs it (Map01); <see cref="Instance"/> is that scene's manager.
     /// All sound stops while the tab loses focus or the game is paused from outside (Yandex Games requirement:
     /// no sound when minimised or during ads; the SDK's game_api_pause will call <see cref="SetExternalPause"/>).
@@ -15,6 +15,7 @@ namespace ZombiCar.Core
     {
         private const string c_MasterVolume = "MasterVolume";
         private const string c_SfxVolume = "SfxVolume";
+        private const string c_MusicVolume = "MusicVolume";
         private const float c_MinDecibels = -80f;
 
         [SerializeField] private AudioMixer m_Mixer;
@@ -48,11 +49,11 @@ namespace ZombiCar.Core
 
         private void OnEnable()
         {
-            SettingsService.VolumeChanged += ApplyVolume;
-            ApplyVolume(SettingsService.MasterVolume);
+            SettingsService.VolumesChanged += ApplyVolumes;
+            ApplyVolumes();
         }
 
-        private void OnDisable() => SettingsService.VolumeChanged -= ApplyVolume;
+        private void OnDisable() => SettingsService.VolumesChanged -= ApplyVolumes;
 
         private void OnApplicationFocus(bool hasFocus)
         {
@@ -132,15 +133,16 @@ namespace ZombiCar.Core
             return oldest;
         }
 
-        private void ApplyVolume(float master)
+        private void ApplyVolumes()
         {
             // No mixer (or one without the exposed parameters): the listener carries the master volume.
-            if (m_Mixer == null || !m_Mixer.SetFloat(c_MasterVolume, ToDecibels(master)))
+            if (m_Mixer == null || !m_Mixer.SetFloat(c_MasterVolume, ToDecibels(SettingsService.MasterVolume)))
             {
-                AudioListener.volume = master;
+                AudioListener.volume = SettingsService.MasterVolume * SettingsService.SfxVolume;
                 return;
             }
-            m_Mixer.SetFloat(c_SfxVolume, 0f);
+            m_Mixer.SetFloat(c_MusicVolume, ToDecibels(SettingsService.MusicVolume));
+            m_Mixer.SetFloat(c_SfxVolume, ToDecibels(SettingsService.SfxVolume));
         }
 
         private static float ToDecibels(float linear) => linear > 1e-4f ? 20f * Mathf.Log10(linear) : c_MinDecibels;

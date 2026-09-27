@@ -21,7 +21,8 @@ namespace ZombiCar.EditorTools
 
         public const int c_MaxAtlasSize = 2048;
         public const float c_CharacterPixelsPerUnit = 100f;
-        private const int c_MaxUiSize = 512;
+        private const int c_MaxUiSize = 1024;
+        private const int c_MaxUiPictureSize = 2048;   // full-screen menu background, map cards
         private const int c_MaxPlayerFrameSize = 1024;
         private const int c_GroundAniso = 4;
         private const float c_AlphaTestReference = 0.5f;
@@ -93,7 +94,7 @@ namespace ZombiCar.EditorTools
 
             if (assetPath.StartsWith(c_UiRoot))
             {
-                maxSize = c_MaxUiSize;
+                maxSize = file.StartsWith("UI_Menu") || file.StartsWith("UI_Map") ? c_MaxUiPictureSize : c_MaxUiSize;
                 compression = TextureImporterCompression.CompressedHQ;
                 if (file == "UI_Crosshair")
                 {
@@ -191,6 +192,8 @@ namespace ZombiCar.EditorTools
                 case "UI_Panel": return new Vector4(22, 22, 22, 22);
                 case "UI_Bar": return new Vector4(14, 14, 14, 14);
                 case "UI_Button": return new Vector4(30, 30, 30, 30);
+                case "UI_GearButton": return new Vector4(48, 48, 48, 48);   // refmenu plate: HUD buttons, cards, windows
+                case "UI_BarTrack": return new Vector4(34, 0, 34, 0);
                 default: return Vector4.zero;
             }
         }
