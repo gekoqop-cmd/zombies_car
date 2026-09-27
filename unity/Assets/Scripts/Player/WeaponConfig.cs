@@ -23,6 +23,16 @@ namespace ZombiCar.Player
         [Tooltip("Bullets created up front so shooting never allocates.")]
         [SerializeField, Min(0)] private int m_PoolPrewarm = 24;
 
+        [Header("Aiming")]
+        [Tooltip("Barrel height above the ground, metres. Bullets fly level at this height and the cursor ray is " +
+                 "intersected with a plane at this height, so every shot passes exactly under the cursor.")]
+        [SerializeField, Range(0.5f, 2f)] private float m_MuzzleHeight = 1.05f;
+        [Tooltip("Radius of the cast along the cursor ray that picks the enemy under the cursor, metres.")]
+        [SerializeField, Min(0f)] private float m_CursorPickRadius = 0.15f;
+        [Tooltip("Aim assist: a shot aimed within Aim Assist Radius of an enemy goes to the enemy's centre.")]
+        [SerializeField] private bool m_AimAssist = true;
+        [SerializeField, Min(0f)] private float m_AimAssistRadius = 0.5f;
+
         public float Range => m_Range;
         public float FireRate => m_FireRate;
         public float ShotInterval => 1f / m_FireRate;
@@ -34,5 +44,9 @@ namespace ZombiCar.Player
         public float BulletSpeed => m_BulletSpeed;
         public float BulletRadius => m_BulletRadius;
         public int PoolPrewarm => m_PoolPrewarm;
+        public float MuzzleHeight => m_MuzzleHeight;
+        public float CursorPickRadius => m_CursorPickRadius;
+        public bool AimAssist => m_AimAssist;
+        public float AimAssistRadius => m_AimAssistRadius;
     }
 }

@@ -4,12 +4,16 @@ using ZombiCar.Core;
 
 namespace ZombiCar.UI
 {
-    /// <summary>Settings window: quality tier (Low / Medium / High) and close. Highlights the active tier.</summary>
+    /// <summary>
+    /// Settings window: quality tier (Low / Medium / High / Ultra) and close. Highlights the active tier.
+    /// Ultra is hidden on mobile (<see cref="SettingsService.IsUltraAllowed"/>).
+    /// </summary>
     public sealed class SettingsPanel : MonoBehaviour
     {
         [SerializeField] private Button m_LowButton;
         [SerializeField] private Button m_MediumButton;
         [SerializeField] private Button m_HighButton;
+        [SerializeField] private Button m_UltraButton;
         [SerializeField] private Button m_CloseButton;
         [SerializeField] private Color m_NormalColor = new Color(0.16f, 0.17f, 0.2f, 0.95f);
         [SerializeField] private Color m_SelectedColor = new Color(0.9f, 0.45f, 0.12f, 1f);
@@ -19,6 +23,11 @@ namespace ZombiCar.UI
             m_LowButton.onClick.AddListener(() => Select(QualityTier.Low));
             m_MediumButton.onClick.AddListener(() => Select(QualityTier.Medium));
             m_HighButton.onClick.AddListener(() => Select(QualityTier.High));
+            if (m_UltraButton != null)
+            {
+                m_UltraButton.gameObject.SetActive(SettingsService.IsUltraAllowed);
+                m_UltraButton.onClick.AddListener(() => Select(QualityTier.Ultra));
+            }
             m_CloseButton.onClick.AddListener(Hide);
         }
 
@@ -41,6 +50,7 @@ namespace ZombiCar.UI
             Paint(m_LowButton, tier == QualityTier.Low);
             Paint(m_MediumButton, tier == QualityTier.Medium);
             Paint(m_HighButton, tier == QualityTier.High);
+            Paint(m_UltraButton, tier == QualityTier.Ultra);
         }
 
         private void Paint(Button button, bool selected)

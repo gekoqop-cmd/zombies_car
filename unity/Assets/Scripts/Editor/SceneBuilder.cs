@@ -241,7 +241,7 @@ namespace ZombiCar.EditorTools
             RectTransform root = UiFactory.Stretch("SettingsPanel", parent);
             UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.55f), false, true);   // dims and blocks clicks behind
             var center = new Vector2(0.5f, 0.5f);
-            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, new Vector2(840f, 580f));
+            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, new Vector2(1000f, 580f));
             UiFactory.Image(window, panel, new Color(0.1f, 0.11f, 0.13f, 0.97f), true, true);
             var top = new Vector2(0.5f, 1f);
             UiFactory.Label("Title", window, top, top, new Vector2(0f, -36f), new Vector2(800f, 70f), "НАСТРОЙКИ", 58f,
@@ -249,15 +249,24 @@ namespace ZombiCar.EditorTools
             UiFactory.Label("Subtitle", window, top, top, new Vector2(0f, -120f), new Vector2(800f, 50f), "Качество графики", 36f,
                 TextAlignmentOptions.Center, new Color(0.75f, 0.72f, 0.68f), false);
             var normal = new Color(0.16f, 0.17f, 0.2f, 0.95f);
-            var size = new Vector2(250f, UiFactory.c_MinTouchTarget);
-            Button low = UiFactory.Button("LowButton", window, top, top, new Vector2(-260f, -200f), size, "НИЗКОЕ", 34f, normal, UiFactory.TextColor);
-            Button medium = UiFactory.Button("MediumButton", window, top, top, new Vector2(0f, -200f), size, "СРЕДНЕЕ", 34f, normal, UiFactory.TextColor);
-            Button high = UiFactory.Button("HighButton", window, top, top, new Vector2(260f, -200f), size, "ВЫСОКОЕ", 34f, normal, UiFactory.TextColor);
+            // Tier buttons in a centred row: when Ultra is hidden (mobile) the other three stay centred.
+            RectTransform row = UiFactory.Rect("TierButtons", window, top, top, new Vector2(0f, -200f), new Vector2(960f, UiFactory.c_MinTouchTarget));
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 20f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = layout.childControlHeight = false;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            var size = new Vector2(220f, UiFactory.c_MinTouchTarget);
+            Button low = UiFactory.Button("LowButton", row, top, top, Vector2.zero, size, "НИЗКОЕ", 32f, normal, UiFactory.TextColor);
+            Button medium = UiFactory.Button("MediumButton", row, top, top, Vector2.zero, size, "СРЕДНЕЕ", 32f, normal, UiFactory.TextColor);
+            Button high = UiFactory.Button("HighButton", row, top, top, Vector2.zero, size, "ВЫСОКОЕ", 32f, normal, UiFactory.TextColor);
+            Button ultra = UiFactory.Button("UltraButton", row, top, top, Vector2.zero, size, "УЛЬТРА", 32f, normal, UiFactory.TextColor);
             var bottom = new Vector2(0.5f, 0f);
             Button close = UiFactory.Button("CloseButton", window, bottom, bottom, new Vector2(0f, 36f), new Vector2(340f, UiFactory.c_MinTouchTarget), "ЗАКРЫТЬ", 40f,
                 UiFactory.AccentColor, new Color(0.12f, 0.08f, 0.06f));
             var settings = root.gameObject.AddComponent<SettingsPanel>();
-            PrefabBuilder.Wire(settings, ("m_LowButton", low), ("m_MediumButton", medium), ("m_HighButton", high), ("m_CloseButton", close));
+            PrefabBuilder.Wire(settings, ("m_LowButton", low), ("m_MediumButton", medium), ("m_HighButton", high), ("m_UltraButton", ultra),
+                ("m_CloseButton", close));
             root.gameObject.SetActive(false);
             return settings;
         }
@@ -320,6 +329,7 @@ namespace ZombiCar.EditorTools
             BuildCamera(cameraRoot, player.transform, map);
             BuildZombieSystems(systemsGo, gameplay, car, player);
             BuildNavMesh(systems);
+            UltraQualityBuilder.AddToMap(map, lighting, nature, cameraRoot, systemsGo, player, (x, z) => IsFreeForGrass(x, z, map));
 
             EditorSceneManager.SaveScene(scene, c_MapScene);
             ReportModelUsage(scene);
@@ -441,8 +451,11 @@ namespace ZombiCar.EditorTools
                 for (int i = 0; i < filter.sharedMesh.subMeshCount; i++)
                     triangles += filter.sharedMesh.GetIndexCount(i) / 3;
             }
+            Light[] points = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<Light>(true))
+                .Where(l => l.type == LightType.Point).ToArray();
+            int basePoints = points.Count(l => l.gameObject.activeInHierarchy);
             Debug.Log($"[SceneBuilder] Map01 stats: {renderers} mesh renderers, {triangles} triangles in the whole map, " +
-                      $"{materials.Count} materials, 3 realtime point lights + sun.");
+                      $"{materials.Count} materials, {basePoints} realtime point lights + sun ({points.Length} on Ultra).");
         }
 
         private static void SetupLighting()

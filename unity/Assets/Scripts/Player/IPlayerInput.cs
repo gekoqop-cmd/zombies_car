@@ -29,5 +29,11 @@ namespace ZombiCar.Player
 
         /// <summary>A short tap on the fire control this frame (mobile: auto-aim shot at the nearest enemy).</summary>
         bool QuickTap { get; }
+
+        /// <summary>
+        /// Camera ray through the aim cursor (PC mouse). Devices that aim with a direction only (stick) return false
+        /// and the weapon fires along <see cref="AimDirection"/>.
+        /// </summary>
+        bool TryGetAimRay(out Ray ray);
     }
 }

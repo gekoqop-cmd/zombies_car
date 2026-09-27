@@ -5,7 +5,8 @@ using UnityEngine.InputSystem;
 namespace ZombiCar.Player
 {
     /// <summary>
-    /// PC input through the Input System: WASD / arrows move, the mouse cursor projected onto the ground aims,
+    /// PC input through the Input System: WASD / arrows move, the mouse cursor aims (the weapon resolves the exact
+    /// target from <see cref="TryGetAimRay"/>; the facing uses the cursor on the barrel-height plane),
     /// the left mouse button fires (hold = automatic fire). Keyboard bindings use physical key positions,
     /// so they work with any keyboard layout (Yandex Games requirement).
     /// </summary>
@@ -16,8 +17,9 @@ namespace ZombiCar.Player
 
         [Tooltip("Where aiming starts from (the player). The aim direction is cursor-on-ground minus this position.")]
         [SerializeField] private Transform m_AimOrigin;
-        [Tooltip("Height of the plane the cursor ray is projected on (ground level).")]
-        [SerializeField] private float m_AimPlaneHeight;
+        [Tooltip("Height of the plane the cursor ray is projected on for the facing: the barrel height " +
+                 "(WeaponConfig.MuzzleHeight, set by the prefab builder), not the ground.")]
+        [SerializeField] private float m_AimPlaneHeight = 1.05f;
         [Tooltip("Cursor closer than this to the player keeps the previous direction (avoids jitter).")]
         [SerializeField, Min(0f)] private float m_MinAimDistance = 0.3f;
         [Tooltip("Maximum turn speed of the aim direction, degrees per second: smooths mouse jitter into a steady aim without feeling laggy.")]
@@ -29,6 +31,8 @@ namespace ZombiCar.Player
         private Camera m_Camera;
         private Vector3 m_AimDirection = Vector3.forward;
         private bool m_FireStartedOverUi;
+        private Ray m_AimRay;
+        private bool m_HasAimRay;
 
         public Vector2 Move { get; private set; }
         public Vector3 AimDirection => m_AimDirection;
@@ -38,8 +42,14 @@ namespace ZombiCar.Player
         public bool FireReleased { get; private set; }
         public bool QuickTap => false;
 
-        /// <summary>Cursor position on the ground (valid while <see cref="AimActive"/>).</summary>
+        /// <summary>Cursor position on the barrel-height plane (valid while <see cref="AimActive"/>).</summary>
         public Vector3 AimPoint { get; private set; }
+
+        public bool TryGetAimRay(out Ray ray)
+        {
+            ray = m_AimRay;
+            return m_HasAimRay && AimActive;
+        }
 
         private void Awake()
         {
@@ -72,7 +82,7 @@ namespace ZombiCar.Player
             m_FireAction.Disable();
             m_PointAction.Disable();
             Move = Vector2.zero;
-            FireHeld = FirePressed = FireReleased = AimActive = false;
+            FireHeld = FirePressed = FireReleased = AimActive = m_HasAimRay = false;
         }
 
         private void OnDestroy()
@@ -111,8 +121,10 @@ namespace ZombiCar.Player
             }
 
             Ray ray = m_Camera.ScreenPointToRay(m_PointAction.ReadValue<Vector2>());
-            var ground = new Plane(Vector3.up, new Vector3(0f, m_AimPlaneHeight, 0f));
-            if (!ground.Raycast(ray, out float distance))
+            m_AimRay = ray;
+            m_HasAimRay = true;
+            var barrelPlane = new Plane(Vector3.up, new Vector3(0f, m_AimPlaneHeight, 0f));
+            if (!barrelPlane.Raycast(ray, out float distance))
                 return;
 
             AimPoint = ray.GetPoint(distance);

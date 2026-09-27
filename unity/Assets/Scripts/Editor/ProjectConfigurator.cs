@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -7,14 +8,16 @@ using ZombiCar.Core;
 namespace ZombiCar.EditorTools
 {
     /// <summary>
-    /// One-shot project setup: serialization (Force Text), player/WebGL settings, physics layers, three URP assets
-    /// (Low/Medium/High) sharing one Forward renderer, quality levels and shader stripping.
+    /// One-shot project setup: serialization (Force Text), player/WebGL settings, physics layers, four URP assets
+    /// (Low/Medium/High sharing one Forward renderer, Ultra with its own renderer that adds SSAO), quality levels
+    /// and shader stripping.
     /// </summary>
     public static class ProjectConfigurator
     {
         private const string c_TemplateRpAsset = EditorPaths.c_Settings + "/Mobile_RPAsset.asset";
         private const string c_TemplateRenderer = EditorPaths.c_Settings + "/Mobile_Renderer.asset";
         private const string c_Renderer = EditorPaths.c_Settings + "/URP_Renderer.asset";
+        private const string c_UltraRenderer = EditorPaths.c_Settings + "/URP_Renderer_Ultra.asset";
         private static readonly string[] s_ObsoleteTemplateAssets =
         {
             EditorPaths.c_Settings + "/PC_RPAsset.asset", EditorPaths.c_Settings + "/PC_Renderer.asset",
@@ -35,7 +38,13 @@ namespace ZombiCar.EditorTools
             public int AdditionalLightsMode;   // 1 = per pixel, 2 = per vertex
             public int AdditionalLightsLimit;
             public int TextureMipLimit;        // 0 = full size (2048), 1 = half (1024)
-            public int AnisotropicMode;        // 0 = off, 1 = per texture
+            public int AnisotropicMode;        // 0 = off, 1 = per texture, 2 = forced on every texture
+            // Ultra-only extras; the defaults keep Low / Medium / High exactly as they were.
+            public string Renderer = c_Renderer;
+            public bool AdditionalLightShadows;
+            public int AdditionalShadowAtlas = 2048;
+            public bool RealtimeReflectionProbes;
+            public bool DepthTexture;
         }
 
         private static readonly TierSpec[] s_Tiers =
@@ -49,7 +58,20 @@ namespace ZombiCar.EditorTools
             new TierSpec { Name = "High", Hdr = true, Msaa = 2, RenderScale = 1f, ShadowDistance = 60f, ShadowResolution = 2048,
                 Cascades = 2, SoftShadows = true, SoftShadowQuality = 2, AdditionalLightsMode = 1, AdditionalLightsLimit = 4,
                 TextureMipLimit = 0, AnisotropicMode = 1 },
+            // Powerful PCs only (selected by hand): supersampling, MSAA 4x, 4 x 4096 shadow cascades with high soft
+            // shadows, 8 per-pixel lights with shadows, SSAO (own renderer), depth texture for bokeh depth of field,
+            // realtime reflection probes, forced 16x anisotropy (see SettingsService.ApplyQuality).
+            new TierSpec { Name = "Ultra", Hdr = true, Msaa = 4, RenderScale = 1.25f, ShadowDistance = 90f, ShadowResolution = 4096,
+                Cascades = 4, SoftShadows = true, SoftShadowQuality = 3, AdditionalLightsMode = 1, AdditionalLightsLimit = 8,
+                TextureMipLimit = 0, AnisotropicMode = 2, Renderer = c_UltraRenderer, AdditionalLightShadows = true,
+                AdditionalShadowAtlas = 4096, RealtimeReflectionProbes = true, DepthTexture = true },
         };
+
+        // SSAO of the Ultra renderer (scene scale: camera ~32 m away, objects 0.5..5 m).
+        private const float c_SsaoIntensity = 1.4f;
+        private const float c_SsaoRadius = 0.6f;
+        private const float c_SsaoDirectLighting = 0.3f;
+        private const float c_SsaoFalloff = 120f;
 
         [MenuItem("Tools/Setup/Configure Project")]
         public static void Run()
@@ -110,10 +132,11 @@ namespace ZombiCar.EditorTools
         {
             if (AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(c_Renderer) == null)
                 AssetDatabase.CopyAsset(c_TemplateRenderer, c_Renderer);
-            var renderer = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(c_Renderer);
-            var rendererSo = new SerializedObject(renderer);
+            var sharedRenderer = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(c_Renderer);
+            var rendererSo = new SerializedObject(sharedRenderer);
             rendererSo.FindProperty("m_RenderingMode").intValue = 0;   // Forward: cheapest path for WebGL / mobile
             rendererSo.ApplyModifiedPropertiesWithoutUndo();
+            ScriptableRendererData ultraRenderer = EnsureUltraRenderer();
 
             var result = new UniversalRenderPipelineAsset[s_Tiers.Length];
             for (int i = 0; i < s_Tiers.Length; i++)
@@ -121,12 +144,19 @@ namespace ZombiCar.EditorTools
                 TierSpec t = s_Tiers[i];
                 string path = $"{EditorPaths.c_Settings}/URP_{t.Name}.asset";
                 if (AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path) == null)
-                    AssetDatabase.CopyAsset(c_TemplateRpAsset, path);
+                {
+                    // The URP template is deleted after the first setup: a new tier starts from the previous one
+                    // (every setting below is written anyway).
+                    string source = AssetDatabase.LoadMainAssetAtPath(c_TemplateRpAsset) != null
+                        ? c_TemplateRpAsset
+                        : $"{EditorPaths.c_Settings}/URP_{s_Tiers[i - 1].Name}.asset";
+                    AssetDatabase.CopyAsset(source, path);
+                }
                 var asset = AssetDatabase.LoadAssetAtPath<UniversalRenderPipelineAsset>(path);
                 var so = new SerializedObject(asset);
                 SerializedProperty list = so.FindProperty("m_RendererDataList");
                 list.arraySize = 1;
-                list.GetArrayElementAtIndex(0).objectReferenceValue = renderer;
+                list.GetArrayElementAtIndex(0).objectReferenceValue = t.Renderer == c_UltraRenderer ? ultraRenderer : sharedRenderer;
                 so.FindProperty("m_DefaultRendererIndex").intValue = 0;
                 so.FindProperty("m_SupportsHDR").boolValue = t.Hdr;
                 so.FindProperty("m_MSAA").intValue = t.Msaa;
@@ -139,14 +169,15 @@ namespace ZombiCar.EditorTools
                 so.FindProperty("m_SoftShadowQuality").intValue = t.SoftShadowQuality;
                 so.FindProperty("m_AdditionalLightsRenderingMode").intValue = t.AdditionalLightsMode;
                 so.FindProperty("m_AdditionalLightsPerObjectLimit").intValue = t.AdditionalLightsLimit;
-                so.FindProperty("m_AdditionalLightShadowsSupported").boolValue = false;
+                so.FindProperty("m_AdditionalLightShadowsSupported").boolValue = t.AdditionalLightShadows;
+                so.FindProperty("m_AdditionalLightsShadowmapResolution").intValue = t.AdditionalShadowAtlas;
                 so.FindProperty("m_UseSRPBatcher").boolValue = true;
                 so.FindProperty("m_SupportsDynamicBatching").boolValue = false;
                 so.FindProperty("m_MixedLightingSupported").boolValue = false;   // no baked lighting -> fewer variants
                 so.FindProperty("m_SupportsLightCookies").boolValue = false;
                 so.FindProperty("m_SupportsLightLayers").boolValue = false;
                 so.FindProperty("m_UseAdaptivePerformance").boolValue = false;
-                so.FindProperty("m_RequireDepthTexture").boolValue = false;
+                so.FindProperty("m_RequireDepthTexture").boolValue = t.DepthTexture;
                 so.FindProperty("m_RequireOpaqueTexture").boolValue = false;
                 so.FindProperty("m_EnableLODCrossFade").boolValue = false;
                 so.FindProperty("m_SupportsTerrainHoles").boolValue = false;
@@ -157,6 +188,48 @@ namespace ZombiCar.EditorTools
                 result[i] = asset;
             }
             return result;
+        }
+
+        /// <summary>Copy of the shared Forward renderer plus a high-quality SSAO renderer feature (Ultra only).</summary>
+        private static ScriptableRendererData EnsureUltraRenderer()
+        {
+            if (AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(c_UltraRenderer) == null)
+                AssetDatabase.CopyAsset(c_Renderer, c_UltraRenderer);
+            var renderer = AssetDatabase.LoadAssetAtPath<ScriptableRendererData>(c_UltraRenderer);
+            var ssao = renderer.rendererFeatures.OfType<ScreenSpaceAmbientOcclusion>().FirstOrDefault();
+            if (ssao == null)
+            {
+                ssao = ScriptableObject.CreateInstance<ScreenSpaceAmbientOcclusion>();
+                ssao.name = "SSAO";
+                AssetDatabase.AddObjectToAsset(ssao, renderer);
+                AssetDatabase.TryGetGUIDAndLocalFileIdentifier(ssao, out string _, out long localId);
+                var rso = new SerializedObject(renderer);
+                SerializedProperty features = rso.FindProperty("m_RendererFeatures");
+                features.arraySize++;
+                features.GetArrayElementAtIndex(features.arraySize - 1).objectReferenceValue = ssao;
+                SerializedProperty map = rso.FindProperty("m_RendererFeatureMap");
+                map.arraySize++;
+                map.GetArrayElementAtIndex(map.arraySize - 1).longValue = localId;
+                rso.ApplyModifiedPropertiesWithoutUndo();
+            }
+
+            // Enum values from ScreenSpaceAmbientOcclusionSettings (internal): DepthNormals = 1, NormalQuality.High = 2,
+            // AOSampleOption.High = 0 (12 samples), BlurQualityOptions.High = 0 (bilateral).
+            var so = new SerializedObject(ssao);
+            so.FindProperty("m_Settings.Downsample").boolValue = false;
+            so.FindProperty("m_Settings.AfterOpaque").boolValue = false;
+            so.FindProperty("m_Settings.Source").intValue = 1;
+            so.FindProperty("m_Settings.NormalSamples").intValue = 2;
+            so.FindProperty("m_Settings.Samples").intValue = 0;
+            so.FindProperty("m_Settings.BlurQuality").intValue = 0;
+            so.FindProperty("m_Settings.Intensity").floatValue = c_SsaoIntensity;
+            so.FindProperty("m_Settings.Radius").floatValue = c_SsaoRadius;
+            so.FindProperty("m_Settings.DirectLightingStrength").floatValue = c_SsaoDirectLighting;
+            so.FindProperty("m_Settings.Falloff").floatValue = c_SsaoFalloff;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            EditorUtility.SetDirty(ssao);
+            EditorUtility.SetDirty(renderer);
+            return renderer;
         }
 
         private static void ConfigureQuality(UniversalRenderPipelineAsset[] tiers)
@@ -177,7 +250,7 @@ namespace ZombiCar.EditorTools
                 level.FindPropertyRelative("anisotropicTextures").intValue = t.AnisotropicMode;
                 level.FindPropertyRelative("antiAliasing").intValue = 0;   // MSAA comes from the URP asset
                 level.FindPropertyRelative("vSyncCount").intValue = 0;     // the browser paces frames
-                level.FindPropertyRelative("realtimeReflectionProbes").boolValue = false;
+                level.FindPropertyRelative("realtimeReflectionProbes").boolValue = t.RealtimeReflectionProbes;
                 level.FindPropertyRelative("softParticles").boolValue = false;
                 level.FindPropertyRelative("lodBias").floatValue = 1f;
                 level.FindPropertyRelative("excludedTargetPlatforms").arraySize = 0;

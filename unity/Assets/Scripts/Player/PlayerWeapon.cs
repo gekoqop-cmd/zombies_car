@@ -5,8 +5,10 @@ using ZombiCar.Core;
 namespace ZombiCar.Player
 {
     /// <summary>
-    /// Placeholder gun: fires pooled bullets along <see cref="IPlayerInput.AimDirection"/> while fire is held,
-    /// with fire rate, magazine, reserve and automatic reload from <see cref="WeaponConfig"/>.
+    /// Placeholder gun: fires pooled bullets from the Muzzle (barrel height) while fire is held, with fire rate,
+    /// magazine, reserve and automatic reload from <see cref="WeaponConfig"/>. With a cursor the shot goes level
+    /// from the muzzle through the resolved aim point (<see cref="AimSolver"/>), otherwise along
+    /// <see cref="IPlayerInput.AimDirection"/>.
     /// Publishes ammo to <see cref="AmmoState"/> for the HUD and raises <see cref="Fired"/> for the player's sprite.
     /// </summary>
     public sealed class PlayerWeapon : MonoBehaviour
@@ -24,9 +26,20 @@ namespace ZombiCar.Player
         private float m_ReloadEndTime;
         private bool m_IsReloading;
         private int m_BlockMask;
+        private AimSolution m_Aim;
+
+        // Shots closer than this to the muzzle keep the input direction (a target inside the gun would flip it).
+        private const float c_MinShotDistance = 0.25f;
 
         public WeaponConfig Config => m_Config;
         public bool IsReloading => m_IsReloading;
+        public Transform Muzzle => m_Muzzle;
+
+        /// <summary>Where the current aim points (valid with a cursor); used by the aim gizmos.</summary>
+        public AimSolution Aim => m_Aim;
+
+        /// <summary>Level direction the next bullet will take from the muzzle.</summary>
+        public Vector3 ShotDirection { get; private set; } = Vector3.forward;
 
         /// <summary>Raised on every shot (muzzle flash, shooting pose).</summary>
         public event Action Fired;
@@ -51,6 +64,7 @@ namespace ZombiCar.Player
         {
             if (m_IsReloading && Time.time >= m_ReloadEndTime)
                 FinishReload();
+            UpdateAim();
 
             bool wantsToFire = m_Input.FireHeld || m_Input.FirePressed || m_Input.QuickTap;
             if (wantsToFire && !m_IsReloading && Time.time >= m_NextShotTime)
@@ -65,19 +79,28 @@ namespace ZombiCar.Player
             if (m_InMagazine <= 0)
                 return;
 
-            Vector3 direction = m_Input.AimDirection;
-            direction.y = 0f;
-            if (direction.sqrMagnitude < Mathf.Epsilon)
-                direction = transform.forward;
-            direction.Normalize();
-
             Bullet bullet = m_Pool.Get();
-            bullet.Launch(m_Muzzle.position, direction, m_Config, m_BlockMask, m_Pool.Release);
+            bullet.Launch(m_Muzzle.position, ShotDirection, m_Config, m_BlockMask, m_Pool.Release);
 
             m_InMagazine--;
             m_NextShotTime = Time.time + m_Config.ShotInterval;
             Publish();
             Fired?.Invoke();
+        }
+
+        private void UpdateAim()
+        {
+            m_Aim = m_Input.TryGetAimRay(out Ray ray)
+                ? AimSolver.FromRay(ray, m_Muzzle.position.y, m_Config)
+                : default;
+            if (m_Aim.IsValid && AimSolver.LevelDirection(m_Muzzle.position, m_Aim.Point, c_MinShotDistance, out Vector3 toAim))
+            {
+                ShotDirection = toAim;
+                return;
+            }
+            Vector3 direction = m_Input.AimDirection;
+            direction.y = 0f;
+            ShotDirection = direction.sqrMagnitude > Mathf.Epsilon ? direction.normalized : transform.forward;
         }
 
         /// <summary>Tops up the reserve, capped at <see cref="WeaponConfig.MaxReserve"/> (the car resupplying the player between waves).</summary>

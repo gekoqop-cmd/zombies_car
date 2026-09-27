@@ -57,6 +57,12 @@ namespace ZombiCar.EditorTools
             public bool FirePressed => false;
             public bool FireReleased => false;
             public bool QuickTap => false;
+
+            public bool TryGetAimRay(out Ray ray)
+            {
+                ray = default;   // the bot aims by direction
+                return false;
+            }
         }
 
         static Playtest()

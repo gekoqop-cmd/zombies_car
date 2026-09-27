@@ -96,6 +96,11 @@ namespace ZombiCar.EditorTools
                 maxSize = c_MaxUiSize;
                 compression = TextureImporterCompression.CompressedHQ;   // thin painted outlines
             }
+            else if (file.EndsWith("_MS"))
+            {
+                importer.sRGBTexture = false;                      // metallic / smoothness data (Ultra materials)
+                importer.anisoLevel = c_GroundAniso;
+            }
             else if (file.EndsWith("_N"))
             {
                 importer.textureType = TextureImporterType.NormalMap;

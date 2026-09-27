@@ -365,10 +365,13 @@ namespace ZombiCar.EditorTools
             cc.stepOffset = 0.35f;
             cc.slopeLimit = 45f;
 
-            // Bullets leave from here (turns with the aim); the body is the 2D sprite built by CharacterBuilder.
+            // Bullets leave from here: centred (no sideways offset), a little ahead, at the weapon's barrel height.
+            // The body is the 2D sprite built by CharacterBuilder.
+            var weaponConfig = DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig);
+            const float muzzleForward = 0.4f;
             var muzzle = new GameObject("Muzzle");
             muzzle.transform.SetParent(root.transform, false);
-            muzzle.transform.localPosition = new Vector3(0.32f, 1.05f, 0.78f);
+            muzzle.transform.localPosition = new Vector3(0f, weaponConfig.MuzzleHeight, muzzleForward);
 
             var desktop = root.AddComponent<DesktopPlayerInput>();
             var mobile = root.AddComponent<MobilePlayerInput>();
@@ -376,13 +379,16 @@ namespace ZombiCar.EditorTools
             var controller = root.AddComponent<PlayerController>();
             var pool = root.AddComponent<BulletPool>();
             var weapon = root.AddComponent<PlayerWeapon>();
+            var aimGizmos = root.AddComponent<AimGizmos>();
 
             Wire(desktop, ("m_AimOrigin", root.transform));
+            CharacterBuilder.SetProps(desktop, ("m_AimPlaneHeight", weaponConfig.MuzzleHeight));
+            Wire(aimGizmos, ("m_Weapon", weapon));
             Wire(provider, ("m_Desktop", desktop), ("m_Mobile", mobile));
             Wire(controller, ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
                 ("m_InputProvider", provider));
             Wire(pool, ("m_Prefab", bulletPrefab));
-            Wire(weapon, ("m_Config", DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig)),
+            Wire(weapon, ("m_Config", weaponConfig),
                 ("m_InputProvider", provider), ("m_Muzzle", muzzle.transform), ("m_Pool", pool),
                 ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)));
             CharacterBuilder.BuildPlayerView(root, provider, weapon);

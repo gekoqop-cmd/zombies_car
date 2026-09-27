@@ -19,9 +19,13 @@ namespace ZombiCar.Player
         private Action<Bullet> m_Release;
         private bool m_Active;
 
+        /// <summary>A bullet stopped at a surface: point, surface normal (impact effects).</summary>
+        public static event Action<Vector3, Vector3> Impacted;
+
         public void Launch(Vector3 position, Vector3 direction, WeaponConfig config, int blockMask, Action<Bullet> release)
         {
-            m_Direction = direction;
+            direction.y = 0f;                      // bullets always fly level at barrel height
+            m_Direction = direction.normalized;
             m_Speed = config.BulletSpeed;
             m_Remaining = config.Range;
             m_Radius = config.BulletRadius;
@@ -29,7 +33,7 @@ namespace ZombiCar.Player
             m_BlockMask = blockMask;
             m_Release = release;
             m_Active = true;
-            transform.SetPositionAndRotation(position, Quaternion.LookRotation(direction, Vector3.up));
+            transform.SetPositionAndRotation(position, Quaternion.LookRotation(m_Direction, Vector3.up));
         }
 
         private void Update()
@@ -42,6 +46,7 @@ namespace ZombiCar.Player
                     QueryTriggerInteraction.Ignore))
             {
                 transform.position = hit.point;
+                Impacted?.Invoke(hit.point, hit.normal);
                 bool enemy = ((1 << hit.collider.gameObject.layer) & Layers.Enemies) != 0;
                 if (enemy && hit.collider.TryGetComponent(out IDamageable target))
                     target.TakeDamage(m_Damage, m_Direction);

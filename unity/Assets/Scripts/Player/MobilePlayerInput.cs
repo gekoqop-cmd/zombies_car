@@ -31,5 +31,11 @@ namespace ZombiCar.Player
         public bool FirePressed => false;
         public bool FireReleased => false;
         public bool QuickTap => false;
+
+        public bool TryGetAimRay(out Ray ray)
+        {
+            ray = default;   // sticks aim by direction only
+            return false;
+        }
     }
 }

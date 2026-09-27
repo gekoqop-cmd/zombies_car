@@ -23,6 +23,7 @@ namespace ZombiCar.EditorTools
             Step("TMP font", () => TmpSetup.EnsureFont());
             Step("Data assets", DataAssetsBuilder.Run);
             Step("Materials", MaterialLibrary.Run);
+            Step("Ultra materials", UltraQualityBuilder.BuildMaterials);
             Step("Prefabs", PrefabBuilder.BuildAll);
             Step("Scenes", SceneBuilder.BuildAll);
             AssetDatabase.SaveAssets();
@@ -34,6 +35,7 @@ namespace ZombiCar.EditorTools
         /// <summary>Rebuilds only prefabs + scenes + screenshots (after art or layout tweaks).</summary>
         public static void RebuildScenes()
         {
+            Step("Ultra materials", UltraQualityBuilder.BuildMaterials);
             Step("Prefabs", PrefabBuilder.BuildAll);
             Step("Scenes", SceneBuilder.BuildAll);
             AssetDatabase.SaveAssets();

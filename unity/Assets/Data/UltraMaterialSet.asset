@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a945229fa0d1b174a9c0e3701c688205, type: 3}
+  m_Name: UltraMaterialSet
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Core.UltraMaterialSet
+  m_Pairs:
+  - Regular: {fileID: 2100000, guid: f2b1b66681ef08f428325f18b78fb482, type: 2}
+    Ultra: {fileID: 2100000, guid: 987bff37b6cf6bf48b5365f0a569fac8, type: 2}
+  - Regular: {fileID: 2100000, guid: e635cf7c303603145a5445f92699c7c6, type: 2}
+    Ultra: {fileID: 2100000, guid: d05be3c82312ed747a98717f26052a99, type: 2}
+  - Regular: {fileID: 2100000, guid: 9e1ee6697ea70544ab73e631859884ed, type: 2}
+    Ultra: {fileID: 2100000, guid: e4d8191469e438e43b862b63816fb5ea, type: 2}
+  - Regular: {fileID: 2100000, guid: 96c4a5a8d97a2fd439eeae160b1ba138, type: 2}
+    Ultra: {fileID: 2100000, guid: 502ec4b2eea9b6d478600055d5f5a49e, type: 2}
+  - Regular: {fileID: 2100000, guid: c56f7285ba4491944ac5c4e07314282a, type: 2}
+    Ultra: {fileID: 2100000, guid: 5065ffe84fe3c2d478e1318f1c454963, type: 2}
+  - Regular: {fileID: 2100000, guid: cf33df4b80749284d91f7fbbe7e1f6a1, type: 2}
+    Ultra: {fileID: 2100000, guid: df46c0884b5266b45b203c962ff2d918, type: 2}
+  - Regular: {fileID: 2100000, guid: fa3ab50b2e6910e47833df14326e1cc8, type: 2}
+    Ultra: {fileID: 2100000, guid: da3781c5d775a154cbd5593be64dc2b9, type: 2}
+  - Regular: {fileID: 2100000, guid: c3299d624282b7441a899459179583a6, type: 2}
+    Ultra: {fileID: 2100000, guid: e770ed53a8db2914bb68830a4a396812, type: 2}
+  - Regular: {fileID: 2100000, guid: accbfe0d36471714989a0a3b5df5ecd1, type: 2}
+    Ultra: {fileID: 2100000, guid: 1a697adbfb2f5d449a15eef2363b31eb, type: 2}
+  - Regular: {fileID: 2100000, guid: 4479a3c9e5ee08345bbe1f528e9b4265, type: 2}
+    Ultra: {fileID: 2100000, guid: 3d4653536987d814abd120515a75990c, type: 2}
+  - Regular: {fileID: 2100000, guid: 86afdeb0432c39a4badd3a74586beb37, type: 2}
+    Ultra: {fileID: 2100000, guid: bf2d4372991e06f4da806ceff35f3ca0, type: 2}
+  - Regular: {fileID: 2100000, guid: a89870a14aa67d24488fea0e5fc966ce, type: 2}
+    Ultra: {fileID: 2100000, guid: ab39d1ac71acb154fa017d940ee7a185, type: 2}
+  - Regular: {fileID: 2100000, guid: 28b67acae22b2e5498caa05be7306b66, type: 2}
+    Ultra: {fileID: 2100000, guid: 14c215cfb46d4dd4a9ac772b56b490b9, type: 2}
+  - Regular: {fileID: 2100000, guid: 1126bf50823e3e34a9dfdaa652f18efe, type: 2}
+    Ultra: {fileID: 2100000, guid: a4e670072dd82d24b90d3ab1ed224047, type: 2}
