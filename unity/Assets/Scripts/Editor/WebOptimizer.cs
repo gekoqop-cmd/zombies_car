@@ -32,6 +32,9 @@ namespace ZombiCar.EditorTools
             PlayerSettings.WebGL.wasm2023 = false;
             // Rustwave template: full-window canvas, no page scroll / long-press menu, capped pixel ratio on phones.
             PlayerSettings.WebGL.template = "PROJECT:Rustwave";
+            // No Unity splash (free since Unity 6): 2.7 MB less to download and the menu appears sooner.
+            PlayerSettings.SplashScreen.show = false;
+            PlayerSettings.SplashScreen.showUnityLogo = false;
             PlayerSettings.WebGL.initialMemorySize = c_InitialMemoryMb;
             PlayerSettings.WebGL.maximumMemorySize = c_MaximumMemoryMb;
             PlayerSettings.WebGL.memoryGrowthMode = WebGLMemoryGrowthMode.Geometric;

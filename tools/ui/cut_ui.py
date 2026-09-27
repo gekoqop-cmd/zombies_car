@@ -35,10 +35,15 @@ def load(name):
     return np.asarray(Image.open(os.path.join(REF, name)).convert("RGBA")).copy()
 
 
+def mult4(n):
+    return max(4, int(round(n / 4.0)) * 4)
+
+
 def save(arr, name, scale=1.0):
+    """Saves at a size that is a multiple of 4 on both sides: GPU block compression (DXT) needs it, otherwise Unity
+    keeps the sprite uncompressed (4-6x the download)."""
     im = Image.fromarray(arr.astype(np.uint8), "RGBA")
-    if scale != 1.0:
-        im = im.resize((max(1, round(im.width * scale)), max(1, round(im.height * scale))), Image.LANCZOS)
+    im = im.resize((mult4(im.width * scale), mult4(im.height * scale)), Image.LANCZOS)
     im.save(os.path.join(OUT, name + ".png"), optimize=True)
     print(name, im.size)
 
@@ -211,10 +216,12 @@ def sticks():
 
 
 def pictures():
-    Image.open(os.path.join(REF, "menumain.png")).convert("RGB").save(os.path.join(OUT, "UI_MenuBackground.png"), optimize=True)
+    # 1600 x 900: 16:9, a multiple of 4 (compressible), enough for a background seen through a dim and a slow zoom.
+    Image.open(os.path.join(REF, "menumain.png")).convert("RGB").resize((1600, 900), Image.LANCZOS).save(
+        os.path.join(OUT, "UI_MenuBackground.png"), optimize=True)
     logo = Image.open(os.path.join(REF, "logo.png")).convert("RGBA")
     logo = logo.crop(logo.getbbox())
-    logo = logo.resize((1200, round(logo.height * 1200 / logo.width)), Image.LANCZOS)
+    logo = logo.resize((1200, mult4(logo.height * 1200 / logo.width)), Image.LANCZOS)
     logo.save(os.path.join(OUT, "UI_Logo.png"), optimize=True)
     day = Image.open(os.path.join(REF, "map1.png")).convert("RGB")
     day.resize((1024, 576), Image.LANCZOS).save(os.path.join(OUT, "UI_MapCityDay.png"), optimize=True)

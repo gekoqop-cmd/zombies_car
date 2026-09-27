@@ -12,6 +12,8 @@ namespace ZombiCar.Core
 
         public MapConfig Map => m_Map;
 
+        private void OnDestroy() => GameSession.ExitMap();
+
         private void Awake()
         {
             SettingsService.EnsureLoaded();
@@ -22,6 +24,7 @@ namespace ZombiCar.Core
         {
             // No baked lighting: rebuild the ambient probe from the scene's gradient ambient colours.
             DynamicGI.UpdateEnvironment();
+            GameSession.EnterMap();
             SceneLoader.EnsureExists().EnsureHudLoaded();
             if (QualityAutoTuner.IsNeeded)
                 gameObject.AddComponent<QualityAutoTuner>();

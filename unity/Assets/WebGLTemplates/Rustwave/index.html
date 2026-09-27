@@ -4,6 +4,15 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>{{{ PRODUCT_NAME }}}</title>
+    <!-- Yandex Games SDK (served by the platform at this path). -->
+    <script src="/sdk.js"></script>
+    <script>
+      // Started right away, so the SDK is ready by the time the game asks (Plugins/WebGL/YandexSdk.jslib).
+      window.ysdkPromise = (typeof YaGames !== "undefined")
+        ? YaGames.init().then(function (s) { window.ysdk = s; return s; })
+            .catch(function (e) { console.warn("[YandexSdk] init failed", e); return null; })
+        : Promise.resolve(null);
+    </script>
     <style>
       /* Full-window game: no scrolling, pull-to-refresh, text selection, long-press menus or double-tap zoom
          (Yandex Games requirements for mobile). */
@@ -62,6 +71,7 @@
         productName: {{{ JSON.stringify(PRODUCT_NAME) }}},
         productVersion: {{{ JSON.stringify(PRODUCT_VERSION) }}},
         showBanner: function (msg, type) { if (type === "error") showError(msg); },
+        autoSyncPersistentDataPath: true,   // saved settings / controls layout persist without the deprecated manual sync
       };
       // Phones have 2-3x screens: rendering at full density costs 4-9x the pixels. Cap it (the game's own quality
       // tiers then scale further with their render scale).

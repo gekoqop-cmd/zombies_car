@@ -3,20 +3,13 @@ using UnityEngine;
 namespace ZombiCar.Core
 {
     /// <summary>
-    /// Mutes all audio while the tab/app is not focused or is paused (Yandex Games moderation rule).
-    /// The Yandex SDK pause events (game_api_pause / resume) can call <see cref="SetExternalPause"/> later.
+    /// Pauses the game and its sound while the tab / app is not focused or is minimised (Yandex Games moderation
+    /// rule), through <see cref="GamePause"/>. Lives on the persistent scene loader.
     /// </summary>
     public sealed class AudioFocusGuard : MonoBehaviour
     {
         private bool m_Unfocused;
         private bool m_Paused;
-        private bool m_ExternalPause;
-
-        public void SetExternalPause(bool paused)
-        {
-            m_ExternalPause = paused;
-            Apply();
-        }
 
         private void OnApplicationFocus(bool hasFocus)
         {
@@ -30,6 +23,6 @@ namespace ZombiCar.Core
             Apply();
         }
 
-        private void Apply() => AudioListener.pause = m_Unfocused || m_Paused || m_ExternalPause;
+        private void Apply() => GamePause.Set(GamePause.Reason.Focus, m_Unfocused || m_Paused);
     }
 }

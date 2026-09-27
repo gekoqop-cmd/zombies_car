@@ -71,6 +71,7 @@ namespace ZombiCar.Core
         private IEnumerator LoadSingleRoutine(string sceneName)
         {
             IsLoading = true;
+            GamePause.ClearSession();
             yield return SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
             IsLoading = false;
         }
@@ -78,6 +79,7 @@ namespace ZombiCar.Core
         private IEnumerator LoadMapRoutine(MapConfig map)
         {
             IsLoading = true;
+            GamePause.ClearSession();
             CurrentMap = map;
             yield return SceneManager.LoadSceneAsync(map.SceneName, LoadSceneMode.Single);
             yield return LoadHudRoutineInternal();

@@ -37,6 +37,9 @@ namespace ZombiCar.UI
             Apply(1f, true);
         }
 
+        // The menu is the first screen the player can use: the game is loaded for the platform.
+        private void Start() => YandexSdk.NotifyGameReady();
+
         public void ShowMapSelection(bool open)
         {
             m_MapOpen = open;

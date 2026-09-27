@@ -39,7 +39,6 @@ namespace ZombiCar.UI
         private Vector2[] m_Position;
         private Vector2 m_AreaSize;
         private int m_Dragged = -1;
-        private float m_TimeScaleBeforeEdit = 1f;
 
         /// <summary>The HUD's controls (null in scenes without them, e.g. the main menu).</summary>
         public static MobileControlsLayout Instance { get; private set; }
@@ -117,8 +116,7 @@ namespace ZombiCar.UI
             if (IsEditing)
                 return;
             IsEditing = true;
-            m_TimeScaleBeforeEdit = Time.timeScale;
-            Time.timeScale = 0f;
+            GamePause.Set(GamePause.Reason.ControlsLayout, true);
             MobileControls.Reset();
             if (m_EditOverlay != null)
                 m_EditOverlay.SetActive(true);
@@ -129,7 +127,7 @@ namespace ZombiCar.UI
             if (!IsEditing)
                 return;
             IsEditing = false;
-            Time.timeScale = m_TimeScaleBeforeEdit;
+            GamePause.Set(GamePause.Reason.ControlsLayout, false);
             if (m_EditOverlay != null)
                 m_EditOverlay.SetActive(false);
             for (int i = 0; i < m_Controls.Length; i++)

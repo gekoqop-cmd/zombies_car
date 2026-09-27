@@ -84,6 +84,12 @@ namespace ZombiCar.UI
 
         public bool IsOpen => gameObject.activeSelf && m_Target > 0f;
 
+        private void OnDisable()
+        {
+            if (m_Target > 0f)
+                GamePause.Set(GamePause.Reason.Settings, false);
+        }
+
         public void Show()
         {
             Init();
@@ -98,6 +104,7 @@ namespace ZombiCar.UI
             Highlight(SettingsService.Quality);
             m_Target = 1f;
             m_Group.interactable = m_Group.blocksRaycasts = true;
+            GamePause.Set(GamePause.Reason.Settings, true);        // the game waits while the settings are open
         }
 
         public void Hide()
@@ -105,6 +112,7 @@ namespace ZombiCar.UI
             m_Target = 0f;
             if (m_Group != null)
                 m_Group.interactable = m_Group.blocksRaycasts = false;
+            GamePause.Set(GamePause.Reason.Settings, false);
         }
 
         /// <summary>Shows or hides at once (tools, screenshots).</summary>
@@ -134,7 +142,7 @@ namespace ZombiCar.UI
         private void ToMenu()
         {
             m_MenuButton.interactable = false;
-            SceneLoader.EnsureExists().LoadMainMenu();
+            YandexSdk.ShowFullscreenAd(() => SceneLoader.EnsureExists().LoadMainMenu());
         }
 
         private void Select(QualityTier tier)

@@ -21,8 +21,8 @@ namespace ZombiCar.EditorTools
     {
         private static readonly Color s_ButtonLabel = new Color(0.97f, 0.95f, 0.9f, 1f);
         private static readonly Color s_PlayColor = new Color(0.93f, 0.47f, 0.13f, 1f);
-        private const float c_LogoAspect = 1200f / 394f;
-        private const float c_MenuBackgroundAspect = 1672f / 941f;
+        private const float c_LogoAspect = 1200f / 412f;   // UI_Logo.png (tools/ui/cut_ui.py)
+        private const float c_MenuBackgroundAspect = 1600f / 900f;
         private const float c_CardSpacing = 1700f;
 
         // ================================================================== Main menu

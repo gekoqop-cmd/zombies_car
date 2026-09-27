@@ -8,8 +8,7 @@ namespace ZombiCar.Core
     /// One-shot sound effects from a fixed pool of AudioSources routed to the SFX group of the game mixer
     /// (Master / Music / SFX). Browsers only allow audio after a user gesture, so nothing plays until the first click,
     /// key press or touch. Lives in the scene that needs it (Map01); <see cref="Instance"/> is that scene's manager.
-    /// All sound stops while the tab loses focus or the game is paused from outside (Yandex Games requirement:
-    /// no sound when minimised or during ads; the SDK's game_api_pause will call <see cref="SetExternalPause"/>).
+    /// All sound stops while the tab loses focus, during ads and platform pauses (<see cref="GamePause"/>).
     /// </summary>
     public sealed class AudioManager : MonoBehaviour
     {
@@ -26,8 +25,6 @@ namespace ZombiCar.Core
         private AudioSource[] m_Sources;
         private int m_Next;
         private bool m_Unlocked;
-        private static bool s_FocusLost;
-        private static bool s_ExternalPause;
 
         public static AudioManager Instance { get; private set; }
 
@@ -55,26 +52,8 @@ namespace ZombiCar.Core
 
         private void OnDisable() => SettingsService.VolumesChanged -= ApplyVolumes;
 
-        private void OnApplicationFocus(bool hasFocus)
-        {
-            s_FocusLost = !hasFocus;
-            ApplyPause();
-        }
-
-        private void OnApplicationPause(bool paused)
-        {
-            s_FocusLost = paused;
-            ApplyPause();
-        }
-
         /// <summary>Mutes everything while an outside pause (ads, platform overlay) is active.</summary>
-        public static void SetExternalPause(bool paused)
-        {
-            s_ExternalPause = paused;
-            ApplyPause();
-        }
-
-        private static void ApplyPause() => AudioListener.pause = s_FocusLost || s_ExternalPause;
+        public static void SetExternalPause(bool paused) => GamePause.Set(GamePause.Reason.Platform, paused);
 
         private void OnDestroy()
         {

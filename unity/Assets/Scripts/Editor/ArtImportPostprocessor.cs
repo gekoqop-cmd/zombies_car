@@ -26,6 +26,7 @@ namespace ZombiCar.EditorTools
         private const int c_MaxPlayerFrameSize = 1024;
         private const int c_GroundAniso = 4;
         private const float c_AlphaTestReference = 0.5f;
+        private const int c_CrunchQuality = 60;
 
         private void OnPreprocessModel()
         {
@@ -151,9 +152,14 @@ namespace ZombiCar.EditorTools
                 importer.anisoLevel = c_GroundAniso;               // ground is seen at a grazing angle
             }
 
+            // Crunch (lossy DXT, decoded on load) cuts the download of the scene textures to a fraction: the WebGL
+            // data file is mostly textures. Kept off for normal / data maps (block artefacts) and for the UI and
+            // character sprites (high-quality compression for thin painted outlines).
+            bool crunch = compression == TextureImporterCompression.Compressed && !file.EndsWith("_N") && !file.EndsWith("_MS");
             importer.maxTextureSize = maxSize;
             importer.textureCompression = compression;
-            importer.crunchedCompression = false;
+            importer.crunchedCompression = crunch;
+            importer.compressionQuality = c_CrunchQuality;
             importer.SetPlatformTextureSettings(new TextureImporterPlatformSettings
             {
                 name = c_WebGL,
@@ -163,7 +169,8 @@ namespace ZombiCar.EditorTools
                     ? TextureImporterFormat.RGBA32
                     : TextureImporterFormat.Automatic,
                 textureCompression = compression,
-                crunchedCompression = false,
+                crunchedCompression = crunch,
+                compressionQuality = c_CrunchQuality,
             });
         }
 
@@ -182,6 +189,24 @@ namespace ZombiCar.EditorTools
             importer.mipmapEnabled = true;
             importer.alphaIsTransparency = true;
             importer.wrapMode = TextureWrapMode.Clamp;
+        }
+
+        /// <summary>Re-imports every texture under Assets/Art with the current rules (after changing them).</summary>
+        [MenuItem("Tools/Setup/Reimport Art Textures")]
+        public static void ReimportTextures()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:Texture2D", new[] { "Assets/Art" });
+            AssetDatabase.StartAssetEditing();
+            try
+            {
+                foreach (string guid in guids)
+                    AssetDatabase.ImportAsset(AssetDatabase.GUIDToAssetPath(guid), ImportAssetOptions.ForceUpdate);
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+            Debug.Log($"[ArtImportPostprocessor] Re-imported {guids.Length} textures.");
         }
 
         private static Vector4 SpriteBorderFor(string file)

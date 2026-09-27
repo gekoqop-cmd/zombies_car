@@ -68,7 +68,8 @@ namespace ZombiCar.UI
             if (map == null)
                 return;
             m_PlayButton.interactable = false;
-            SceneLoader.EnsureExists().LoadMap(map);
+            // Between the menu and the map: a logical break for a fullscreen ad (the platform limits how often).
+            YandexSdk.ShowFullscreenAd(() => SceneLoader.EnsureExists().LoadMap(map));
         }
     }
 }
