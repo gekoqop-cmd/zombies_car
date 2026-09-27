@@ -18,7 +18,7 @@ namespace ZombiCar.EditorTools
     /// Everything the Ultra graphics tier adds on top of High, built so that Low / Medium / High render exactly as
     /// before: Ultra versions of the key materials (URP Lit: normal map, smoothness, reflections, stronger emission)
     /// swapped in by <see cref="UltraMaterialSwap"/>, and Map01 content that only a <see cref="QualityTierGate"/>
-    /// switches on — five more lamp lights (eight in total), 1.5x denser grass and bushes, a reflection probe,
+    /// switches on — four more lamp lights, 1.5x denser grass and bushes, a reflection probe,
     /// ambient dust — plus shot / impact sparks and a high-priority Ultra post-processing volume.
     /// The URP asset, SSAO renderer and quality level are set up by <see cref="ProjectConfigurator"/>.
     /// </summary>
@@ -143,7 +143,6 @@ namespace ZombiCar.EditorTools
             ("UltraLight_WorkshopLampL", new Vector3(-11.8f, 3.3f, 5.9f), 1.6f, 4.5f, false),
             ("UltraLight_WorkshopLampR", new Vector3(-6.2f, 3.3f, 5.9f), 1.6f, 4.5f, false),
             ("UltraLight_RoadLampW", new Vector3(-16f, 3.45f, 17.6f), 2.5f, 7f, false),
-            ("UltraLight_RoadLampE", new Vector3(11f, 3.45f, 17.6f), 2.5f, 7f, false),
         };
 
         /// <summary>Existing lights that also cast soft shadows (only pipelines with additional-light shadows, i.e. Ultra).</summary>

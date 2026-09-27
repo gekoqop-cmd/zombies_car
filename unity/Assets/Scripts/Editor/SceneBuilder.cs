@@ -804,7 +804,7 @@ namespace ZombiCar.EditorTools
             Place("Env_Sidewalk_East", background, 32.85f, eastStripZ, 90f, 1f, c_SidewalkHeight);
 
             // Street furniture outside the lot.
-            foreach (float x in new[] { -38f, -16f, 11f, 40f })
+            foreach (float x in new[] { -38f, -16f, 40f })   // the lamp at x 11 (by the gas sign) removed on request
                 Place("Lamp_Street", background, x, 16.7f, 90f);
             foreach (float z in new[] { -12f, 6f })
                 Place("Pole_Power", background, 33.8f, z, 90f);
@@ -1088,9 +1088,7 @@ namespace ZombiCar.EditorTools
                 ("Decal_Pothole1", -12f, 2f, 130f, 1.3f, 0.75f), ("Decal_Pothole2", 11.2f, 7.7f, 200f, 0.7f, 0.95f),
                 ("Decal_Pothole1", 2.8f, -10.5f, 280f, 0.85f, 0.6f), ("Decal_Pothole2", 15.4f, -1.4f, 40f, 1.05f, 1.2f),
                 ("Decal_Manhole", 10.9f, -7.4f, 0f, 1f, 1f),
-                ("Decal_Stone1", -16.8f, -2.8f, 0f, 1.2f, 1.2f), ("Decal_Stone2", 7.7f, 9.5f, 30f, 1.1f, 1.1f),
-                ("Decal_Stone3", -7f, -11.2f, 70f, 1.15f, 1.15f), ("Decal_Stone2", 0f, 6.6f, 10f, 1f, 1f),
-                ("Decal_Stone3", 13f, -4.2f, 140f, 1f, 1f),
+                // No stone decals: removed from the lot on request.
             };
             // Neighbouring decals may overlap: each one gets its own height step.
             for (int i = 0; i < decals.Length; i++)
