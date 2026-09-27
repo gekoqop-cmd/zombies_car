@@ -1,4 +1,5 @@
 using UnityEngine;
+using ZombiCar.Core;
 
 namespace ZombiCar.Player
 {
@@ -16,7 +17,7 @@ namespace ZombiCar.Player
 
         private void Awake()
         {
-            bool useMobile = Application.isMobilePlatform && m_Mobile != null && m_Mobile.IsImplemented;
+            bool useMobile = DeviceInfo.IsMobile && m_Mobile != null && m_Mobile.IsImplemented;
             if (useMobile)
             {
                 Input = m_Mobile;
@@ -28,8 +29,7 @@ namespace ZombiCar.Player
                 Input = m_Desktop;
                 if (m_Mobile != null)
                     m_Mobile.enabled = false;
-                if (Application.isMobilePlatform)
-                    Debug.LogWarning("[PlayerInputProvider] Touch controls are not implemented yet, using PC input.");
+
             }
         }
     }

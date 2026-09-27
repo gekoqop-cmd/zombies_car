@@ -28,7 +28,10 @@ namespace ZombiCar.EditorTools
             PlayerSettings.WebGL.decompressionFallback = true;
             PlayerSettings.WebGL.exceptionSupport = WebGLExceptionSupport.None;
             PlayerSettings.WebGL.debugSymbolMode = WebGLDebugSymbolMode.Off;
-            PlayerSettings.WebGL.wasm2023 = true;
+            // Off: WebAssembly 2023 features need Safari 16.4+ - older iPhones (iOS 15 / early 16) would not start.
+            PlayerSettings.WebGL.wasm2023 = false;
+            // Rustwave template: full-window canvas, no page scroll / long-press menu, capped pixel ratio on phones.
+            PlayerSettings.WebGL.template = "PROJECT:Rustwave";
             PlayerSettings.WebGL.initialMemorySize = c_InitialMemoryMb;
             PlayerSettings.WebGL.maximumMemorySize = c_MaximumMemoryMb;
             PlayerSettings.WebGL.memoryGrowthMode = WebGLMemoryGrowthMode.Geometric;
@@ -49,6 +52,7 @@ namespace ZombiCar.EditorTools
                 + $"  exceptionSupport = {PlayerSettings.WebGL.exceptionSupport}\n"
                 + $"  debugSymbolMode = {PlayerSettings.WebGL.debugSymbolMode}\n"
                 + $"  wasm2023 = {PlayerSettings.WebGL.wasm2023}\n"
+                + $"  template = {PlayerSettings.WebGL.template}\n"
                 + $"  memory = {PlayerSettings.WebGL.initialMemorySize}..{PlayerSettings.WebGL.maximumMemorySize} MB {PlayerSettings.WebGL.memoryGrowthMode}\n"
                 + $"  codeOptimization = {UnityEditor.WebGL.UserBuildSettings.codeOptimization}");
         }

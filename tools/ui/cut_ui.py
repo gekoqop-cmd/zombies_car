@@ -15,6 +15,7 @@ Writes to unity/Assets/Art/Textures/UI:
   UI_GearIcon.png         the gear
   UI_WavePanel.png        wave panel with its notched shape, text painted out
   UI_IconSun/Moon.png, UI_Arrow.png  small drawn icons for the map selection
+  UI_StickRing/Knob.png, UI_RoundButton.png  round touch controls (mobile)
 The references' backgrounds are already transparent (checked), so no background removal is needed; cut edges get
 a 1 px defringe (colour bled from the inside).
 """
@@ -163,6 +164,7 @@ def icons():
     arrow = Image.new("RGBA", (s, s), (0, 0, 0, 0))
     ImageDraw.Draw(arrow).polygon([(40, 14), (100, 64), (40, 114), (26, 100), (70, 64), (26, 28)], fill=(255, 255, 255, 255))
     arrow.save(os.path.join(OUT, "UI_Arrow.png"))
+    sticks()
     print("icons")
 
 
@@ -181,6 +183,31 @@ def align_to(reference, image):
     out = cv2.warpAffine(img, warp, (ref.shape[1], ref.shape[0]), flags=cv2.INTER_LINEAR | cv2.WARP_INVERSE_MAP,
                          borderMode=cv2.BORDER_REPLICATE)
     return Image.fromarray(out)
+
+
+def sticks():
+    """Round touch controls in the HUD style: the stick ring (dark translucent disc, light rim), the knob and a round
+    button plate. Drawn 4x and scaled down for smooth edges."""
+    def disc(size, fill, rim, rim_width, inner_shadow=False, gloss=False):
+        n = size * 4
+        im = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+        d = ImageDraw.Draw(im)
+        d.ellipse((2, 2, n - 3, n - 3), fill=rim)
+        w = rim_width * 4
+        d.ellipse((w, w, n - 1 - w, n - 1 - w), fill=fill)
+        if inner_shadow:
+            ring = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+            ImageDraw.Draw(ring).ellipse((w, w, n - 1 - w, n - 1 - w), outline=(0, 0, 0, 90), width=w * 2)
+            im.alpha_composite(ring.filter(ImageFilter.GaussianBlur(w)))
+        if gloss:
+            g = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+            ImageDraw.Draw(g).ellipse((n * 0.2, n * 0.1, n * 0.8, n * 0.5), fill=(255, 255, 255, 60))
+            im.alpha_composite(g.filter(ImageFilter.GaussianBlur(n * 0.04)))
+        return im.resize((size, size), Image.LANCZOS)
+    disc(256, (12, 14, 20, 110), (225, 215, 200, 170), 5, inner_shadow=True).save(os.path.join(OUT, "UI_StickRing.png"))
+    disc(128, (58, 62, 74, 235), (235, 228, 214, 255), 6, gloss=True).save(os.path.join(OUT, "UI_StickKnob.png"))
+    disc(160, (20, 23, 31, 215), (205, 200, 190, 220), 5, gloss=True).save(os.path.join(OUT, "UI_RoundButton.png"))
+    print("sticks")
 
 
 def pictures():

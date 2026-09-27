@@ -26,6 +26,15 @@ namespace ZombiCar.UI
         [SerializeField] private Color m_NormalColor = new Color(0.16f, 0.17f, 0.2f, 0.95f);
         [SerializeField] private Color m_SelectedColor = new Color(0.9f, 0.45f, 0.12f, 1f);
 
+        [Header("Touch controls (mobile only)")]
+        [SerializeField, OptionalReference] private GameObject m_MobileSection;
+        [SerializeField, OptionalReference] private Slider m_ControlsSizeSlider;
+        [Tooltip("Opens the controls' edit mode (only where the controls exist: the HUD).")]
+        [SerializeField, OptionalReference] private Button m_EditControlsButton;
+        [Tooltip("The window; it is this much shorter when the touch-controls section is hidden.")]
+        [SerializeField] private RectTransform m_Window;
+        [SerializeField, Min(0f)] private float m_MobileSectionHeight;
+
         [SerializeField] private Button m_CloseButton;
         [Tooltip("Leaves the map for the main menu (only the HUD's pop-up has it).")]
         [SerializeField, OptionalReference] private Button m_MenuButton;
@@ -55,6 +64,19 @@ namespace ZombiCar.UI
             m_CloseButton.onClick.AddListener(Hide);
             if (m_MenuButton != null)
                 m_MenuButton.onClick.AddListener(ToMenu);
+            bool mobile = DeviceInfo.IsMobile && m_MobileSection != null;
+            if (m_MobileSection != null)
+                m_MobileSection.SetActive(mobile);
+            if (!mobile && m_Window != null)
+                m_Window.sizeDelta -= new Vector2(0f, m_MobileSectionHeight);
+            if (m_ControlsSizeSlider != null)
+            {
+                m_ControlsSizeSlider.minValue = SettingsService.c_MinControlsScale;
+                m_ControlsSizeSlider.maxValue = SettingsService.c_MaxControlsScale;
+                m_ControlsSizeSlider.onValueChanged.AddListener(SettingsService.SetControlsScale);
+            }
+            if (m_EditControlsButton != null)
+                m_EditControlsButton.onClick.AddListener(EditControls);
             m_MasterSlider.onValueChanged.AddListener(SettingsService.SetMasterVolume);
             m_MusicSlider.onValueChanged.AddListener(SettingsService.SetMusicVolume);
             m_SfxSlider.onValueChanged.AddListener(SettingsService.SetSfxVolume);
@@ -69,6 +91,10 @@ namespace ZombiCar.UI
             m_MasterSlider.SetValueWithoutNotify(SettingsService.MasterVolume);
             m_MusicSlider.SetValueWithoutNotify(SettingsService.MusicVolume);
             m_SfxSlider.SetValueWithoutNotify(SettingsService.SfxVolume);
+            if (m_ControlsSizeSlider != null)
+                m_ControlsSizeSlider.SetValueWithoutNotify(SettingsService.ControlsScale);
+            if (m_EditControlsButton != null)
+                m_EditControlsButton.gameObject.SetActive(MobileControlsLayout.Instance != null);
             Highlight(SettingsService.Quality);
             m_Target = 1f;
             m_Group.interactable = m_Group.blocksRaycasts = true;
@@ -95,6 +121,14 @@ namespace ZombiCar.UI
             m_Group.alpha = Mathf.MoveTowards(m_Group.alpha, m_Target, Time.unscaledDeltaTime / m_FadeTime);
             if (m_Target <= 0f && m_Group.alpha <= 0f)
                 gameObject.SetActive(false);
+        }
+
+        private void EditControls()
+        {
+            Hide();
+            Snap();
+            if (MobileControlsLayout.Instance != null)
+                MobileControlsLayout.Instance.BeginEdit();
         }
 
         private void ToMenu()

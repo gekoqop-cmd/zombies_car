@@ -13,6 +13,9 @@ namespace ZombiCar.Core
         private const string c_VolumeKey = "settings.volume";
         private const string c_MusicVolumeKey = "settings.volume.music";
         private const string c_SfxVolumeKey = "settings.volume.sfx";
+        private const string c_ControlsScaleKey = "settings.controls.scale";
+        public const float c_MinControlsScale = 0.7f;
+        public const float c_MaxControlsScale = 1.4f;
         private const QualityTier c_FallbackDesktopQuality = QualityTier.Medium;
         private const QualityTier c_FallbackMobileQuality = QualityTier.Low;
         private const float c_FallbackVolume = 1f;
@@ -37,9 +40,16 @@ namespace ZombiCar.Core
         public static float MusicVolume { get; private set; } = c_FallbackVolume;
         public static float SfxVolume { get; private set; } = c_FallbackVolume;
 
+        /// <summary>Size multiplier of the on-screen touch controls.</summary>
+        public static float ControlsScale { get; private set; } = 1f;
+        public static event Action<float> ControlsScaleChanged;
+
+        /// <summary>The player (or the first-run auto-tuning) has chosen a quality tier on this device.</summary>
+        public static bool HasStoredQuality => PlayerPrefs.HasKey(c_QualityKey);
+
         public static void Load(GameSettings defaults)
         {
-            QualityTier defaultTier = Application.isMobilePlatform
+            QualityTier defaultTier = DeviceInfo.IsMobile
                 ? (defaults != null ? defaults.MobileDefaultQuality : c_FallbackMobileQuality)
                 : (defaults != null ? defaults.DesktopDefaultQuality : c_FallbackDesktopQuality);
             float defaultVolume = defaults != null ? defaults.DefaultMasterVolume : c_FallbackVolume;
@@ -49,6 +59,7 @@ namespace ZombiCar.Core
             MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_VolumeKey, defaultVolume));
             MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_MusicVolumeKey, c_FallbackVolume));
             SfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_SfxVolumeKey, c_FallbackVolume));
+            ControlsScale = Mathf.Clamp(PlayerPrefs.GetFloat(c_ControlsScaleKey, 1f), c_MinControlsScale, c_MaxControlsScale);
 
             // Let the browser drive the frame pacing on the Web (requestAnimationFrame).
             Application.targetFrameRate = -1;
@@ -65,8 +76,9 @@ namespace ZombiCar.Core
                 Load(null);
         }
 
-        /// <summary>Ultra is for powerful PCs: it is not offered on mobile and a stored Ultra falls back to High there.</summary>
-        public static bool IsUltraAllowed => !Application.isMobilePlatform;
+        /// <summary>Every tier is offered on every device (Ultra on phones is the player's choice; the first run on a
+        /// phone picks a tier by measuring the frame rate, <see cref="QualityAutoTuner"/>).</summary>
+        public static bool IsUltraAllowed => true;
 
         public static void SetQuality(QualityTier tier)
         {
@@ -95,6 +107,14 @@ namespace ZombiCar.Core
             PlayerPrefs.SetFloat(c_MusicVolumeKey, MusicVolume);
             PlayerPrefs.Save();
             VolumesChanged?.Invoke();
+        }
+
+        public static void SetControlsScale(float scale)
+        {
+            ControlsScale = Mathf.Clamp(scale, c_MinControlsScale, c_MaxControlsScale);
+            PlayerPrefs.SetFloat(c_ControlsScaleKey, ControlsScale);
+            PlayerPrefs.Save();
+            ControlsScaleChanged?.Invoke(ControlsScale);
         }
 
         public static void SetSfxVolume(float volume)

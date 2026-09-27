@@ -443,6 +443,9 @@ namespace ZombiCar.EditorTools
             return saved.GetComponent<Bullet>();
         }
 
+        private const string c_AimLineMaterial = EditorPaths.c_Materials + "/VFX/M_AimLine.mat";
+        private static readonly Color s_AimLineColor = new Color(1f, 0.55f, 0.18f, 1f);
+
         private static void BuildPlayer(Bullet bulletPrefab)
         {
             var root = new GameObject("Player") { layer = Layers.c_PlayerIndex, tag = "Player" };
@@ -474,8 +477,22 @@ namespace ZombiCar.EditorTools
             Wire(weapon, ("m_Config", weaponConfig),
                 ("m_InputProvider", provider), ("m_Pool", pool),
                 ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)));
+            Wire(mobile, ("m_Weapon", weapon));
             PlayerBuilder.BuildView(root, provider, weapon, desktop);
             SetLayerRecursively(root, Layers.c_PlayerIndex);
+
+            // Touch-controls aim line (Brawl Stars style); placed in world space by the component, off on desktop.
+            var aimLine = new GameObject("AimLine");
+            aimLine.transform.SetParent(root.transform, false);
+            aimLine.AddComponent<MeshFilter>();
+            var aimRenderer = aimLine.AddComponent<MeshRenderer>();
+            var aimMaterial = AssetDatabase.LoadAssetAtPath<Material>(c_AimLineMaterial);
+            aimMaterial.SetColor("_BaseColor", s_AimLineColor);                 // reads on the light asphalt and at night
+            EditorUtility.SetDirty(aimMaterial);
+            aimRenderer.sharedMaterial = aimMaterial;
+            aimRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            aimRenderer.receiveShadows = false;
+            Wire(aimLine.AddComponent<AimIndicator>(), ("m_InputProvider", provider), ("m_Weapon", weapon), ("m_Follow", root.transform));
 
             SavePrefab(root, $"{EditorPaths.c_PrefabsCharacters}/Player.prefab");
         }

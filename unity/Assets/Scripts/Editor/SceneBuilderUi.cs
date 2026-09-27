@@ -254,7 +254,9 @@ namespace ZombiCar.EditorTools
             group.alpha = 0f;
             var center = new Vector2(0.5f, 0.5f);
             var top = new Vector2(0.5f, 1f);
-            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, new Vector2(1060f, 820f));
+            // Taller by the touch-controls row; SettingsPanel removes that height again on desktop.
+            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero,
+                new Vector2(1060f, 820f + c_MobileSettingsRowHeight));
             UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
             OutlinedLabel("Title", window, top, top, new Vector2(0f, -34f), new Vector2(900f, 80f), "НАСТРОЙКИ", 60f,
                 TextAlignmentOptions.Center, s_ButtonLabel, outline);
@@ -277,6 +279,17 @@ namespace ZombiCar.EditorTools
             Button medium = TierButton("MediumButton", row, size, "СРЕДНЕЕ", normal, outline);
             Button high = TierButton("HighButton", row, size, "ВЫСОКОЕ", normal, outline);
             Button ultra = TierButton("UltraButton", row, size, "УЛЬТРА", normal, outline);
+
+            // Touch controls (mobile only): size, and "layout" to drag them around (only in the game, where they exist).
+            RectTransform mobileRow = UiFactory.Rect("TouchControls", window, top, top, new Vector2(0f, -655f), new Vector2(940f, 90f));
+            var midLeft = new Vector2(0f, 0.5f);
+            var midRight = new Vector2(1f, 0.5f);
+            OutlinedLabel("Label", mobileRow, midLeft, midLeft, Vector2.zero, new Vector2(270f, 70f), "ДЖОЙСТИКИ", 36f,
+                TextAlignmentOptions.Left, s_ButtonLabel, outline);
+            RectTransform sizeSlot = UiFactory.Rect("SizeSlot", mobileRow, midLeft, midLeft, new Vector2(270f, 0f), new Vector2(360f, 56f));
+            Slider controlsSize = BuildSlider(sizeSlot);
+            Button editControls = HudButton("EditLayoutButton", mobileRow, midRight, Vector2.zero, new Vector2(280f, 90f), "РАСПОЛОЖЕНИЕ",
+                30f, Color.white, outline);
             var bottom = new Vector2(0.5f, 0f);
             // In the game: "To menu" next to Back (the main menu's own pop-up only has Back).
             Button close = HudButton("BackButton", window, bottom, new Vector2(menuButton ? 200f : 0f, 40f), new Vector2(360f, 110f),
@@ -288,7 +301,9 @@ namespace ZombiCar.EditorTools
             var settings = root.gameObject.AddComponent<SettingsPanel>();
             PrefabBuilder.Wire(settings, ("m_MasterSlider", master), ("m_MusicSlider", music), ("m_SfxSlider", sfx),
                 ("m_LowButton", low), ("m_MediumButton", medium), ("m_HighButton", high), ("m_UltraButton", ultra),
-                ("m_CloseButton", close), ("m_MenuButton", toMenu));
+                ("m_CloseButton", close), ("m_MenuButton", toMenu), ("m_MobileSection", mobileRow.gameObject),
+                ("m_ControlsSizeSlider", controlsSize), ("m_EditControlsButton", editControls), ("m_Window", window));
+            CharacterBuilder.SetProps(settings, ("m_MobileSectionHeight", c_MobileSettingsRowHeight));
             root.gameObject.SetActive(false);
             return settings;
         }
@@ -314,7 +329,14 @@ namespace ZombiCar.EditorTools
             OutlinedLabel("Label", row, midLeft, midLeft, Vector2.zero, new Vector2(460f, 70f), label, 36f, TextAlignmentOptions.Left,
                 s_ButtonLabel, outline);
 
-            RectTransform sliderRt = UiFactory.Rect("Slider", row, midRight, midRight, Vector2.zero, new Vector2(440f, 56f));
+            RectTransform sliderSlot = UiFactory.Rect("SliderSlot", row, midRight, midRight, Vector2.zero, new Vector2(440f, 56f));
+            return BuildSlider(sliderSlot);
+        }
+
+        /// <summary>A HUD-style slider (rounded trough, orange fill, light handle) filling <paramref name="slot"/>.</summary>
+        private static Slider BuildSlider(RectTransform slot)
+        {
+            RectTransform sliderRt = UiFactory.Stretch("Slider", slot);
             UiFactory.Image(sliderRt, UiFactory.Sprite("UI_BarTrack"), Color.white, true, true);   // the trough, also the hit area
             RectTransform fillArea = UiFactory.Stretch("FillArea", sliderRt);
             fillArea.offsetMin = new Vector2(8f, 8f);
@@ -423,6 +445,7 @@ namespace ZombiCar.EditorTools
             settingsButton.targetGraphic = gearPlate;
             gearRt.gameObject.AddComponent<UIButtonFx>();
 
+            BuildTouchControls(safe, outline);
             SettingsPanel settings = BuildSettingsPopup(safe, outline, true);
 
             var hud = canvas.gameObject.AddComponent<HudController>();
@@ -440,6 +463,96 @@ namespace ZombiCar.EditorTools
             SaveUiPrefab(canvas.gameObject, "HUD");
             UiFactory.EventSystem();
             EditorSceneManager.SaveScene(scene, c_HudScene);
+        }
+
+        // ------------------------------------------------------------------ touch controls (mobile)
+        private const float c_MobileSettingsRowHeight = 110f;
+        private const float c_HudReserve = 220f;           // the top HUD panels + the reload bar: controls stay below
+        private const float c_StickTouch = 380f;           // touch area of a stick
+        private const float c_StickRing = 260f;
+        private const float c_StickKnob = 120f;
+        private const float c_TouchButton = 150f;
+
+        /// <summary>
+        /// The mobile controls layer (hidden on desktop by <see cref="MobileControlsLayout"/>): move stick bottom-left,
+        /// aim / fire stick bottom-right, reload button above it, all inside the area below the top HUD; plus the
+        /// edit overlay (frame of the allowed area, hint, Reset / Done) used to move them.
+        /// </summary>
+        private static void BuildTouchControls(RectTransform safe, Material outline)
+        {
+            RectTransform root = UiFactory.Stretch("TouchControls", safe);
+            RectTransform area = UiFactory.Stretch("Area", root);
+            area.offsetMin = new Vector2(20f, 20f);
+            area.offsetMax = new Vector2(-20f, -c_HudReserve);
+
+            var bottomLeft = new Vector2(0f, 0f);
+            var bottomRight = new Vector2(1f, 0f);
+            var layout = root.gameObject.AddComponent<MobileControlsLayout>();
+            RectTransform move = Stick("MoveStick", area, bottomLeft, new Vector2(c_StickTouch * 0.5f, c_StickTouch * 0.5f),
+                VirtualJoystick.Role.Move, Color.white, layout);
+            RectTransform aim = Stick("AimStick", area, bottomRight, new Vector2(-c_StickTouch * 0.5f, c_StickTouch * 0.5f),
+                VirtualJoystick.Role.Aim, new Color(1f, 0.62f, 0.3f, 1f), layout);
+            RectTransform reload = UiFactory.Rect("ReloadButton", area, bottomRight, new Vector2(0.5f, 0.5f),
+                new Vector2(-c_StickTouch - 30f, c_StickTouch * 0.5f + 150f), new Vector2(c_TouchButton, c_TouchButton));
+            UiFactory.Image(reload, UiFactory.Sprite("UI_RoundButton"), Color.white, false, true);
+            RectTransform reloadIcon = UiFactory.Rect("Icon", reload, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
+                new Vector2(c_TouchButton * 0.5f, c_TouchButton * 0.5f));
+            UiFactory.Image(reloadIcon, UiFactory.Sprite("UI_AmmoIcon"), Color.white, false).preserveAspect = true;
+            PrefabBuilder.Wire(reload.gameObject.AddComponent<TouchButton>(), ("m_Layout", layout));
+
+            // Edit overlay: dims the game, shows where the controls may go, takes the drags.
+            RectTransform overlay = UiFactory.Stretch("EditOverlay", root);
+            UiFactory.Image(overlay, null, new Color(0f, 0f, 0f, 0.45f), false, true);
+            RectTransform frame = UiFactory.Stretch("AllowedArea", overlay);
+            frame.offsetMin = area.offsetMin;
+            frame.offsetMax = area.offsetMax;
+            UiFactory.Image(frame, UiFactory.Sprite("UI_Panel"), new Color(1f, 0.85f, 0.6f, 0.18f), true);
+            var top = new Vector2(0.5f, 1f);
+            OutlinedLabel("Hint", overlay, top, top, new Vector2(0f, -c_HudReserve - 20f), new Vector2(1300f, 60f),
+                "ПЕРЕТАЩИТЕ ДЖОЙСТИКИ И КНОПКИ", 40f, TextAlignmentOptions.Center, s_ButtonLabel, outline);
+            Button reset = HudButton("ResetButton", overlay, top, new Vector2(-190f, -c_HudReserve - 100f), new Vector2(340f, 100f),
+                "СБРОС", 42f, Color.white, outline);
+            Button done = HudButton("DoneButton", overlay, top, new Vector2(190f, -c_HudReserve - 100f), new Vector2(340f, 100f),
+                "ГОТОВО", 42f, s_PlayColor, outline);
+
+            var so = new SerializedObject(layout);
+            so.FindProperty("m_Area").objectReferenceValue = area;
+            SerializedProperty controls = so.FindProperty("m_Controls");
+            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload) };
+            controls.arraySize = list.Length;
+            for (int i = 0; i < list.Length; i++)
+            {
+                SerializedProperty c = controls.GetArrayElementAtIndex(i);
+                c.FindPropertyRelative("Id").stringValue = list[i].id;
+                c.FindPropertyRelative("Rect").objectReferenceValue = list[i].rect;
+            }
+            so.FindProperty("m_EditOverlay").objectReferenceValue = overlay.gameObject;
+            so.FindProperty("m_DoneButton").objectReferenceValue = done;
+            so.FindProperty("m_ResetButton").objectReferenceValue = reset;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            overlay.gameObject.SetActive(false);
+        }
+
+        private static RectTransform Stick(string name, RectTransform area, Vector2 anchor, Vector2 position, VirtualJoystick.Role role,
+            Color knobTint, MobileControlsLayout layout)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform rt = UiFactory.Rect(name, area, anchor, center, position, new Vector2(c_StickTouch, c_StickTouch));
+            UiFactory.Image(rt, null, Color.clear, false, true);                 // the (larger) touch area
+            var group = rt.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0.75f;
+            RectTransform ring = UiFactory.Rect("Ring", rt, center, center, Vector2.zero, new Vector2(c_StickRing, c_StickRing));
+            UiFactory.Image(ring, UiFactory.Sprite("UI_StickRing"), Color.white, false);
+            RectTransform knob = UiFactory.Rect("Knob", ring, center, center, Vector2.zero, new Vector2(c_StickKnob, c_StickKnob));
+            UiFactory.Image(knob, UiFactory.Sprite("UI_StickKnob"), knobTint, false);
+            var stick = rt.gameObject.AddComponent<VirtualJoystick>();
+            var so = new SerializedObject(stick);
+            so.FindProperty("m_Role").enumValueIndex = (int)role;
+            so.FindProperty("m_Ring").objectReferenceValue = ring;
+            so.FindProperty("m_Knob").objectReferenceValue = knob;
+            so.FindProperty("m_Layout").objectReferenceValue = layout;
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return rt;
         }
 
         // Opaque boxes of the references (px): parts are placed by their reference coordinates inside these.

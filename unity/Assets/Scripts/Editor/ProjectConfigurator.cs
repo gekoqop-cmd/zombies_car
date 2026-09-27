@@ -80,7 +80,7 @@ namespace ZombiCar.EditorTools
             VersionControlSettings.mode = "Visible Meta Files";
 
             PlayerSettings.companyName = "gekoqop";
-            PlayerSettings.productName = "Zombies Car";
+            PlayerSettings.productName = "Rustwave";
             PlayerSettings.colorSpace = ColorSpace.Linear;
             PlayerSettings.defaultInterfaceOrientation = UIOrientation.LandscapeLeft;
             PlayerSettings.allowedAutorotateToPortrait = false;

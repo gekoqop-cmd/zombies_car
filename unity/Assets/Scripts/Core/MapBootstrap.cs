@@ -23,6 +23,8 @@ namespace ZombiCar.Core
             // No baked lighting: rebuild the ambient probe from the scene's gradient ambient colours.
             DynamicGI.UpdateEnvironment();
             SceneLoader.EnsureExists().EnsureHudLoaded();
+            if (QualityAutoTuner.IsNeeded)
+                gameObject.AddComponent<QualityAutoTuner>();
         }
     }
 }
