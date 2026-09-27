@@ -7,7 +7,7 @@ namespace ZombiCar.Core
     /// <summary>
     /// Scales post-processing with the quality tier: Low = no post-processing, Medium = bloom/vignette/colour,
     /// High = everything + depth of field and SMAA, Ultra = High + the Ultra volume (high-quality bloom, bokeh depth
-    /// of field, lift/gamma/gain grade, white balance, light chromatic aberration and film grain).
+    /// of field, lift/gamma/gain grade, white balance and film grain).
     /// </summary>
     public sealed class QualityPostProcessApplier : MonoBehaviour, IQualityTierListener
     {

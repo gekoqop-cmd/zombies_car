@@ -7,8 +7,9 @@ using ZombiCar.Waves;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// HUD (UI_HUD scene): health, level, wave + timer, ammo and the settings button. Listens to the shared
-    /// state assets, so it works over any map scene without direct references.
+    /// HUD (UI_HUD scene): health, level, wave + timer, ammo with the reload progress and the settings button.
+    /// Listens to the shared state assets, so it works over any map scene without direct references; every number
+    /// on it comes from them (the scene builder fills the saved texts with <see cref="Refresh"/> too).
     /// </summary>
     public sealed class HudController : MonoBehaviour
     {
@@ -32,6 +33,8 @@ namespace ZombiCar.UI
         [Header("Ammo")]
         [SerializeField] private TMP_Text m_AmmoValue;
         [SerializeField] private GameObject m_ReloadHint;
+        [Tooltip("Filled image of the reload bar; advances every frame while reloading.")]
+        [SerializeField] private Image m_ReloadFill;
 
         [Header("Settings")]
         [SerializeField] private Button m_SettingsButton;
@@ -49,9 +52,21 @@ namespace ZombiCar.UI
             if (m_WaveState != null) m_WaveState.Changed += RefreshWave;
             if (m_AmmoState != null) m_AmmoState.Changed += RefreshAmmo;
             if (m_SettingsButton != null) m_SettingsButton.onClick.AddListener(OpenSettings);
+            Refresh();
+        }
+
+        /// <summary>Shows the current values of all state assets.</summary>
+        public void Refresh()
+        {
             RefreshPlayer();
             RefreshWave();
             RefreshAmmo();
+        }
+
+        private void Update()
+        {
+            if (m_ReloadFill != null && m_AmmoState != null && m_AmmoState.IsReloading)
+                m_ReloadFill.fillAmount = m_AmmoState.ReloadProgress;
         }
 
         private void OnDisable()
@@ -88,6 +103,8 @@ namespace ZombiCar.UI
             m_AmmoValue.SetText(string.Format(m_ValueFormat, m_AmmoState.InMagazine, m_AmmoState.Reserve));
             if (m_ReloadHint != null)
                 m_ReloadHint.SetActive(m_AmmoState.IsReloading);
+            if (m_ReloadFill != null)
+                m_ReloadFill.fillAmount = m_AmmoState.ReloadProgress;
         }
 
         private void OpenSettings()

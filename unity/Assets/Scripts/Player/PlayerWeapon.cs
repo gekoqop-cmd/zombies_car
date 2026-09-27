@@ -5,10 +5,10 @@ using ZombiCar.Core;
 namespace ZombiCar.Player
 {
     /// <summary>
-    /// Placeholder gun: fires pooled bullets from the Muzzle (barrel height) while fire is held, with fire rate,
-    /// magazine, reserve and automatic reload from <see cref="WeaponConfig"/>. With a cursor the shot goes level
-    /// from the muzzle through the resolved aim point (<see cref="AimSolver"/>), otherwise along
-    /// <see cref="IPlayerInput.AimDirection"/>.
+    /// Placeholder gun: fires pooled bullets from the Muzzle (the barrel on the player sprite) while fire is held,
+    /// with fire rate, magazine, reserve and reload (R or an empty magazine) from <see cref="WeaponConfig"/>.
+    /// With a cursor the shot goes level from the muzzle through the resolved aim point (<see cref="AimSolver"/>),
+    /// otherwise along <see cref="IPlayerInput.AimDirection"/>.
     /// Publishes ammo to <see cref="AmmoState"/> for the HUD and raises <see cref="Fired"/> for the player's sprite.
     /// </summary>
     public sealed class PlayerWeapon : MonoBehaviour
@@ -41,8 +41,11 @@ namespace ZombiCar.Player
         /// <summary>Level direction the next bullet will take from the muzzle.</summary>
         public Vector3 ShotDirection { get; private set; } = Vector3.forward;
 
-        /// <summary>Raised on every shot (muzzle flash, shooting pose).</summary>
+        /// <summary>Raised on every shot (muzzle flash, shooting pose, sound).</summary>
         public event Action Fired;
+
+        /// <summary>Raised when a reload starts (animation stretched to <see cref="WeaponConfig.ReloadTime"/>, sound).</summary>
+        public event Action ReloadStarted;
 
         private void Start()
         {
@@ -70,7 +73,9 @@ namespace ZombiCar.Player
             if (wantsToFire && !m_IsReloading && Time.time >= m_NextShotTime)
                 Fire();
 
-            if (m_InMagazine == 0 && !m_IsReloading && m_Reserve > 0)
+            bool magazineEmpty = m_InMagazine == 0;
+            bool requested = m_Input.ReloadPressed && m_InMagazine < m_Config.MagazineSize;
+            if ((magazineEmpty || requested) && !m_IsReloading && m_Reserve > 0)
                 StartReload();
         }
 
@@ -79,6 +84,8 @@ namespace ZombiCar.Player
             if (m_InMagazine <= 0)
                 return;
 
+            // The bullet is drawn at the barrel of the sprite; it collides over the whole height band from
+            // WeaponConfig.HitBandBottom up to the barrel, so low cover and small zombies stop it too.
             Bullet bullet = m_Pool.Get();
             bullet.Launch(m_Muzzle.position, ShotDirection, m_Config, m_BlockMask, m_Pool.Release);
 
@@ -91,7 +98,7 @@ namespace ZombiCar.Player
         private void UpdateAim()
         {
             m_Aim = m_Input.TryGetAimRay(out Ray ray)
-                ? AimSolver.FromRay(ray, m_Muzzle.position.y, m_Config)
+                ? AimSolver.FromRay(ray, m_Config.MuzzleHeight, m_Config)
                 : default;
             if (m_Aim.IsValid && AimSolver.LevelDirection(m_Muzzle.position, m_Aim.Point, c_MinShotDistance, out Vector3 toAim))
             {
@@ -117,6 +124,7 @@ namespace ZombiCar.Player
             m_IsReloading = true;
             m_ReloadEndTime = Time.time + m_Config.ReloadTime;
             Publish();
+            ReloadStarted?.Invoke();
         }
 
         private void FinishReload()
@@ -131,7 +139,7 @@ namespace ZombiCar.Player
         private void Publish()
         {
             if (m_Ammo != null)
-                m_Ammo.Set(m_InMagazine, m_Reserve, m_IsReloading);
+                m_Ammo.Set(m_InMagazine, m_Reserve, m_IsReloading, m_Config.ReloadTime);
         }
     }
 }

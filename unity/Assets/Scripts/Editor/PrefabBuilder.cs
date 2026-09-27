@@ -57,8 +57,6 @@ namespace ZombiCar.EditorTools
         /// </summary>
         private static readonly (string prefab, string material, Vector3 center, Vector3 size, bool solid)[] s_StubParts =
         {
-            ("Stub_Tree", "M_Stub_Trunk", new Vector3(0f, 1.4f, 0f), new Vector3(0.5f, 2.8f, 0.5f), true),
-            ("Stub_Tree", "M_Stub_Foliage", new Vector3(0f, 4.4f, 0f), new Vector3(4.2f, 3.6f, 4.2f), false),
             ("Stub_Bicycle", "M_Stub_Bicycle", new Vector3(0f, 0.5f, 0f), new Vector3(1.75f, 1f, 0.45f), true),
             ("Stub_Hydrant", "M_Stub_Hydrant", new Vector3(0f, 0.45f, 0f), new Vector3(0.4f, 0.9f, 0.4f), true),
         };
@@ -75,8 +73,10 @@ namespace ZombiCar.EditorTools
             int models = BuildModelPrefabs();
             BuildGeneratedEnvironment();
             BuildStubs();
+            TreeBuilder.BuildAll();
             Bullet bullet = BuildBullet();
             CharacterBuilder.BuildAll();
+            PlayerBuilder.BuildAssets();
             BuildPlayer(bullet);
             AssetDatabase.SaveAssets();
             Debug.Log($"[PrefabBuilder] {models} model prefabs + generated environment, bullet, zombies, player.");
@@ -224,8 +224,8 @@ namespace ZombiCar.EditorTools
             var box = go.AddComponent<BoxCollider>();
             box.center = CarPlayerColliderCenter;
             box.size = CarPlayerColliderSize;
-            // Its own layer: bullets (Obstacle|Enemy blockers) pass through so the player can shoot zombies
-            // hiding behind the car, while it still blocks the player's CharacterController (default layer
+            // Its own layer (zombies target it rather than treat it as scenery): bullets stop at it with sparks and
+            // no damage (Layers.ProjectileBlockers), it blocks the player's CharacterController (default layer
             // collision) and carves the zombie NavMesh below.
             go.layer = Layers.c_CarObstacleIndex;
             var navObstacle = go.AddComponent<NavMeshObstacle>();
@@ -365,13 +365,8 @@ namespace ZombiCar.EditorTools
             cc.stepOffset = 0.35f;
             cc.slopeLimit = 45f;
 
-            // Bullets leave from here: centred (no sideways offset), a little ahead, at the weapon's barrel height.
-            // The body is the 2D sprite built by CharacterBuilder.
+            // The body is the 2D sprite built by PlayerBuilder; bullets leave from its animated barrel (View/Body/Muzzle).
             var weaponConfig = DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig);
-            const float muzzleForward = 0.4f;
-            var muzzle = new GameObject("Muzzle");
-            muzzle.transform.SetParent(root.transform, false);
-            muzzle.transform.localPosition = new Vector3(0f, weaponConfig.MuzzleHeight, muzzleForward);
 
             var desktop = root.AddComponent<DesktopPlayerInput>();
             var mobile = root.AddComponent<MobilePlayerInput>();
@@ -382,16 +377,15 @@ namespace ZombiCar.EditorTools
             var aimGizmos = root.AddComponent<AimGizmos>();
 
             Wire(desktop, ("m_AimOrigin", root.transform));
-            CharacterBuilder.SetProps(desktop, ("m_AimPlaneHeight", weaponConfig.MuzzleHeight));
             Wire(aimGizmos, ("m_Weapon", weapon));
             Wire(provider, ("m_Desktop", desktop), ("m_Mobile", mobile));
             Wire(controller, ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
                 ("m_InputProvider", provider));
             Wire(pool, ("m_Prefab", bulletPrefab));
             Wire(weapon, ("m_Config", weaponConfig),
-                ("m_InputProvider", provider), ("m_Muzzle", muzzle.transform), ("m_Pool", pool),
+                ("m_InputProvider", provider), ("m_Pool", pool),
                 ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)));
-            CharacterBuilder.BuildPlayerView(root, provider, weapon);
+            PlayerBuilder.BuildView(root, provider, weapon, desktop);
             SetLayerRecursively(root, Layers.c_PlayerIndex);
 
             SavePrefab(root, $"{EditorPaths.c_PrefabsCharacters}/Player.prefab");

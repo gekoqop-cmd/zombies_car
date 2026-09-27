@@ -28,6 +28,7 @@ namespace ZombiCar.Player
         private InputAction m_MoveAction;
         private InputAction m_FireAction;
         private InputAction m_PointAction;
+        private InputAction m_ReloadAction;
         private Camera m_Camera;
         private Vector3 m_AimDirection = Vector3.forward;
         private bool m_FireStartedOverUi;
@@ -41,6 +42,7 @@ namespace ZombiCar.Player
         public bool FirePressed { get; private set; }
         public bool FireReleased { get; private set; }
         public bool QuickTap => false;
+        public bool ReloadPressed { get; private set; }
 
         /// <summary>Cursor position on the barrel-height plane (valid while <see cref="AimActive"/>).</summary>
         public Vector3 AimPoint { get; private set; }
@@ -67,6 +69,7 @@ namespace ZombiCar.Player
 
             m_FireAction = new InputAction("Fire", InputActionType.Button, "<Mouse>/leftButton");
             m_PointAction = new InputAction("Point", InputActionType.Value, "<Mouse>/position");
+            m_ReloadAction = new InputAction("Reload", InputActionType.Button, "<Keyboard>/r");   // physical key: any layout
         }
 
         private void OnEnable()
@@ -74,6 +77,7 @@ namespace ZombiCar.Player
             m_MoveAction.Enable();
             m_FireAction.Enable();
             m_PointAction.Enable();
+            m_ReloadAction.Enable();
         }
 
         private void OnDisable()
@@ -81,6 +85,8 @@ namespace ZombiCar.Player
             m_MoveAction.Disable();
             m_FireAction.Disable();
             m_PointAction.Disable();
+            m_ReloadAction.Disable();
+            ReloadPressed = false;
             Move = Vector2.zero;
             FireHeld = FirePressed = FireReleased = AimActive = m_HasAimRay = false;
         }
@@ -90,11 +96,13 @@ namespace ZombiCar.Player
             m_MoveAction?.Dispose();
             m_FireAction?.Dispose();
             m_PointAction?.Dispose();
+            m_ReloadAction?.Dispose();
         }
 
         private void Update()
         {
             Move = Vector2.ClampMagnitude(m_MoveAction.ReadValue<Vector2>(), 1f);
+            ReloadPressed = m_ReloadAction.WasPressedThisFrame();
             // A click that starts on a HUD button (settings, etc.) must not shoot.
             bool pressedNow = m_FireAction.WasPressedThisFrame();
             if (pressedNow)

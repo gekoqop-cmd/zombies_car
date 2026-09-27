@@ -24,9 +24,13 @@ namespace ZombiCar.Player
         [SerializeField, Min(0)] private int m_PoolPrewarm = 24;
 
         [Header("Aiming")]
-        [Tooltip("Barrel height above the ground, metres. Bullets fly level at this height and the cursor ray is " +
-                 "intersected with a plane at this height, so every shot passes exactly under the cursor.")]
-        [SerializeField, Range(0.5f, 2f)] private float m_MuzzleHeight = 1.05f;
+        [Tooltip("Height of the barrel on the player sprite, metres (world, set by the prefab builder from the frames). " +
+                 "Bullets are drawn level at this height and the cursor ray is intersected with a plane at this height, " +
+                 "so every shot passes exactly under the cursor.")]
+        [SerializeField, Range(0.5f, 3f)] private float m_MuzzleHeight = 1.05f;
+        [Tooltip("Lowest point a bullet collides at, metres: the bullet sweeps a vertical capsule from here up to the " +
+                 "barrel, so low cover (barriers, barrels) and small zombies stop it although it is drawn higher.")]
+        [SerializeField, Min(0f)] private float m_HitBandBottom = 0.35f;
         [Tooltip("Radius of the cast along the cursor ray that picks the enemy under the cursor, metres.")]
         [SerializeField, Min(0f)] private float m_CursorPickRadius = 0.15f;
         [Tooltip("Aim assist: a shot aimed within Aim Assist Radius of an enemy goes to the enemy's centre.")]
@@ -45,6 +49,7 @@ namespace ZombiCar.Player
         public float BulletRadius => m_BulletRadius;
         public int PoolPrewarm => m_PoolPrewarm;
         public float MuzzleHeight => m_MuzzleHeight;
+        public float HitBandBottom => m_HitBandBottom;
         public float CursorPickRadius => m_CursorPickRadius;
         public bool AimAssist => m_AimAssist;
         public float AimAssistRadius => m_AimAssistRadius;

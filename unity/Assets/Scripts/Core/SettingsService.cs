@@ -24,6 +24,9 @@ namespace ZombiCar.Core
 
         public static event Action<QualityTier> QualityChanged;
 
+        /// <summary>Master volume 0..1 changed (applied to the mixer by <see cref="AudioManager"/>).</summary>
+        public static event Action<float> VolumeChanged;
+
         public static QualityTier Quality { get; private set; } = c_FallbackDesktopQuality;
         public static float MasterVolume { get; private set; } = c_FallbackVolume;
 
@@ -41,8 +44,8 @@ namespace ZombiCar.Core
             // Let the browser drive the frame pacing on the Web (requestAnimationFrame).
             Application.targetFrameRate = -1;
             ApplyQuality(Quality);
-            AudioListener.volume = MasterVolume;
             s_Loaded = true;
+            VolumeChanged?.Invoke(MasterVolume);
             QualityChanged?.Invoke(Quality);   // components enabled before the load pick up the stored tier
         }
 
@@ -70,9 +73,9 @@ namespace ZombiCar.Core
         public static void SetMasterVolume(float volume)
         {
             MasterVolume = Mathf.Clamp01(volume);
-            AudioListener.volume = MasterVolume;
             PlayerPrefs.SetFloat(c_VolumeKey, MasterVolume);
             PlayerPrefs.Save();
+            VolumeChanged?.Invoke(MasterVolume);
         }
 
         /// <summary>

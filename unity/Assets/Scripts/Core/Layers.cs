@@ -19,12 +19,12 @@ namespace ZombiCar.Core
         public const int c_ProjectileIndex = 11;
         public const int c_CameraBoundsIndex = 12;
         public const int c_EnemyIndex = 13;
-        // The player's car: its own layer so bullets pass through it (the player can shoot zombies hiding behind
-        // it) while it still blocks the player's CharacterController and carves the zombie NavMesh like Obstacle.
+        // The player's car: its own layer (the zombie AI treats it as their target, not as scenery); it blocks the
+        // player's CharacterController, carves the zombie NavMesh like Obstacle and stops bullets (without damage).
         public const int c_CarObstacleIndex = 14;
 
-        /// <summary>Everything a projectile stops at.</summary>
-        public static int ProjectileBlockers => (1 << c_ObstacleIndex) | (1 << c_EnemyIndex);
+        /// <summary>Everything a projectile stops at: scenery, the player's car (sparks, no damage) and enemies.</summary>
+        public static int ProjectileBlockers => (1 << c_ObstacleIndex) | (1 << c_CarObstacleIndex) | (1 << c_EnemyIndex);
 
         /// <summary>Colliders that bullets damage.</summary>
         public static int Enemies => 1 << c_EnemyIndex;

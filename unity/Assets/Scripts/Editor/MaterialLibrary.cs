@@ -20,6 +20,8 @@ namespace ZombiCar.EditorTools
         // Declared before s_Specs: static fields initialise in textual order.
         private static readonly Color s_GrassTint = new Color(0.9f, 1f, 0.8f, 1f);     // counters the orange sunset on dry grass
         private const float c_BushLighten = 1.12f;                                      // bushes read slightly lighter than grass
+        private static readonly Color s_LeafTint = new Color(1.1f, 1.15f, 0.95f, 1f);
+        private static readonly Color s_LeafGlow = new Color(0.45f, 0.45f, 0.45f, 1f);
 
         public enum Surface { Opaque, Cutout, Transparent }
 
@@ -60,7 +62,10 @@ namespace ZombiCar.EditorTools
                 list.Add(S(mat, "Workshop", $"Workshop/{tex}.png"));
             list.Add(new Spec { Name = "M_LampGlow", Folder = "Workshop", Texture = "Workshop/lamp_glow.png",
                 EmissionTexture = "Workshop/lamp_glow.png", Emission = Color.white * 2.5f });
-            list.Add(new Spec { Name = "M_Leaf", Folder = "Workshop", Texture = "Workshop/leaf.png", TwoSided = true });
+            // Two-sided leaf cards: Simple Lit does not flip the normal of back faces, so the half turned from the sun got
+            // only ambient and went black under the Ultra grade. A faint glow of the leaf's own texture keeps it green.
+            list.Add(new Spec { Name = "M_Leaf", Folder = "Workshop", Texture = "Workshop/leaf.png", TwoSided = true,
+                Tint = s_LeafTint, EmissionTexture = "Workshop/leaf.png", Emission = s_LeafGlow });
             list.Add(new Spec { Name = "M_Grass", Folder = "Workshop", Texture = "Workshop/grass.png", TwoSided = true });
             list.Find(s => s.Name == "M_Glass").Smoothness = 0.6f;
 
@@ -106,14 +111,21 @@ namespace ZombiCar.EditorTools
                     Surface = Surface.Transparent, Smoothness = 0f });
             list.Add(new Spec { Name = "M_ShadowBlob", Folder = "Environment", Texture = "Environment/T_ShadowBlob.png",
                 Surface = Surface.Transparent, Unlit = true, Tint = Color.white });
-            // Stand-ins for concept objects without a model (tree, bicycle, fire hydrant): flat colour hints.
+            // Stand-ins for concept objects without a model (bicycle, fire hydrant): flat colour hints.
             (string, Color)[] stubs =
             {
-                ("M_Stub_Trunk", new Color(0.42f, 0.29f, 0.19f)), ("M_Stub_Foliage", new Color(0.40f, 0.55f, 0.22f)),
                 ("M_Stub_Bicycle", new Color(0.55f, 0.13f, 0.10f)), ("M_Stub_Hydrant", new Color(0.78f, 0.14f, 0.09f)),
             };
             foreach (var (name, color) in stubs)
                 list.Add(new Spec { Name = name, Folder = "Stubs", Tint = color, Smoothness = 0f });
+            // Generated low-poly background trees (TreeBuilder): flat colours in the olive tones of the lot's greenery.
+            (string, Color)[] trees =
+            {
+                ("M_Tree_Bark", new Color(0.40f, 0.27f, 0.17f)), ("M_Tree_Crown", new Color(0.36f, 0.50f, 0.18f)),
+                ("M_Tree_CrownLight", new Color(0.52f, 0.64f, 0.24f)),
+            };
+            foreach (var (name, color) in trees)
+                list.Add(new Spec { Name = name, Folder = "Nature", Tint = color, Smoothness = 0f });
 
             // VFX (characters are 2D sprites: URP Sprite-Unlit-Default, see CharacterBuilder).
             list.Add(new Spec { Name = "M_Bullet", Folder = "VFX", Unlit = true, Tint = new Color(6f, 4.2f, 1.4f, 1f) });

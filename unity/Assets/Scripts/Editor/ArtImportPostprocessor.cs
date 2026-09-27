@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ZombiCar.EditorTools
 {
     /// <summary>
-    /// Import rules for everything under Assets/Art: FBX at scale 1 without cameras/lights/animation,
+    /// Import rules for everything under Assets/Art (and the SFX under Assets/Audio/SFX): FBX at scale 1 without cameras/lights/animation,
     /// textures sized and compressed for WebGL, sprites/cursor/normal maps typed by folder and name.
     /// Character frames (tools/characters) are sprites with the pivot at the feet (bottom centre).
     /// </summary>
@@ -15,11 +15,14 @@ namespace ZombiCar.EditorTools
         private const string c_UiRoot = "Assets/Art/Textures/UI/";
         private const string c_CharactersRoot = EditorPaths.c_CharacterTextures + "/";
         private const string c_VfxRoot = "Assets/Art/VFX/";
+        private const string c_SfxRoot = "Assets/Audio/SFX/";
         private const string c_WebGL = "WebGL";
+        private const float c_SfxQuality = 0.5f;
 
         public const int c_MaxAtlasSize = 2048;
         public const float c_CharacterPixelsPerUnit = 100f;
         private const int c_MaxUiSize = 512;
+        private const int c_MaxPlayerFrameSize = 1024;
         private const int c_GroundAniso = 4;
         private const float c_AlphaTestReference = 0.5f;
 
@@ -48,6 +51,24 @@ namespace ZombiCar.EditorTools
             importer.importTangents = ModelImporterTangents.None;   // models use no normal maps
             importer.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
             importer.materialLocation = ModelImporterMaterialLocation.InPrefab;
+        }
+
+        private void OnPreprocessAudio()
+        {
+            if (!assetPath.StartsWith(c_SfxRoot))
+                return;
+            // Short effects: mono Vorbis, decompressed on load (no per-play decode cost, small download).
+            var importer = (AudioImporter)assetImporter;
+            importer.forceToMono = true;
+            importer.loadInBackground = false;
+            importer.defaultSampleSettings = new AudioImporterSampleSettings
+            {
+                loadType = AudioClipLoadType.DecompressOnLoad,
+                compressionFormat = AudioCompressionFormat.Vorbis,
+                quality = c_SfxQuality,
+                sampleRateSetting = AudioSampleRateSetting.OptimizeSampleRate,
+                preloadAudioData = true,
+            };
         }
 
         private void OnPreprocessTexture()
@@ -93,7 +114,9 @@ namespace ZombiCar.EditorTools
             else if (assetPath.StartsWith(c_CharactersRoot))
             {
                 ConfigureCharacterSprite(importer, file);
-                maxSize = c_MaxUiSize;
+                // Player frames (tools/characters/player_mp4) share one 616 px wide canvas: never downscale them,
+                // the sprite size and the barrel positions are measured in their pixels.
+                maxSize = file.StartsWith("Player_") ? c_MaxPlayerFrameSize : c_MaxUiSize;
                 compression = TextureImporterCompression.CompressedHQ;   // thin painted outlines
             }
             else if (file.EndsWith("_MS"))

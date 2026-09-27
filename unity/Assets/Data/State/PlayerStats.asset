@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: PlayerStats
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.PlayerStats
   m_MaxHealth: 100
-  m_StartHealth: 84
-  m_StartLevel: 4
-  m_StartLevelProgress: 0.35
+  m_StartHealth: 100
+  m_StartLevel: 1
+  m_StartLevelProgress: 0

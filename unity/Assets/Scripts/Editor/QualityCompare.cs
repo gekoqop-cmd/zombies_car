@@ -33,6 +33,7 @@ namespace ZombiCar.EditorTools
         {
             ("Workshop", new Vector3(-7f, 0f, 3f)),
             ("Car", new Vector3(0f, 0f, -1.5f)),
+            ("NorthBackground", new Vector3(15f, 0f, 13f)),     // the trees beyond the north road
         };
 
         private static readonly QualityTier[] s_ShotTiers = { QualityTier.High, QualityTier.Ultra };
@@ -191,7 +192,7 @@ namespace ZombiCar.EditorTools
                 if (ps.main.loop)
                     ps.Simulate(c_DustSimulation, true, true);
             }
-            UltraShotEffects effects = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<UltraShotEffects>(true)).FirstOrDefault();
+            ShotEffects effects = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<ShotEffects>(true)).FirstOrDefault();
             PlayerWeapon weapon = scene.GetRootGameObjects().SelectMany(g => g.GetComponentsInChildren<PlayerWeapon>(true)).FirstOrDefault();
             ParticleSystem sparks = effects != null ? effects.GetComponentsInChildren<ParticleSystem>(true).FirstOrDefault(p => p.name == "MuzzleSparks") : null;
             if (sparks == null || weapon == null)

@@ -4,16 +4,18 @@ using UnityEngine;
 namespace ZombiCar.Player
 {
     /// <summary>
-    /// Player health / level shown by the HUD. Placeholder values until the damage and XP systems exist;
-    /// <see cref="ResetToDefaults"/> is called when a map starts.
+    /// Player health / level shown by the HUD (written by <see cref="PlayerHealth"/>). The start values below are the
+    /// defaults a map begins with: <see cref="ResetToDefaults"/> is called when a map starts.
     /// </summary>
     [CreateAssetMenu(fileName = "PlayerStats", menuName = "ZombiCar/State/Player Stats")]
     public sealed class PlayerStats : ScriptableObject
     {
         [SerializeField, Min(1)] private int m_MaxHealth = 100;
-        [SerializeField, Min(0)] private int m_StartHealth = 84;
-        [SerializeField, Min(1)] private int m_StartLevel = 4;
-        [SerializeField, Range(0f, 1f)] private float m_StartLevelProgress = 0.35f;
+        [Tooltip("Health at the start of a map; the player starts at full health.")]
+        [SerializeField, Min(0)] private int m_StartHealth = 100;
+        [SerializeField, Min(1)] private int m_StartLevel = 1;
+        [Tooltip("Experience towards the next level at the start, 0..1.")]
+        [SerializeField, Range(0f, 1f)] private float m_StartLevelProgress = 0f;
 
         [NonSerialized] private int m_Health;
         [NonSerialized] private int m_Level;

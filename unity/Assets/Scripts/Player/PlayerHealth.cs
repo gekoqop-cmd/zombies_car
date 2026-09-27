@@ -11,7 +11,7 @@ namespace ZombiCar.Player
     public sealed class PlayerHealth : MonoBehaviour, IDamageable
     {
         [SerializeField] private PlayerStats m_Stats;
-        [SerializeField] private PlayerSpriteView m_View;
+        [SerializeField] private PlayerView m_View;
 
         private CharacterController m_Controller;
 

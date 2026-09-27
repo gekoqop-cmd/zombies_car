@@ -172,7 +172,7 @@ namespace ZombiCar.EditorTools
             RectTransform portrait = UiFactory.Stretch("Portrait", frame);
             portrait.offsetMin = new Vector2(6f, 6f);
             portrait.offsetMax = new Vector2(-6f, -6f);
-            UiFactory.Image(portrait, UiFactory.Sprite("UI_Portrait"), Color.white, false);
+            UiFactory.Image(portrait, UiFactory.Sprite("UI_PortraitPlayer"), Color.white, false);
             UiFactory.Label("HealthLabel", health, topLeft, topLeft, new Vector2(150f, -12f), new Vector2(240f, 40f),
                 "ЗДОРОВЬЕ", 28f, TextAlignmentOptions.Left, UiFactory.TextColor);
             RectTransform healthBar = UiFactory.Rect("HealthBar", health, topLeft, topLeft, new Vector2(150f, -54f), new Vector2(354f, 40f));
@@ -180,26 +180,27 @@ namespace ZombiCar.EditorTools
             RectTransform healthFillRt = UiFactory.Stretch("Fill", healthBar);
             healthFillRt.offsetMin = new Vector2(4f, 4f);
             healthFillRt.offsetMax = new Vector2(-4f, -4f);
-            Image healthFill = UiFactory.Fill(healthFillRt, bar, new Color(0.86f, 0.2f, 0.16f, 1f), 0.84f);
+            // Values are left empty here: HudController.Refresh fills them from the state assets below.
+            Image healthFill = UiFactory.Fill(healthFillRt, bar, new Color(0.86f, 0.2f, 0.16f, 1f), 1f);
             TextMeshProUGUI healthValue = UiFactory.Label("HealthValue", healthBar, midRight, midRight, new Vector2(-12f, 0f),
-                new Vector2(180f, 40f), "84 / 100", 26f, TextAlignmentOptions.Right, Color.white);
+                new Vector2(180f, 40f), string.Empty, 26f, TextAlignmentOptions.Right, Color.white);
             TextMeshProUGUI levelLabel = UiFactory.Label("LevelLabel", health, topLeft, topLeft, new Vector2(150f, -102f),
-                new Vector2(150f, 36f), "УРОВЕНЬ 4", 23f, TextAlignmentOptions.Left, UiFactory.TextColor);
+                new Vector2(150f, 36f), string.Empty, 23f, TextAlignmentOptions.Left, UiFactory.TextColor);
             RectTransform levelBar = UiFactory.Rect("LevelBar", health, topLeft, topLeft, new Vector2(300f, -108f), new Vector2(204f, 24f));
             UiFactory.Image(levelBar, bar, new Color(0.08f, 0.12f, 0.2f, 1f), true);
             RectTransform levelFillRt = UiFactory.Stretch("Fill", levelBar);
             levelFillRt.offsetMin = new Vector2(3f, 3f);
             levelFillRt.offsetMax = new Vector2(-3f, -3f);
-            Image levelFill = UiFactory.Fill(levelFillRt, bar, new Color(0.26f, 0.62f, 0.98f, 1f), 0.35f);
+            Image levelFill = UiFactory.Fill(levelFillRt, bar, new Color(0.26f, 0.62f, 0.98f, 1f), 0f);
 
             // Wave + timer (top-centre).
             RectTransform wave = UiFactory.Rect("WavePanel", safe, topCenter, topCenter, new Vector2(0f, -margin), new Vector2(250f, 130f));
             UiFactory.Image(wave, panel, UiFactory.PanelColor, true);
             TextMeshProUGUI waveLabel = UiFactory.Label("WaveLabel", wave, topCenter, topCenter, new Vector2(0f, -8f),
-                new Vector2(236f, 56f), "ВОЛНА 5", 42f, TextAlignmentOptions.Center, UiFactory.TextColor);
+                new Vector2(236f, 56f), string.Empty, 42f, TextAlignmentOptions.Center, UiFactory.TextColor);
             var bottomCenter = new Vector2(0.5f, 0f);
             TextMeshProUGUI waveTimer = UiFactory.Label("WaveTimer", wave, bottomCenter, bottomCenter, new Vector2(0f, 10f),
-                new Vector2(236f, 60f), "00:36", 48f, TextAlignmentOptions.Center, UiFactory.TextColor);
+                new Vector2(236f, 60f), string.Empty, 48f, TextAlignmentOptions.Center, UiFactory.TextColor);
 
             // Ammo (top-right, left of the settings button).
             RectTransform ammo = UiFactory.Rect("AmmoPanel", safe, topRight, topRight, new Vector2(-(margin * 2f + buttonSize), -margin),
@@ -210,10 +211,18 @@ namespace ZombiCar.EditorTools
             UiFactory.Label("AmmoLabel", ammo, midLeft, midLeft, new Vector2(84f, 0f), new Vector2(150f, 50f),
                 "ПАТРОНЫ", 24f, TextAlignmentOptions.Left, UiFactory.TextColor);
             TextMeshProUGUI ammoValue = UiFactory.Label("AmmoValue", ammo, midRight, midRight, new Vector2(-16f, 0f),
-                new Vector2(160f, 50f), "24 / 120", 36f, TextAlignmentOptions.Right, UiFactory.TextColor);
-            TextMeshProUGUI reload = UiFactory.Label("ReloadHint", safe, topRight, topRight, new Vector2(-(margin * 2f + buttonSize), -122f),
-                new Vector2(410f, 40f), "ПЕРЕЗАРЯДКА...", 26f, TextAlignmentOptions.Right, UiFactory.AccentColor);
-            reload.gameObject.SetActive(false);
+                new Vector2(160f, 50f), string.Empty, 36f, TextAlignmentOptions.Right, UiFactory.TextColor);
+            // Reload: label + progress bar under the ammo panel, shown while reloading.
+            RectTransform reload = UiFactory.Rect("ReloadHint", safe, topRight, topRight, new Vector2(-(margin * 2f + buttonSize), -122f),
+                new Vector2(410f, 64f));
+            UiFactory.Label("ReloadLabel", reload, topRight, topRight, Vector2.zero, new Vector2(410f, 34f),
+                "ПЕРЕЗАРЯДКА", 26f, TextAlignmentOptions.Right, UiFactory.AccentColor);
+            RectTransform reloadBar = UiFactory.Rect("ReloadBar", reload, topRight, topRight, new Vector2(0f, -38f), new Vector2(410f, 22f));
+            UiFactory.Image(reloadBar, bar, new Color(0.18f, 0.12f, 0.06f, 0.9f), true);
+            RectTransform reloadFillRt = UiFactory.Stretch("Fill", reloadBar);
+            reloadFillRt.offsetMin = new Vector2(3f, 3f);
+            reloadFillRt.offsetMax = new Vector2(-3f, -3f);
+            Image reloadFill = UiFactory.Fill(reloadFillRt, bar, UiFactory.AccentColor, 0f);
 
             // Settings button: 112 visible, touch area >= 48 dp (the visible panel keeps the 24 margin) and window.
             float touchInset = (UiFactory.c_MinTouchTarget - buttonSize) * 0.5f;
@@ -229,11 +238,26 @@ namespace ZombiCar.EditorTools
                 ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_AmmoState", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)),
                 ("m_HealthFill", healthFill), ("m_HealthValue", healthValue), ("m_LevelFill", levelFill), ("m_LevelLabel", levelLabel),
-                ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_ReloadHint", reload.gameObject),
+                ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_ReloadHint", reload.gameObject), ("m_ReloadFill", reloadFill),
                 ("m_SettingsButton", settingsButton), ("m_SettingsPanel", settings));
+            ShowStartState(hud);
             SaveUiPrefab(canvas.gameObject, "HUD");
             UiFactory.EventSystem();
             EditorSceneManager.SaveScene(scene, c_HudScene);
+        }
+
+        /// <summary>
+        /// Fills the saved HUD with the values a map starts with, all from the data assets: player stats defaults,
+        /// wave 1 with the first-wave countdown, a full magazine + the start reserve.
+        /// </summary>
+        private static void ShowStartState(HudController hud)
+        {
+            var waves = DataAssetsBuilder.Load<WaveConfig>(DataAssetsBuilder.c_WaveConfig);
+            var weapon = DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig);
+            DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats).ResetToDefaults();
+            DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState).Set(1, Mathf.CeilToInt(waves.FirstWaveDelay));
+            DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState).Set(weapon.MagazineSize, weapon.StartReserve, false);
+            hud.Refresh();
         }
 
         private static SettingsPanel BuildSettingsPanel(RectTransform parent, Sprite panel)
@@ -312,11 +336,13 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(systemsGo.AddComponent<MapBootstrap>(), ("m_Map", map));
             PrefabBuilder.Wire(systemsGo.AddComponent<CrosshairCursor>(),
                 ("m_Crosshair", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Textures/UI/UI_Crosshair.png")));
+            AudioBuilder.AddManager(systemsGo);
 
             BuildLights(lighting);
             BuildGround(environment, background, map);
             BuildFences(fences, map);
             BuildBuildingsAndSigns(environment);
+            GasSignLanternLights(lighting, environment.Find("Sign_Gas"));
             BuildProps(props);
             BuildNature(nature, map);
             BuildDecals(decals);
@@ -357,47 +383,118 @@ namespace ZombiCar.EditorTools
                 ("m_Spawner", spawner));
         }
 
-        // World-space durability bar floating above the player's car; high enough to clear the roof cargo.
-        private const float c_CarHealthBarHeight = 3.3f;
-        private static readonly Vector2 s_CarHealthBarSize = new Vector2(2.3f, 0.6f);
+        // World-space durability plate above the player's car (anchor height; the plate sits on it, facing the camera).
+        private const float c_CarHealthBarHeight = 2.8f;
+        // Canvas units (UI-sized, the plate component scales it to a fixed share of the screen height).
+        private static readonly Vector2 s_CarHealthBarSize = new Vector2(460f, 120f);
+        private const float c_CarHealthBarScreenHeight = 0.07f;   // twice the old 2.3 x 0.6 m plate at the default camera distance
+        private const int c_CarHealthBarSortingOrder = 100;          // after every sprite of the scene
+        private const string c_UiOverlayShader = "ZombiCar/UI World Overlay";
+        private const string c_TmpOverlayShader = "TextMeshPro/Mobile/Distance Field Overlay";
 
         private static void BuildCarHealthBar(GameObject car)
         {
             var anchor = new GameObject("HealthBarAnchor");
             anchor.transform.SetParent(car.transform, false);
-            anchor.transform.localPosition = new Vector3(0f, c_CarHealthBarHeight, 0f);
-            // Tilted to squarely face the fixed camera (unlike the upright character sprites, a flat panel
-            // would be seen edge-on if it only rotated to the camera's yaw and ignored its downward pitch).
-            Vector3 camForward = Quaternion.Euler(ViewConstants.c_CameraPitch, 0f, 0f) * Vector3.forward;
-            anchor.transform.rotation = Quaternion.LookRotation(camForward, Vector3.up);
+            anchor.transform.position = car.transform.position + Vector3.up * c_CarHealthBarHeight;
+            // Saved facing the default camera at its default distance (the component keeps it so at run time).
+            anchor.transform.rotation = Quaternion.Euler(ViewConstants.c_CameraPitch, 0f, 0f);
+            float viewHeight = 2f * ViewConstants.c_CameraDistance * Mathf.Tan(0.5f * ViewConstants.c_CameraFov * Mathf.Deg2Rad);
+            anchor.transform.localScale = Vector3.one * (viewHeight * c_CarHealthBarScreenHeight / s_CarHealthBarSize.y) /
+                                          car.transform.lossyScale.x;
 
             var canvasGo = new GameObject("Canvas", typeof(RectTransform)) { layer = UiFactory.c_UiLayer };
             canvasGo.transform.SetParent(anchor.transform, false);
             var canvas = canvasGo.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
+            canvas.overrideSorting = true;
+            canvas.sortingOrder = c_CarHealthBarSortingOrder;
             var root = (RectTransform)canvas.transform;
             root.sizeDelta = s_CarHealthBarSize;
+            root.pivot = new Vector2(0.5f, 0f);                         // stands on the anchor, clear of the roof
+
+            Material imageMaterial = OverlayMaterial("M_UI_WorldOverlay", Shader.Find(c_UiOverlayShader), null);
+            Material textMaterial = OverlayMaterial("M_TMP_WorldOverlay", Shader.Find(c_TmpOverlayShader), UiFactory.Font.material);
 
             Sprite panel = UiFactory.Sprite("UI_Panel");
             Sprite bar = UiFactory.Sprite("UI_Bar");
-            UiFactory.Image(UiFactory.Stretch("Background", root), panel, new Color(0.05f, 0.06f, 0.08f, 0.85f), true);
-
             var midLeft = new Vector2(0f, 0.5f);
             var topLeft = new Vector2(0f, 1f);
-            RectTransform icon = UiFactory.Rect("Icon", root, midLeft, midLeft, new Vector2(0.07f, 0f), new Vector2(0.42f, 0.42f));
-            UiFactory.Image(icon, UiFactory.Sprite("UI_IconCar"), Color.white, false);
+            var bottomLeft = new Vector2(0f, 0f);
+            var midRight = new Vector2(1f, 0.5f);
+            var images = new List<Image>();
+            var texts = new List<TMP_Text>();
 
-            UiFactory.Label("Label", root, topLeft, topLeft, new Vector2(0.56f, -0.06f), new Vector2(1.6f, 0.24f),
-                "ПРОЧНОСТЬ МАШИНЫ", 0.19f, TextAlignmentOptions.Left, UiFactory.TextColor);
+            images.Add(UiFactory.Image(UiFactory.Stretch("Background", root), panel, new Color(0.06f, 0.07f, 0.09f, 0.9f), true));
+            RectTransform iconFrame = UiFactory.Rect("IconFrame", root, midLeft, midLeft, new Vector2(12f, 0f), new Vector2(96f, 96f));
+            images.Add(UiFactory.Image(iconFrame, panel, UiFactory.TextColor, true));   // light tile: the brown icon reads on it
+            RectTransform icon = UiFactory.Stretch("Icon", iconFrame);
+            icon.offsetMin = new Vector2(10f, 10f);
+            icon.offsetMax = new Vector2(-10f, -10f);
+            images.Add(UiFactory.Image(icon, UiFactory.Sprite("UI_IconCar"), Color.white, false));
 
-            RectTransform barRt = UiFactory.Rect("Bar", root, topLeft, topLeft, new Vector2(0.56f, -0.32f), new Vector2(1.62f, 0.2f));
-            UiFactory.Image(barRt, bar, new Color(0.1f, 0.1f, 0.12f, 1f), true);
-            RectTransform fillRt = UiFactory.Stretch("Fill", barRt);
-            fillRt.offsetMin = new Vector2(0.02f, 0.02f);
-            fillRt.offsetMax = new Vector2(-0.02f, -0.02f);
-            Image fill = UiFactory.Fill(fillRt, bar, Color.green, 1f);
+            texts.Add(UiFactory.Label("Title", root, topLeft, topLeft, new Vector2(122f, -10f), new Vector2(326f, 44f),
+                "ПРОЧНОСТЬ МАШИНЫ", 30f, TextAlignmentOptions.Left, UiFactory.TextColor));
 
-            PrefabBuilder.Wire(canvasGo.AddComponent<CarHealthBar>(), ("m_Car", car.GetComponent<CarHealth>()), ("m_Fill", fill));
+            RectTransform barRt = UiFactory.Rect("Bar", root, bottomLeft, bottomLeft, new Vector2(122f, 14f), new Vector2(324f, 50f));
+            images.Add(UiFactory.Image(barRt, bar, new Color(0.03f, 0.03f, 0.04f, 1f), true));
+            RectTransform trailRt = Inset(UiFactory.Stretch("Trail", barRt), 4f);
+            Image trail = UiFactory.Fill(trailRt, bar, new Color(1f, 0.93f, 0.8f, 0.85f), 1f);
+            images.Add(trail);
+            RectTransform fillRt = Inset(UiFactory.Stretch("Fill", barRt), 4f);
+            Image fill = UiFactory.Fill(fillRt, bar, new Color(0.36f, 0.82f, 0.3f, 1f), 1f);   // CarHealthBar gradient at full
+            images.Add(fill);
+            TextMeshProUGUI value = UiFactory.Label("Value", barRt, midRight, midRight, new Vector2(-12f, 0f), new Vector2(300f, 50f),
+                string.Empty, 28f, TextAlignmentOptions.Right, Color.white);
+            value.outlineWidth = 0.2f;
+            value.outlineColor = new Color32(0, 0, 0, 200);
+            texts.Add(value);
+
+            Image flash = UiFactory.Image(UiFactory.Stretch("Flash", root), panel, new Color(1f, 0.45f, 0.35f, 0f), true);
+            images.Add(flash);
+
+            foreach (Image image in images)
+            {
+                image.material = imageMaterial;
+                image.raycastTarget = false;
+            }
+            foreach (TMP_Text text in texts)
+                text.fontSharedMaterial = textMaterial;
+
+            var healthBar = anchor.AddComponent<CarHealthBar>();
+            PrefabBuilder.Wire(healthBar, ("m_Car", car.GetComponent<CarHealth>()), ("m_Plate", root), ("m_Fill", fill),
+                ("m_Trail", trail), ("m_Flash", flash), ("m_Value", value));
+            CharacterBuilder.SetProps(healthBar, ("m_ScreenHeight", c_CarHealthBarScreenHeight));
+            value.SetText($"{car.GetComponent<CarHealth>().MaxHealth} / {car.GetComponent<CarHealth>().MaxHealth}");
+        }
+
+        private static RectTransform Inset(RectTransform rt, float inset)
+        {
+            rt.offsetMin = new Vector2(inset, inset);
+            rt.offsetMax = new Vector2(-inset, -inset);
+            return rt;
+        }
+
+        /// <summary>A material asset drawing UI with no depth test (copies <paramref name="source"/>'s properties when given).</summary>
+        private static Material OverlayMaterial(string name, Shader shader, Material source)
+        {
+            if (shader == null)
+                throw new InvalidOperationException($"[SceneBuilder] Shader for {name} not found");
+            string path = $"{EditorPaths.c_Materials}/UI/{name}.mat";
+            EditorPaths.EnsureFolder($"{EditorPaths.c_Materials}/UI");
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = source != null ? new Material(source) : new Material(shader);
+                AssetDatabase.CreateAsset(material, path);
+            }
+            else if (source != null)
+            {
+                material.CopyPropertiesFromMaterial(source);
+            }
+            material.shader = shader;
+            EditorUtility.SetDirty(material);
+            return material;
         }
 
         /// <summary>
@@ -501,10 +598,45 @@ namespace ZombiCar.EditorTools
             sun.shadowStrength = 0.8f;
             RenderSettings.sun = sun;
 
-            // Max three dynamic point lights; every other lamp is emission only.
+            // Few dynamic point lights (the gas sign's two lanterns: GasSignLanternLights); every other lamp is emission only.
             PointLight("Light_WorkshopGarage", parent, s_WorkshopPosition + new Vector3(0.5f, 2.6f, -2.3f), 4f, 8f);
-            PointLight("Light_GasSign", parent, new Vector3(16.5f, 3.6f, 15.6f), 3f, 6.5f);
             PointLight("Light_StreetLamp", parent, new Vector3(-0.1f, 3.45f, 13.4f), 3f, 7f);
+        }
+
+        // The gas sign is lit by its own two lanterns (the glowing glass of the Sign_Gas_Lamps part), not by a light
+        // floating in front of the board: one light just under and in front of each lantern.
+        private const float c_SignLanternIntensity = 1.7f;
+        private const float c_SignLanternRange = 5f;
+        private static readonly Vector3 s_SignLanternLightOffset = new Vector3(0f, -0.2f, -0.3f);   // below, towards the lot
+
+        private static void GasSignLanternLights(Transform lighting, Transform sign)
+        {
+            MeshRenderer lamps = sign != null
+                ? sign.GetComponentsInChildren<MeshRenderer>(true).FirstOrDefault(r => r.name.EndsWith("Lamps"))
+                : null;
+            int glass = lamps != null ? Array.FindIndex(lamps.sharedMaterials, m => m != null && m.name == "M_Signs_Emissive") : -1;
+            if (glass < 0)
+            {
+                Debug.LogError("[SceneBuilder] Sign_Gas lanterns (Sign_Gas_Lamps / M_Signs_Emissive) not found: the sign stays unlit.");
+                return;
+            }
+            Mesh mesh = lamps.GetComponent<MeshFilter>().sharedMesh;
+            Vector3[] vertices = mesh.vertices;
+            var left = new List<Vector3>();
+            var right = new List<Vector3>();
+            foreach (int index in mesh.GetTriangles(glass).Distinct())
+            {
+                Vector3 world = lamps.transform.TransformPoint(vertices[index]);
+                (sign.InverseTransformPoint(world).x < 0f ? left : right).Add(world);
+            }
+            int n = 0;
+            foreach (List<Vector3> lantern in new[] { left, right })
+            {
+                if (lantern.Count == 0)
+                    continue;
+                Vector3 center = lantern.Aggregate(Vector3.zero, (sum, v) => sum + v) / lantern.Count;
+                PointLight($"Light_GasSignLantern{++n}", lighting, center + s_SignLanternLightOffset, c_SignLanternIntensity, c_SignLanternRange);
+            }
         }
 
         private static void PointLight(string name, Transform parent, Vector3 position, float intensity, float range)
@@ -555,11 +687,19 @@ namespace ZombiCar.EditorTools
             vcam.Lens.FieldOfView = ViewConstants.c_CameraFov;
             vcam.Lens.NearClipPlane = ViewConstants.c_NearClip;
             vcam.Lens.FarClipPlane = ViewConstants.c_FarClip;
-            vcam.Target.TrackingTarget = target;
+            // The camera follows a lead point (player + look-ahead + aim offset, CameraConfig), not the player itself.
+            var cameraConfig = DataAssetsBuilder.Load<CameraConfig>(DataAssetsBuilder.c_CameraConfig);
+            var followTargetGo = new GameObject("CameraFollowTarget");
+            followTargetGo.transform.SetParent(parent, false);
+            followTargetGo.transform.position = target.position;
+            vcam.Target.TrackingTarget = followTargetGo.transform;
             var follow = vcamGo.AddComponent<CinemachineFollow>();
             follow.FollowOffset = offset;
             follow.TrackerSettings.BindingMode = BindingMode.WorldSpace;
-            follow.TrackerSettings.PositionDamping = new Vector3(0.6f, 0.6f, 0.6f);
+            follow.TrackerSettings.PositionDamping = cameraConfig.WorldDamping;
+            PrefabBuilder.Wire(followTargetGo.AddComponent<CameraFollowTarget>(), ("m_Config", cameraConfig), ("m_Player", target),
+                ("m_Controller", target.GetComponent<CharacterController>()), ("m_InputProvider", target.GetComponent<PlayerInputProvider>()),
+                ("m_Weapon", target.GetComponent<PlayerWeapon>()), ("m_Follow", follow));
             vcamGo.AddComponent<CameraAspectAdapter>();
 
             var boundsGo = new GameObject("CameraBounds") { layer = Layers.c_CameraBoundsIndex };
@@ -719,9 +859,10 @@ namespace ZombiCar.EditorTools
             Place("Sign_Road", parent, 20.7f, 8f, 210f, c_RoadSignScale);
             Place("Pole_Power", parent, 20.4f, -5f, 90f);
 
+            // Background trees beyond the north road (generated low-poly models, TreeBuilder).
+            Place($"{TreeBuilder.c_Prefix}1", parent, 2.5f, 17f);
+            Place($"{TreeBuilder.c_Prefix}2", parent, 28f, 17f, 30f);
             // Concept objects without a model: stand-in cubes (see the build report).
-            Place("Stub_Tree", parent, 2.5f, 17f);
-            Place("Stub_Tree", parent, 28f, 17f, 30f);
             Place("Stub_Hydrant", parent, 5f, 16.7f);
             Place("Stub_Bicycle", parent, -13.5f, -13.6f, 8f);
         }
@@ -811,18 +952,30 @@ namespace ZombiCar.EditorTools
             Place("Rock2", parent, -36f, -14f, 45f, 1.5f);
             Place("Rock3", parent, -32f, 19f, 90f, 1.3f);
 
-            // Grass tufts inside the lot, keeping the centre, the workshop and the parked cars clear.
+            // Grass inside the lot grows in clumps that hug the fences (the concept's overgrown edges); the open
+            // centre gets only a few stray tufts. The workshop and the parked cars stay clear.
             var lotRnd = new Random(7);
+            Vector3 lotCenter = map.PlayAreaCenter;
             float lotX = map.PlayAreaSize.x * 0.5f - 1.4f, lotZ = map.PlayAreaSize.y * 0.5f - 1.4f;
-            int placed = 0;
-            for (int attempt = 0; attempt < 600 && placed < 42; attempt++)
+            int clumps = 0;
+            for (int attempt = 0; attempt < 800 && clumps < c_LotGrassClumps; attempt++)
             {
-                float x = Mathf.Lerp(-lotX, lotX, (float)lotRnd.NextDouble());
-                float z = Mathf.Lerp(-lotZ, lotZ, (float)lotRnd.NextDouble());
-                if (!IsFreeForGrass(x, z, map))
+                float x = lotCenter.x + Mathf.Lerp(-lotX, lotX, (float)lotRnd.NextDouble());
+                float z = lotCenter.z + Mathf.Lerp(-lotZ, lotZ, (float)lotRnd.NextDouble());
+                float toEdge = Mathf.Min(lotX - Mathf.Abs(x - lotCenter.x), lotZ - Mathf.Abs(z - lotCenter.z));
+                bool edge = toEdge < c_LotGrassEdgeBand;
+                if (lotRnd.NextDouble() > (edge ? 1.0 : c_LotGrassCentreChance) || !IsFreeForGrass(x, z, map))
                     continue;
-                PlaceGrass(parent, lotRnd, x, z, c_LotGrassScale);
-                placed++;
+                int tufts = edge ? 3 + lotRnd.Next(4) : 1;
+                for (int t = 0; t < tufts; t++)
+                {
+                    double angle = lotRnd.NextDouble() * Math.PI * 2.0;
+                    float r = t == 0 ? 0f : c_LotGrassClumpRadius * (0.35f + 0.65f * (float)lotRnd.NextDouble());
+                    float tx = x + r * (float)Math.Cos(angle), tz = z + r * (float)Math.Sin(angle);
+                    if (IsFreeForGrass(tx, tz, map))
+                        PlaceGrass(parent, lotRnd, tx, tz, c_LotGrassScale * (1f - 0.35f * r / c_LotGrassClumpRadius));   // smaller at the rim
+                }
+                clumps++;
             }
             // Outside the fences (verges), within the visible ground.
             var outRnd = new Random(8);
@@ -871,6 +1024,11 @@ namespace ZombiCar.EditorTools
             }
         }
 
+        private const int c_LotGrassClumps = 16;
+        private const float c_LotGrassEdgeBand = 4f;          // metres from the fence where clumps grow
+        private const double c_LotGrassCentreChance = 0.08;   // share of centre candidates kept (as single tufts)
+        private const float c_LotGrassClumpRadius = 1.2f;
+
         private static bool IsFreeForGrass(float x, float z, MapConfig map)
         {
             if (x * x + z * z < (map.FreeZoneRadius + 0.5f) * (map.FreeZoneRadius + 0.5f))
@@ -894,23 +1052,26 @@ namespace ZombiCar.EditorTools
         // ------------------------------------------------------------------ decals
         private static void BuildDecals(Transform parent)
         {
-            (string name, float x, float z, float yaw, float scale)[] decals =
+            // Few, varied marks: each is stretched differently (x / z scale) and turned, so the two pothole and crack
+            // textures never read as the same stamp twice. The dark potholes are the fewest.
+            (string name, float x, float z, float yaw, float scaleX, float scaleZ)[] decals =
             {
-                ("Decal_Crack1", -9.8f, -4.2f, 20f, 1.1f), ("Decal_Crack2", 5.6f, -8.4f, 110f, 1.2f), ("Decal_Crack1", 11.9f, 2.8f, 60f, 1f),
-                ("Decal_Crack2", -1.5f, 2.2f, 150f, 0.95f), ("Decal_Crack1", -14f, -9.1f, 30f, 1f), ("Decal_Crack2", 2.5f, 3.2f, 75f, 0.9f),
-                ("Decal_Crack1", 7.7f, 4.9f, 200f, 1.1f), ("Decal_Crack2", 1.5f, 9.5f, 250f, 1f), ("Decal_Crack1", 16.8f, -8.4f, 320f, 1.05f),
-                ("Decal_Pothole1", -5.6f, -2.8f, 0f, 1f), ("Decal_Pothole2", 7f, -4.5f, 60f, 1.1f), ("Decal_Pothole1", -12f, 2f, 130f, 0.9f),
-                ("Decal_Pothole2", 11.2f, 7.7f, 200f, 1f), ("Decal_Pothole1", 2.8f, -10.5f, 280f, 1.2f), ("Decal_Pothole2", -15.4f, -8.4f, 20f, 0.9f),
-                ("Decal_Pothole1", 15.4f, -1.4f, 90f, 0.85f), ("Decal_Pothole2", 4f, 11f, 310f, 0.8f),
-                ("Decal_Manhole", 10.9f, -7.4f, 0f, 1f),
-                ("Decal_Stone1", -16.8f, -2.8f, 0f, 1.2f), ("Decal_Stone2", 7.7f, 9.5f, 30f, 1.1f), ("Decal_Stone3", -7f, -11.2f, 70f, 1.15f),
-                ("Decal_Stone2", 0f, 6.6f, 10f, 1f), ("Decal_Stone3", 13f, -4.2f, 140f, 1f),
+                ("Decal_Crack1", -9.8f, -4.2f, 20f, 1.25f, 0.8f), ("Decal_Crack2", 5.6f, -8.4f, 110f, 0.9f, 1.35f),
+                ("Decal_Crack1", 11.9f, 2.8f, 245f, 0.75f, 1.1f), ("Decal_Crack2", -1.5f, 2.2f, 150f, 1.1f, 0.7f),
+                ("Decal_Crack1", -14f, -9.1f, 300f, 1.4f, 1f), ("Decal_Crack2", 16.8f, -8.4f, 35f, 0.8f, 0.95f),
+                ("Decal_Pothole1", -12f, 2f, 130f, 1.3f, 0.75f), ("Decal_Pothole2", 11.2f, 7.7f, 200f, 0.7f, 0.95f),
+                ("Decal_Pothole1", 2.8f, -10.5f, 280f, 0.85f, 0.6f), ("Decal_Pothole2", 15.4f, -1.4f, 40f, 1.05f, 1.2f),
+                ("Decal_Manhole", 10.9f, -7.4f, 0f, 1f, 1f),
+                ("Decal_Stone1", -16.8f, -2.8f, 0f, 1.2f, 1.2f), ("Decal_Stone2", 7.7f, 9.5f, 30f, 1.1f, 1.1f),
+                ("Decal_Stone3", -7f, -11.2f, 70f, 1.15f, 1.15f), ("Decal_Stone2", 0f, 6.6f, 10f, 1f, 1f),
+                ("Decal_Stone3", 13f, -4.2f, 140f, 1f, 1f),
             };
-            // The lot is denser than before, so neighbouring decals overlap: each one gets its own height step.
+            // Neighbouring decals may overlap: each one gets its own height step.
             for (int i = 0; i < decals.Length; i++)
             {
-                (string name, float x, float z, float yaw, float scale) = decals[i];
-                Place(name, parent, x, z, yaw, scale, i * c_DecalStep);
+                (string name, float x, float z, float yaw, float scaleX, float scaleZ) = decals[i];
+                GameObject decal = Place(name, parent, x, z, yaw, 1f, i * c_DecalStep);
+                decal.transform.localScale = new Vector3(scaleX, 1f, scaleZ);
             }
         }
 

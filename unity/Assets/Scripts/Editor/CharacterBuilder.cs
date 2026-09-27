@@ -16,25 +16,19 @@ namespace ZombiCar.EditorTools
     /// <summary>
     /// 2D characters from referens/characters.png (cut by tools/characters/slice_characters.py): sprite clips
     /// (Data/Characters), zombie configs (Data/Zombies, created once with the stats below, then tuned in the
-    /// Inspector), zombie prefabs (Prefabs/Enemies), the sprite view of the player and the wave line-up.
+    /// Inspector), zombie prefabs (Prefabs/Enemies) and the wave line-up (the player: PlayerBuilder).
     /// Called by <see cref="PrefabBuilder"/>.
     /// </summary>
     public static class CharacterBuilder
     {
-        // The sheet draws every character at one scale: the player's idle frame (148 px) is 1.8 m.
+        // The zombie sheet draws every character at one scale: 148 px (a standing figure) is 1.8 m.
         private const float c_SheetPixelsPerMetre = 148f / 1.8f;
-        // Player gun tip in the shoot frame, px from the feet (x right, y up): tools/characters/slice_player.py.
-        private static readonly Vector2 s_PlayerGunTipPx = new Vector2(45.9f, 97f);
-        private const float c_MuzzleFlashLength = 0.8f;             // metres on screen
-        private const float c_ShadowHeight = 0.08f;                  // above decals and the workshop's soil slab
-        private const int c_ShadowSortingOrder = -1;                 // ground shadows before every character sprite
-        private const int c_MuzzleFlashSortingOrder = 1;
-        private const string c_SpriteMaterial = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Unlit-Default.mat";
-        private const string c_QuadMesh = EditorPaths.c_GeneratedMeshes + "/SM_QuadXZ.asset";
+        internal const float c_ShadowHeight = 0.08f;                 // above decals and the workshop's soil slab
+        internal const int c_ShadowSortingOrder = -1;                // ground shadows before every character sprite
+        internal const string c_SpriteMaterial = "Packages/com.unity.render-pipelines.universal/Runtime/Materials/Sprite-Unlit-Default.mat";
+        internal const string c_QuadMesh = EditorPaths.c_GeneratedMeshes + "/SM_QuadXZ.asset";
         // Unlit sprites are painted fully lit: a warm tint sits them in the sunset.
-        private static readonly Color s_SpriteTint = new Color(1f, 0.93f, 0.85f, 1f);
-
-        public const string c_PlayerSprites = EditorPaths.c_DataCharacters + "/Player_Sprites.asset";
+        internal static readonly Color s_SpriteTint = new Color(1f, 0.93f, 0.85f, 1f);
 
         private sealed class Look
         {
@@ -70,15 +64,6 @@ namespace ZombiCar.EditorTools
         /// <summary>Numeric frame indices shared by one character's clips (characters.png, one sheet per character).</summary>
         private static string[] Idx(params int[] indices) => Array.ConvertAll(indices, i => i.ToString());
 
-        /// <summary>Named frames of one player clip (referens/person.png, one panel per clip): "{prefix}_0".."{prefix}_{count-1}".</summary>
-        private static string[] Seq(string prefix, int count)
-        {
-            var frames = new string[count];
-            for (int i = 0; i < count; i++)
-                frames[i] = $"{prefix}_{i}";
-            return frames;
-        }
-
         // Sheet columns: 0-1 idle, 2-3 walk / lunge, 4 attack, 5 hit, 6 dead (see referens/characters.png).
         private static (CharacterAnim, string[], float, bool)[] HumanoidClips(int[] walk, float walkFps) => new[]
         {
@@ -87,22 +72,6 @@ namespace ZombiCar.EditorTools
             (CharacterAnim.Attack, Idx(3, 4), 5f, false),
             (CharacterAnim.Hit, Idx(5), 1f, true),
             (CharacterAnim.Dead, Idx(5, 6), 5f, false),
-        };
-
-        // referens/person.png: run right (mirrored for left), idle, shooting, reload and the two turning poses used
-        // when the player aims mostly up/down the screen instead of left/right (see PlayerSpriteView).
-        private static readonly Look s_PlayerLook = new Look
-        {
-            Name = "Player",
-            Clips = new[]
-            {
-                (CharacterAnim.Idle, Seq("Idle", 4), 4f, true),
-                (CharacterAnim.Move, Seq("Move", 6), 10f, true),
-                (CharacterAnim.Shoot, Seq("Shoot", 4), 12f, true),
-                (CharacterAnim.Reload, Seq("Reload", 4), 4f, true),
-                (CharacterAnim.TurnUp, Seq("TurnUp", 4), 3f, true),
-                (CharacterAnim.TurnDown, Seq("TurnDown", 4), 3f, true),
-            },
         };
 
         private static readonly ZombieSpec[] s_Zombies =
@@ -179,13 +148,12 @@ namespace ZombiCar.EditorTools
             EditorPaths.EnsureFolder(EditorPaths.c_PrefabsEnemies);
             EnsureSpriteImport();
 
-            BuildSprites(s_PlayerLook);
             var configs = new List<ZombieConfig>();
             foreach (ZombieSpec spec in s_Zombies)
                 configs.Add(BuildZombie(spec, BuildSprites(spec.Look)));
             ConfigureWaves(configs);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[CharacterBuilder] Player sprites + {configs.Count} zombie types.");
+            Debug.Log($"[CharacterBuilder] {configs.Count} zombie types.");
         }
 
         // ------------------------------------------------------------------ sprites
@@ -226,14 +194,14 @@ namespace ZombiCar.EditorTools
             return asset;
         }
 
-        // ------------------------------------------------------------------ visuals shared by zombies and the player
+        // ------------------------------------------------------------------ zombie visuals
         private static float SpriteScale(Look look) => ViewScale * look.Size;
 
         /// <summary>Sheet pixels -> metres at 100 px per unit.</summary>
         private static float ViewScale => ArtImportPostprocessor.c_CharacterPixelsPerUnit / c_SheetPixelsPerMetre;
 
         /// <summary>1 / cos(camera pitch): an upright sprite seen from above is not squashed.</summary>
-        private static float PitchCompensation => 1f / Mathf.Cos(ViewConstants.c_CameraPitch * Mathf.Deg2Rad);
+        internal static float PitchCompensation => 1f / Mathf.Cos(ViewConstants.c_CameraPitch * Mathf.Deg2Rad);
 
         /// <summary>
         /// View (faces the camera) with the Sprite (animated, pivot at the feet) and a blob shadow on the ground.
@@ -335,42 +303,6 @@ namespace ZombiCar.EditorTools
                 entries[i] = new WaveConfig.Entry(configs[i], s_Zombies[i].FromWave, s_Zombies[i].Weight);
             waves.EditorSetEnemies(entries);
             EditorUtility.SetDirty(waves);
-        }
-
-        // ------------------------------------------------------------------ player
-        /// <summary>Adds the sprite view (idle / run / shoot / hurt clips, muzzle flash, blob shadow) and the health.</summary>
-        public static void BuildPlayerView(GameObject root, PlayerInputProvider input, PlayerWeapon weapon)
-        {
-            CharacterSprites sprites = AssetDatabase.LoadAssetAtPath<CharacterSprites>(c_PlayerSprites);
-            SpriteAnimator animator = BuildView(root, s_PlayerLook, sprites, true, out Transform view, out _, out _);
-
-            // Muzzle flash at the gun tip of the shoot frame; a child of the sprite, so it follows facing and bounce.
-            var flashGo = new GameObject("MuzzleFlash");
-            flashGo.transform.SetParent(animator.transform, false);
-            flashGo.transform.localPosition = s_PlayerGunTipPx / ArtImportPostprocessor.c_CharacterPixelsPerUnit;
-            var flash = flashGo.AddComponent<SpriteRenderer>();
-            flash.sprite = Frame("Player", "MuzzleFlash");
-            flash.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(c_SpriteMaterial);
-            flash.sortingOrder = c_MuzzleFlashSortingOrder;
-            flash.shadowCastingMode = ShadowCastingMode.Off;
-            flash.enabled = false;                                      // shown for a moment on every shot
-            float flashLength = flash.sprite.bounds.max.x;             // the flash fills the right half
-            float k = c_MuzzleFlashLength / (flashLength * SpriteScale(s_PlayerLook));
-            flashGo.transform.localScale = new Vector3(k, k / PitchCompensation, 1f);   // undo the sprite's Y stretch
-
-            var obstacle = root.AddComponent<NavMeshObstacle>();   // zombie crowd avoidance steers around the player
-            obstacle.shape = NavMeshObstacleShape.Capsule;
-            var cc = root.GetComponent<CharacterController>();
-            obstacle.center = cc.center;
-            obstacle.radius = cc.radius;
-            obstacle.height = cc.height;
-            obstacle.carving = false;
-
-            var playerView = view.gameObject.AddComponent<PlayerSpriteView>();
-            SetProps(playerView, ("m_Animator", animator), ("m_MuzzleFlash", flash), ("m_Controller", cc),
-                ("m_InputProvider", input), ("m_Weapon", weapon));
-            var health = root.AddComponent<PlayerHealth>();
-            SetProps(health, ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)), ("m_View", playerView));
         }
 
         // ------------------------------------------------------------------ helpers

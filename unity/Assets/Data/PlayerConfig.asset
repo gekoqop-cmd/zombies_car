@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe074e52778ee1341843883b32744d05, type: 3}
   m_Name: PlayerConfig
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.PlayerConfig
-  m_MoveSpeed: 5
+  m_MoveSpeed: 6.25
   m_TurnSpeed: 900
   m_Gravity: -25
   m_GroundStickSpeed: 2
+  m_RunAnimationReferenceSpeed: 4
+  m_RunAnimationRateRange: {x: 0.6, y: 2}

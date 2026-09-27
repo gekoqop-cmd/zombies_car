@@ -14,9 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.WeaponConfig
   m_Range: 14
   m_FireRate: 6
+  m_Damage: 10
   m_MagazineSize: 24
   m_StartReserve: 120
+  m_MaxReserve: 240
   m_ReloadTime: 1.4
   m_BulletSpeed: 35
   m_BulletRadius: 0.08
   m_PoolPrewarm: 24
+  m_MuzzleHeight: 1.383303
+  m_HitBandBottom: 0.35
+  m_CursorPickRadius: 0.15
+  m_AimAssist: 1
+  m_AimAssistRadius: 0.5

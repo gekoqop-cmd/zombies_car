@@ -340,18 +340,19 @@ namespace ZombiCar.EditorTools
             color.color = Fade(Color.white);
         }
 
-        private static ParticleSystem Sparks(string name, Transform parent, float speedMin, float speedMax, float coneAngle)
+        private static ParticleSystem Sparks(string name, Transform parent, float speedMin, float speedMax, float coneAngle,
+            float sizeMin = 0.03f, float sizeMax = 0.07f)
         {
             ParticleSystem ps = Particles(name, parent, ParticleMaterial("M_FX_Spark", new Color(4f, 2.3f, 0.8f, 1f), true), true);
             ParticleSystem.MainModule main = ps.main;
             main.loop = false;
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.12f, 0.32f);
             main.startSpeed = new ParticleSystem.MinMaxCurve(speedMin, speedMax);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.03f, 0.07f);
+            main.startSize = new ParticleSystem.MinMaxCurve(sizeMin, sizeMax);
             main.gravityModifier = 1.2f;
             main.maxParticles = 200;
             ParticleSystem.EmissionModule emission = ps.emission;
-            emission.rateOverTime = 0f;                                       // emitted by UltraShotEffects
+            emission.rateOverTime = 0f;                                       // emitted by ShotEffects
             ParticleSystem.ShapeModule shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Cone;
             shape.angle = coneAngle;
@@ -364,12 +365,14 @@ namespace ZombiCar.EditorTools
 
         private static void AddShotEffects(GameObject systems, GameObject player)
         {
-            var root = new GameObject("UltraShotEffects").transform;
+            var root = new GameObject("ShotEffects").transform;
             root.SetParent(systems.transform, false);
             ParticleSystem muzzle = Sparks("MuzzleSparks", root, 5f, 11f, 14f);
-            ParticleSystem impact = Sparks("ImpactSparks", root, 2f, 6f, 55f);
-            var effects = root.gameObject.AddComponent<UltraShotEffects>();
-            PrefabBuilder.Wire(effects, ("m_Weapon", player.GetComponent<PlayerWeapon>()), ("m_MuzzleSparks", muzzle), ("m_ImpactSparks", impact));
+            // Impact sparks show on every tier and must read from ~32 m away (1 px ≈ 1.6 cm): bigger than the muzzle ones.
+            ParticleSystem impact = Sparks("ImpactSparks", root, 2.5f, 7f, 60f, 0.09f, 0.18f);
+            var effects = root.gameObject.AddComponent<ShotEffects>();
+            PrefabBuilder.Wire(effects, ("m_Weapon", player.GetComponent<PlayerWeapon>()), ("m_MuzzleSparks", muzzle), ("m_ImpactSparks", impact),
+                ("m_ImpactSound", PlayerBuilder.Sound("Bullet_Impact")));
         }
 
         // ------------------------------------------------------------------ post-processing
@@ -389,7 +392,7 @@ namespace ZombiCar.EditorTools
                 PrefabBuilder.Wire(applier, ("m_UltraVolume", volume));
         }
 
-        /// <summary>Overrides on top of the base profile: HQ bloom, bokeh DoF, lift/gamma/gain, white balance, CA, grain.</summary>
+        /// <summary>Overrides on top of the base profile: HQ bloom, bokeh DoF, lift/gamma/gain, white balance, grain.</summary>
         private static VolumeProfile BuildVolumeProfile()
         {
             if (AssetDatabase.LoadAssetAtPath<VolumeProfile>(c_VolumeProfile) != null)
@@ -428,8 +431,8 @@ namespace ZombiCar.EditorTools
             vignette.smoothness.Override(0.5f);
             vignette.color.Override(new Color(0.12f, 0.06f, 0.03f));
 
-            var chromatic = Add<ChromaticAberration>(profile);
-            chromatic.intensity.Override(0.07f);
+            // No chromatic aberration: it split the high-contrast rust of the wrecks at the screen edges into
+            // red / cyan fringes.
 
             var grain = Add<FilmGrain>(profile);
             grain.type.Override(FilmGrainLookup.Thin1);
