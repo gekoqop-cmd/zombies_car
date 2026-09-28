@@ -148,7 +148,9 @@ refmenu/ refsanim/ referens/     референсы: UI, видео игрока
 | **Tools → Build WebGL Player** | релизная сборка в `unity/Builds/WebGL` (шаблон `Assets/WebGLTemplates/Rustwave`) |
 | **Tools → Diagnostics → …** | Play-mode сценарии со скриншотами: UI, камера, ночь, сравнение качества, playtest |
 
-Проверки игровых механик — `Editor/FeatureTests*.cs`, в batch-режиме: `-executeMethod ZombiCar.EditorTools.FeatureTests.Run -featureTest <сценарий>` (плюс `-featureMap night`, `-forceMobile`). Сценарии: `progression`, `sound`, `bosses`, `gameover`, `victory`, `explosions`, `axe`, `refill`, `carplate`, `hitbox`. Скриншоты — `Screenshots/Feature_*.png`.
+Проверки игровых механик — `Editor/FeatureTests*.cs`, в batch-режиме: `-executeMethod ZombiCar.EditorTools.FeatureTests.Run -featureTest <сценарий>` (плюс `-featureMap night`, `-forceMobile`). Сценарии: `progression`, `sound`, `bosses`, `gameover`, `victory`, `explosions`, `axe`, `refill`, `carplate`, `hitbox`. Скриншоты — `Screenshots/Feature_*.png`. В редакторе те же сценарии запускаются из **Tools → Diagnostics → Feature Tests**.
+
+К боссам без прохождения волн: в Play Mode выбрать `Systems/MapSystems`, у компонента **WaveDirector** открыть меню (⋮) → **Debug → Skip to wave 10 / 20 / 30**.
 
 > ⚠️ **Ручные правки сцен теряются при пересборке.** Если что-то двигаете или удаляете в Map01/Map02 руками, перенесите это в `SceneBuilder*.cs`, иначе **Build Everything** вернёт всё как было.
 
