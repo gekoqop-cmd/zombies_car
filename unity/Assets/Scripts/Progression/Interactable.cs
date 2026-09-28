@@ -26,6 +26,9 @@ namespace ZombiCar.Progression
         /// <summary>Seconds the interaction takes (0 = instant).</summary>
         public virtual float Duration => 0f;
 
+        /// <summary>Whether the prompt is offered at all right now (false: the player walks by without a prompt).</summary>
+        public virtual bool IsOffered => true;
+
         protected virtual void OnEnable() => s_All.Add(this);
 
         protected virtual void OnDisable() => s_All.Remove(this);

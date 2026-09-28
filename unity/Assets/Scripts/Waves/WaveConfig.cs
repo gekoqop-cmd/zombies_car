@@ -61,8 +61,6 @@ namespace ZombiCar.Waves
         [SerializeField, Range(0.1f, 1f)] private float m_SpawnWindow = 0.6f;
         [Tooltip("No new zombies while this many are alive.")]
         [SerializeField, Min(1)] private int m_MaxAlive = 30;
-        [Tooltip("Reserve ammo the car resupplies the player with when a wave ends.")]
-        [SerializeField, Min(0)] private int m_AmmoResupplyPerWave = 40;
         [SerializeField] private Entry[] m_Enemies = Array.Empty<Entry>();
         [Tooltip("Boss waves: the wave lasts until its boss and all its zombies are dead (no time limit).")]
         [SerializeField] private BossWave[] m_Bosses = Array.Empty<BossWave>();
@@ -75,7 +73,6 @@ namespace ZombiCar.Waves
         public int EnemiesGrowthPerWave => m_EnemiesGrowthPerWave;
         public float SpawnWindow => m_SpawnWindow;
         public int MaxAlive => m_MaxAlive;
-        public int AmmoResupplyPerWave => m_AmmoResupplyPerWave;
         public Entry[] Enemies => m_Enemies;
         public BossWave[] Bosses => m_Bosses;
 

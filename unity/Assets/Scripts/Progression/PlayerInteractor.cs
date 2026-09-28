@@ -120,6 +120,8 @@ namespace ZombiCar.Progression
             Vector3 position = transform.position;
             foreach (Interactable candidate in Interactable.All)
             {
+                if (!candidate.IsOffered)
+                    continue;
                 float distance = candidate.DistanceTo(position);
                 if (distance <= candidate.Radius && distance < bestDistance)
                 {

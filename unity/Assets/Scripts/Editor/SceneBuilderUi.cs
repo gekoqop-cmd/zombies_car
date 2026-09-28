@@ -467,7 +467,8 @@ namespace ZombiCar.EditorTools
                 ("m_AmmoState", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)),
                 ("m_Run", Run), ("m_MoneyValue", moneyValue), ("m_KillsValue", killsValue), ("m_MoneyPanel", moneyPanel),
                 ("m_HealthFill", healthFill), ("m_HealthValue", healthValue), ("m_LevelFill", levelFill), ("m_LevelLabel", levelLabel),
-                ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_ReloadHint", reload.gameObject),
+                ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_AmmoPanel", ammo),
+                ("m_ReloadHint", reload.gameObject),
                 ("m_ReloadFill", reloadFill), ("m_SettingsButton", settingsButton), ("m_SettingsPanel", settings));
             // Every HUD text gets the black outline + shadow: the panels are translucent over a bright map.
             foreach (TMP_Text text in canvas.GetComponentsInChildren<TMP_Text>(true))

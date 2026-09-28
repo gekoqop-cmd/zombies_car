@@ -8,7 +8,7 @@ import sys
 
 import numpy as np
 
-from dsp import (SR, adsr, bandpass, bell, boom, brass, crash, db, decay, drive, fade, glide, highpass, kick, lowpass,
+from dsp import (SR, adsr, n_of, bandpass, bell, boom, brass, crash, db, decay, drive, fade, glide, highpass, kick, lowpass,
                  mix, noise, normalize, note, pluck, reverb, saw, sine, snare, square, sweep, times, tom, trim, write_ogg)
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
@@ -326,6 +326,32 @@ def Weapon_Switch():
     tone = np.sin(2 * np.pi * 1400 * t[:len(click2)]) * decay(0.05, 0.01) * 0.3
     x = mix(0.3, [(0, click1, 0.8), (0.09, click2 + tone, 0.9)])
     return finish(x, -6)
+
+
+@sound
+def Ammo_Refill():
+    # The crate lid opens, cartridges clink into the bag one after another, then the magazine slides home and latches.
+    rnd = np.random.RandomState(81)
+    t = times(0.2)
+    lid = mix(0.2, [(0, kick(0.15, 240, 110, 0.01), 0.6), (0, highpass(noise(0.05, rnd), 1800) * decay(0.05, 0.008), 0.7)])
+    parts = [(0, lid, 0.8)]
+    at = 0.14
+    for i in range(8):
+        k = rnd.uniform(0.85, 1.2)
+        tc = times(0.09)
+        ring = (np.sin(2 * np.pi * 2900 * k * tc) + 0.6 * np.sin(2 * np.pi * 4350 * k * tc)
+                + 0.3 * np.sin(2 * np.pi * 6900 * k * tc)) * np.exp(-tc / rnd.uniform(0.025, 0.04))
+        tick = highpass(noise(0.09, rnd), 3000) * np.exp(-tc / 0.003)
+        parts.append((at, ring * 0.35 + tick * 0.6, rnd.uniform(0.45, 0.7)))
+        at += rnd.uniform(0.07, 0.11)
+    slide = sweep(noise(0.18, rnd), glide(900, 2600, 0.18), "band") * np.sin(np.linspace(0, np.pi, n_of(0.18)))
+    parts.append((at + 0.05, slide, 0.5))
+    latch = mix(0.12, [(0, highpass(noise(0.03, rnd), 2200) * decay(0.03, 0.005), 0.9),
+                       (0.035, bandpass(noise(0.06, rnd), 700, 3500) * decay(0.06, 0.012), 0.9),
+                       (0.035, kick(0.1, 180, 90, 0.008), 0.5)])
+    parts.append((at + 0.24, latch, 1.0))
+    x = mix(at + 0.45, parts)
+    return finish(reverb(x, 0.12, 0.5), -4)
 
 
 def main(names):

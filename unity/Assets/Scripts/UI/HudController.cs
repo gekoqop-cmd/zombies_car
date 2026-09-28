@@ -41,6 +41,8 @@ namespace ZombiCar.UI
 
         [Header("Ammo")]
         [SerializeField] private TMP_Text m_AmmoValue;
+        [Tooltip("Pops when the reserve is topped up (the refill at the car).")]
+        [SerializeField] private RectTransform m_AmmoPanel;
         [SerializeField] private GameObject m_ReloadHint;
         [Tooltip("Filled image of the reload bar; advances every frame while reloading.")]
         [SerializeField] private Image m_ReloadFill;
@@ -58,6 +60,8 @@ namespace ZombiCar.UI
 
         private int m_ShownMoney = -1;
         private float m_MoneyPunch = float.NegativeInfinity;
+        private int m_ShownReserve = -1;
+        private float m_AmmoPunch = float.NegativeInfinity;
 
         private void OnEnable()
         {
@@ -84,6 +88,8 @@ namespace ZombiCar.UI
                 m_ReloadFill.fillAmount = m_AmmoState.ReloadProgress;
             if (m_MoneyPanel != null)
                 m_MoneyPanel.localScale = Vector3.one * (1f + UiMotion.Punch((Time.unscaledTime - m_MoneyPunch) / 0.25f) * 0.18f);
+            if (m_AmmoPanel != null)
+                m_AmmoPanel.localScale = Vector3.one * (1f + UiMotion.Punch((Time.unscaledTime - m_AmmoPunch) / 0.3f) * 0.12f);
         }
 
         private void OnDisable()
@@ -139,6 +145,9 @@ namespace ZombiCar.UI
             if (m_AmmoState == null)
                 return;
             m_AmmoValue.SetText(string.Format(m_ValueFormat, m_AmmoState.InMagazine, m_AmmoState.Reserve));
+            if (m_ShownReserve >= 0 && m_AmmoState.Reserve > m_ShownReserve)
+                m_AmmoPunch = Time.unscaledTime;
+            m_ShownReserve = m_AmmoState.Reserve;
             if (m_ReloadHint != null)
                 m_ReloadHint.SetActive(m_AmmoState.IsReloading);
             if (m_ReloadFill != null)

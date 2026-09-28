@@ -239,6 +239,7 @@ namespace ZombiCar.EditorTools
             BuildCamera(cameraRoot, player.transform, map);
             BuildZombieSystems(systemsGo, gameplay, car, player);
             BuildWorkshopZone(gameplay);
+            BuildCarResupply(gameplay, car, player);
             BuildNavMesh(systems);
             UltraQualityBuilder.AddToMap(map, lighting, nature, cameraRoot, systemsGo, player, (x, z) => IsFreeForGrass(x, z, map));
             foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
@@ -277,7 +278,6 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(systemsGo.AddComponent<WaveDirector>(),
                 ("m_Config", DataAssetsBuilder.Load<WaveConfig>(DataAssetsBuilder.c_WaveConfig)),
                 ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
-                ("m_PlayerWeapon", player.GetComponent<PlayerWeapon>()),
                 ("m_Spawner", spawner));
             PrefabBuilder.Wire(systemsGo.AddComponent<GameOverDirector>(),
                 ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)), ("m_Car", car.GetComponent<CarHealth>()),
@@ -327,6 +327,46 @@ namespace ZombiCar.EditorTools
                 ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_Marker", iconRoot.transform), ("m_MarkerSprite", icon), ("m_Ring", ring), ("m_Icon", icon.sprite));
             CharacterBuilder.SetProps(zone, ("m_Radius", c_WorkshopZoneRadius));
+        }
+
+        // Ammo refill at the car: the spot behind the trunk (the car's nose is its local +Z), the ammo box above it.
+        private const float c_ResupplyRadius = 1.5f;              // from the car's body
+        private const float c_ResupplyBehind = 0.9f;              // spot behind the rear bumper
+        private const float c_ResupplyIconHeight = 1.9f;
+        private const float c_ResupplyIconScale = 0.55f;
+        private static readonly Color s_ResupplyRingColor = new Color(1f, 0.82f, 0.35f, 0.8f);
+
+        private static void BuildCarResupply(Transform gameplay, GameObject car, GameObject player)
+        {
+            var root = new GameObject("AmmoRefill");
+            root.transform.SetParent(gameplay, false);
+            Vector3 rear = PrefabBuilder.CarPlayerColliderCenter - Vector3.forward * (PrefabBuilder.CarPlayerColliderSize.z * 0.5f + c_ResupplyBehind);
+            Vector3 position = car.transform.TransformPoint(rear);
+            root.transform.position = new Vector3(position.x, 0f, position.z);
+            Material ringMaterial = FxBuilder.Material("M_FX_AmmoRing", "FX_MarkerRing", s_ResupplyRingColor, false);
+            MeshRenderer ring = FxBuilder.GroundQuad("Ring", root.transform, ringMaterial, 1.8f, 0.04f);
+
+            var iconRoot = new GameObject("Icon");
+            iconRoot.transform.SetParent(root.transform, false);
+            iconRoot.transform.localPosition = Vector3.up * c_ResupplyIconHeight;
+            CharacterBuilder.SetProps(iconRoot.AddComponent<YAxisBillboard>(), ("m_UpdateEveryFrame", false));
+            var iconGo = new GameObject("Sprite");
+            iconGo.transform.SetParent(iconRoot.transform, false);
+            iconGo.transform.localScale = new Vector3(c_ResupplyIconScale, c_ResupplyIconScale * CharacterBuilder.PitchCompensation, 1f);
+            var icon = iconGo.AddComponent<SpriteRenderer>();
+            icon.sprite = UiFactory.Sprite("UI_Icon_AmmoBox");
+            icon.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(CharacterBuilder.c_SpriteMaterial);
+            icon.sortingOrder = 50;
+            icon.shadowCastingMode = ShadowCastingMode.Off;
+            icon.receiveShadows = false;
+
+            var resupply = root.AddComponent<CarResupply>();
+            PrefabBuilder.Wire(resupply, ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Weapon", player.GetComponent<PlayerWeapon>()), ("m_View", player.GetComponentInChildren<PlayerView>()),
+                ("m_Body", car.GetComponent<BoxCollider>()),
+                ("m_Marker", iconRoot.transform), ("m_MarkerSprite", icon), ("m_Glow", ring), ("m_Icon", icon.sprite));
+            CharacterBuilder.SetProps(resupply, ("m_Radius", c_ResupplyRadius));
         }
 
         // World-space durability plate above the player's car (anchor height; the plate sits on it, facing the camera).

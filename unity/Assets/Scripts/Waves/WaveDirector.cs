@@ -1,6 +1,5 @@
 using UnityEngine;
 using ZombiCar.Enemies;
-using ZombiCar.Player;
 
 namespace ZombiCar.Waves
 {
@@ -22,7 +21,6 @@ namespace ZombiCar.Waves
 
         [SerializeField] private WaveConfig m_Config;
         [SerializeField] private WaveState m_WaveState;
-        [SerializeField] private PlayerWeapon m_PlayerWeapon;
         [SerializeField] private ZombieSpawner m_Spawner;
 
         private Phase m_Phase;
@@ -162,8 +160,6 @@ namespace ZombiCar.Waves
         {
             m_BossWave = false;
             m_Boss = null;
-            if (m_PlayerWeapon != null)
-                m_PlayerWeapon.Resupply(m_Config.AmmoResupplyPerWave);
             bool last = m_Wave >= m_Config.WaveCount;
             if (m_WaveState != null)
                 m_WaveState.EndWave(m_Wave, last);

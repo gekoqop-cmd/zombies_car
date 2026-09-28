@@ -23,12 +23,15 @@ namespace ZombiCar.UI
         [SerializeField, Min(0.01f)] private float m_In = 0.25f;
         [SerializeField, Min(0f)] private float m_Hold = 1.8f;
         [SerializeField, Min(0.01f)] private float m_Out = 0.5f;
-        [SerializeField] private string m_BreakHint = "ПЕРЕДЫШКА ПЕРЕД СЛЕДУЮЩЕЙ ВОЛНОЙ";
+        [SerializeField] private string m_BreakHint = "ПАТРОНЫ — У МАШИНЫ, ПРОКАЧКА — В МАСТЕРСКОЙ";
 
         private float m_ShownAt = float.NegativeInfinity;
 
         /// <summary>The title shown last (tests).</summary>
         public string LastTitle { get; private set; }
+
+        /// <summary>The subtitle shown last (tests).</summary>
+        public string LastSubtitle { get; private set; }
 
         private void OnEnable()
         {
@@ -65,6 +68,7 @@ namespace ZombiCar.UI
         public void Show(string title, string subtitle, Color color)
         {
             LastTitle = title;
+            LastSubtitle = subtitle;
             m_Title.SetText(title);
             m_Title.color = color;
             m_Subtitle.SetText(subtitle);

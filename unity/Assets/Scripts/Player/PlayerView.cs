@@ -91,6 +91,8 @@ namespace ZombiCar.Player
         private float m_Speed;
         private float m_DownSince = float.NegativeInfinity;
         private float m_LungeStart = float.NegativeInfinity;
+        private float m_RefillEnd = float.NegativeInfinity;
+        private float m_RefillTime = 1f;
         private bool m_Down;
 
         private void Awake()
@@ -134,6 +136,16 @@ namespace ZombiCar.Player
         private void OnSwung() => m_LungeStart = Time.time;
 
         private void Start() => m_Input = m_InputProvider != null ? m_InputProvider.Input : null;
+
+        /// <summary>The reload animation stretched to <paramref name="duration"/> (the ammo refill at the car).</summary>
+        public void PlayRefill(float duration)
+        {
+            m_RefillTime = Mathf.Max(0.1f, duration);
+            m_RefillEnd = Time.time + m_RefillTime;
+        }
+
+        /// <summary>Stops the refill animation (the refill was interrupted).</summary>
+        public void StopRefill() => m_RefillEnd = float.NegativeInfinity;
 
         /// <summary>Red flash on a hit (called by <see cref="PlayerHealth"/>).</summary>
         public void ShowHurt() => m_HurtUntil = Time.time + m_HurtTime;
@@ -237,8 +249,9 @@ namespace ZombiCar.Player
                 m_Animator.ResetTrigger(s_Shoot);
             if (m_Weapon != null && m_Weapon.Config != null)
             {
-                m_Animator.SetBool(s_Reloading, m_Weapon.IsReloading);
-                m_Animator.SetFloat(s_ReloadSpeed, m_ReloadClipLength / m_Weapon.ReloadTime);
+                bool refilling = Time.time < m_RefillEnd;
+                m_Animator.SetBool(s_Reloading, m_Weapon.IsReloading || refilling);
+                m_Animator.SetFloat(s_ReloadSpeed, m_ReloadClipLength / (refilling ? m_RefillTime : m_Weapon.ReloadTime));
                 // Automatic fire is faster than the clip: it is sped up so every shot still shows all of it.
                 m_Animator.SetFloat(s_ShotSpeed, Mathf.Max(1f, m_ShotClipLength / m_Weapon.ShotInterval));
             }
