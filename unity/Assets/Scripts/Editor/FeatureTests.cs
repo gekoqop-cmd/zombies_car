@@ -174,6 +174,26 @@ namespace ZombiCar.EditorTools
                     s_Errors++;
             };
             s_Scenario = SessionState.GetString(c_ScenarioKey, "progression");
+            Rebind();
+
+            s_Steps.Clear();
+            s_NextStep = 0;
+            if (!s_Scenarios.TryGetValue(s_Scenario, out Action build))
+            {
+                Debug.LogError($"[FeatureTests] Unknown scenario '{s_Scenario}'. Known: {string.Join(", ", s_Scenarios.Keys)}");
+                At(0.1f, Finish);
+            }
+            else
+            {
+                build();
+            }
+            s_Steps.Sort((a, b) => a.Time != b.Time ? a.Time.CompareTo(b.Time) : a.Order.CompareTo(b.Order));
+            Debug.Log($"[FeatureTests] Scenario '{s_Scenario}': {s_Steps.Count} steps.");
+        }
+
+        /// <summary>Finds the map's objects and puts the bot in charge of the player (again after a map reload).</summary>
+        private static void Rebind()
+        {
             s_Weapon = Object.FindAnyObjectByType<PlayerWeapon>();
             s_Player = s_Weapon.transform;
             s_Controller = s_Player.GetComponent<CharacterController>();
@@ -199,20 +219,6 @@ namespace ZombiCar.EditorTools
                 if (field != null && field.FieldType == typeof(IPlayerInput))
                     field.SetValue(behaviour, s_Bot);
             }
-
-            s_Steps.Clear();
-            s_NextStep = 0;
-            if (!s_Scenarios.TryGetValue(s_Scenario, out Action build))
-            {
-                Debug.LogError($"[FeatureTests] Unknown scenario '{s_Scenario}'. Known: {string.Join(", ", s_Scenarios.Keys)}");
-                At(0.1f, Finish);
-            }
-            else
-            {
-                build();
-            }
-            s_Steps.Sort((a, b) => a.Time != b.Time ? a.Time.CompareTo(b.Time) : a.Order.CompareTo(b.Order));
-            Debug.Log($"[FeatureTests] Scenario '{s_Scenario}': {s_Steps.Count} steps.");
         }
 
         // ================================================================== helpers for scenarios

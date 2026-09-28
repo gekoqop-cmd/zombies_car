@@ -30,7 +30,10 @@ namespace ZombiCar.Progression
             if (m_Spawner != null)
                 m_Spawner.ZombieDied += OnZombieDied;
             if (m_Waves != null)
+            {
                 m_Waves.WaveEnded += OnWaveEnded;
+                m_Waves.WaveStarted += OnWaveStarted;
+            }
         }
 
         private void OnDisable()
@@ -38,8 +41,13 @@ namespace ZombiCar.Progression
             if (m_Spawner != null)
                 m_Spawner.ZombieDied -= OnZombieDied;
             if (m_Waves != null)
+            {
                 m_Waves.WaveEnded -= OnWaveEnded;
+                m_Waves.WaveStarted -= OnWaveStarted;
+            }
         }
+
+        private void OnWaveStarted(int wave) => m_Run.SetWave(wave);
 
         private void Start()
         {

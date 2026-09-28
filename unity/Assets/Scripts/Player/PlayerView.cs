@@ -84,6 +84,8 @@ namespace ZombiCar.Player
         private float m_RecoilStart = float.NegativeInfinity;
         private float m_HurtUntil;
         private float m_Speed;
+        private float m_DownSince = float.NegativeInfinity;
+        private bool m_Down;
 
         private void Awake()
         {
@@ -123,6 +125,20 @@ namespace ZombiCar.Player
 
         /// <summary>Red flash on a hit (called by <see cref="PlayerHealth"/>).</summary>
         public void ShowHurt() => m_HurtUntil = Time.time + m_HurtTime;
+
+        /// <summary>The player is down: the body tips over and darkens, the animation stops.</summary>
+        public void ShowDown()
+        {
+            if (m_Down)
+                return;
+            m_Down = true;
+            m_DownSince = Time.time;
+            m_Animator.speed = 0f;
+            if (m_MuzzleFlash != null)
+                m_MuzzleFlash.enabled = false;
+            if (m_MuzzleGlow != null)
+                m_MuzzleGlow.enabled = false;
+        }
 
         /// <summary>Animation event of the Run clip (foot strike), forwarded by <see cref="PlayerAnimationEvents"/>.</summary>
         public void Footstep()
@@ -185,6 +201,17 @@ namespace ZombiCar.Player
 
         private void LateUpdate()
         {
+            if (m_Down)
+            {
+                // Falls over sideways (away from where it faced) in a quarter of a second and stays there, darkened.
+                float t = Mathf.Clamp01((Time.time - m_DownSince) / 0.3f);
+                float fall = 1f - (1f - t) * (1f - t);
+                Transform b = m_Body.transform;
+                b.localRotation = Quaternion.Euler(0f, 0f, 82f * m_Facing * fall);
+                b.localPosition = new Vector3(-m_Facing * 0.35f * fall, 0f, 0f);
+                m_Body.color = Color.Lerp(m_Tint, new Color(0.72f, 0.62f, 0.6f, 1f), fall) * SceneTint.Characters;
+                return;
+            }
             Vector3 velocity = m_Controller != null ? m_Controller.velocity : Vector3.zero;
             velocity.y = 0f;
             m_Speed = velocity.magnitude;

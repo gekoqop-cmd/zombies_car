@@ -190,7 +190,11 @@ namespace ZombiCar.Progression
             if (m_Outcome != RunOutcome.None || outcome == RunOutcome.None)
                 return;
             m_Outcome = outcome;
-            m_WorkshopOpen = false;
+            if (m_WorkshopOpen)
+            {
+                m_WorkshopOpen = false;
+                WorkshopChanged?.Invoke();
+            }
             OutcomeChanged?.Invoke();
         }
     }

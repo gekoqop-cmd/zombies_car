@@ -83,6 +83,8 @@ namespace ZombiCar.Player
             {
                 m_Dead = true;
                 Debug.Log("[PlayerHealth] The player is down.", this);
+                if (m_View != null)
+                    m_View.ShowDown();
                 Died?.Invoke();
             }
         }

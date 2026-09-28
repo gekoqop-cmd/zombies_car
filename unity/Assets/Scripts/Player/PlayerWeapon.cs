@@ -113,7 +113,7 @@ namespace ZombiCar.Player
             if (m_IsReloading && Time.time >= m_ReloadEndTime)
                 FinishReload();
             UpdateAim();
-            if (m_Holstered)
+            if (m_Holstered || (m_Run != null && m_Run.IsOver))
                 return;
 
             bool wantsToFire = m_Input.FireHeld || m_Input.FirePressed || m_Input.QuickTap;

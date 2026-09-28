@@ -456,6 +456,7 @@ namespace ZombiCar.EditorTools
             BuildTouchControls(safe, outline);
             BuildLevelUpScreen(safe, outline);
             BuildWorkshopScreen(safe, outline);
+            BuildGameOverScreen(safe, outline);
             SettingsPanel settings = BuildSettingsPopup(safe, outline, true);
 
             var hud = canvas.gameObject.AddComponent<HudController>();

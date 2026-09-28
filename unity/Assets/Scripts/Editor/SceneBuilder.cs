@@ -278,6 +278,10 @@ namespace ZombiCar.EditorTools
                 ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_PlayerWeapon", player.GetComponent<PlayerWeapon>()),
                 ("m_Spawner", spawner));
+            PrefabBuilder.Wire(systemsGo.AddComponent<GameOverDirector>(),
+                ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)), ("m_Car", car.GetComponent<CarHealth>()),
+                ("m_Player", player.GetComponent<PlayerHealth>()), ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Director", systemsGo.GetComponent<WaveDirector>()));
             PrefabBuilder.Wire(systemsGo.AddComponent<MusicDirector>(), ("m_Map", systemsGo.GetComponent<MapBootstrap>().Map),
                 ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)));
             PrefabBuilder.Wire(systemsGo.AddComponent<PlayerProgression>(),

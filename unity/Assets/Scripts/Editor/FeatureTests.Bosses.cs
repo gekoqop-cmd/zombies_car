@@ -21,7 +21,7 @@ namespace ZombiCar.EditorTools
             BossBrain brain = null;
             int moneyBefore = 0;
             // The player and the car are kept alive: the scenario looks at the bosses.
-            for (float t = 1.5f; t < 60f; t += 0.5f)
+            for (float t = 1.5f; t < 60f; t += 0.1f)
                 At(t, () =>
                 {
                     s_PlayerHealth.Heal(1000);

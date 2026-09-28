@@ -211,6 +211,70 @@ namespace ZombiCar.EditorTools
             return view;
         }
 
+        // ------------------------------------------------------------------ game over
+        private static readonly Vector2 s_GameOverWindow = new Vector2(1060f, 860f);
+
+        private static GameOverScreen BuildGameOverScreen(RectTransform parent, Material outline)
+        {
+            RectTransform host = UiFactory.Stretch("GameOverScreen", parent);
+            RectTransform root = UiFactory.Stretch("Root", host);
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            UiFactory.Image(UiFactory.Stretch("Dim", root), null, new Color(0.02f, 0.01f, 0.01f, 0.78f), false, true);
+            var center = new Vector2(0.5f, 0.5f);
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+            RectTransform window = UiFactory.Rect("Window", root, center, center, new Vector2(0f, -20f), s_GameOverWindow);
+            UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
+            TextMeshProUGUI title = OutlinedLabel("Title", window, top, top, new Vector2(0f, -30f), new Vector2(980f, 100f), "ИГРА ОКОНЧЕНА",
+                84f, TextAlignmentOptions.Center, new Color(1f, 0.38f, 0.3f, 1f), outline);
+            title.enableAutoSizing = true;
+            title.fontSizeMin = 50f;
+            title.fontSizeMax = 84f;
+            TextMeshProUGUI reason = OutlinedLabel("Reason", window, top, top, new Vector2(0f, -132f), new Vector2(980f, 52f),
+                "МАШИНА УНИЧТОЖЕНА", 38f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            reason.enableAutoSizing = true;
+            reason.fontSizeMin = 24f;
+            reason.fontSizeMax = 38f;
+
+            TextMeshProUGUI money = StatRow(window, 0, "UI_Icon_Scrap", "ЗАРАБОТАНО", outline, new Color(1f, 0.82f, 0.35f, 1f));
+            TextMeshProUGUI level = StatRow(window, 1, "UI_Icon_Xp", "УРОВЕНЬ", outline, Color.white);
+            TextMeshProUGUI kills = StatRow(window, 2, "UI_Icon_Skull", "УБИТО ЗОМБИ", outline, Color.white);
+            TextMeshProUGUI wave = StatRow(window, 3, "UI_Icon_Boss", "ВОЛНА", outline, Color.white);
+
+            Button restart = HudButton("RestartButton", window, bottom, new Vector2(-220f, 40f), new Vector2(380f, 116f), "ЗАНОВО", 50f,
+                s_PlayColor, outline);
+            Button menu = HudButton("MenuButton", window, bottom, new Vector2(220f, 40f), new Vector2(380f, 116f), "В МЕНЮ", 50f,
+                Color.white, outline);
+
+            var screen = host.gameObject.AddComponent<GameOverScreen>();
+            PrefabBuilder.Wire(screen, ("m_Run", Run), ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
+                ("m_Root", group), ("m_Window", window), ("m_Title", title), ("m_Reason", reason), ("m_Money", money), ("m_Level", level),
+                ("m_Kills", kills), ("m_Wave", wave), ("m_RestartButton", restart), ("m_MenuButton", menu));
+            group.alpha = 0f;
+            root.gameObject.SetActive(false);
+            return screen;
+        }
+
+        /// <summary>One result line of the game-over window: icon, label, value (right-aligned).</summary>
+        private static TextMeshProUGUI StatRow(RectTransform window, int index, string icon, string label, Material outline, Color valueColor)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var midLeft = new Vector2(0f, 0.5f);
+            var midRight = new Vector2(1f, 0.5f);
+            RectTransform row = UiFactory.Rect($"Stat{index + 1}", window, top, top, new Vector2(0f, -210f - index * 108f), new Vector2(900f, 96f));
+            UiFactory.Image(row, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.55f), true);
+            RectTransform iconRt = UiFactory.Rect("Icon", row, midLeft, midLeft, new Vector2(18f, 0f), new Vector2(72f, 72f));
+            UiFactory.Image(iconRt, UiFactory.Sprite(icon), Color.white, false).preserveAspect = true;
+            OutlinedLabel("Label", row, midLeft, midLeft, new Vector2(108f, 0f), new Vector2(420f, 80f), label, 40f,
+                TextAlignmentOptions.Left, s_SubtitleColor, outline);
+            TextMeshProUGUI value = OutlinedLabel("Value", row, midRight, midRight, new Vector2(-28f, 0f), new Vector2(440f, 80f), "0", 52f,
+                TextAlignmentOptions.Right, valueColor, outline);
+            value.enableAutoSizing = true;
+            value.fontSizeMin = 30f;
+            value.fontSizeMax = 52f;
+            return value;
+        }
+
         // ------------------------------------------------------------------ workshop
         private const int c_WorkshopRows = 6;
         private static readonly Vector2 s_WorkshopWindow = new Vector2(1600f, 900f);
