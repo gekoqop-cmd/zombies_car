@@ -354,6 +354,57 @@ def Ammo_Refill():
     return finish(reverb(x, 0.12, 0.5), -4)
 
 
+# ================================================================================================ hits
+def car_hit(seed, pitch):
+    # A zombie's blow on the car body: a dull thud, a sheet-metal "bonk" (inharmonic partials) and a short scrape.
+    rnd = np.random.RandomState(seed)
+    t = times(0.5)
+    thud = kick(0.3, 110 * pitch, 50 * pitch, 0.012)
+    bonk = sum(np.sin(2 * np.pi * f * pitch * t + rnd.rand() * 6) * np.exp(-t / tau) * g
+               for f, tau, g in ((310, 0.22, 1.0), (747, 0.14, 0.7), (1187, 0.09, 0.5), (1930, 0.05, 0.35)))
+    scrape = bandpass(noise(0.5, rnd), 1200, 4500) * np.exp(-t / 0.035)
+    x = mix(0.5, [(0, thud, 1.0), (0, bonk, 0.35), (0, scrape, 0.45)])
+    return finish(drive(x * 1.2, 1.3), -5)
+
+
+@sound
+def Car_Hit1():
+    return car_hit(91, 1.0)
+
+
+@sound
+def Car_Hit2():
+    return car_hit(92, 0.88)
+
+
+@sound
+def Car_Hit3():
+    return car_hit(93, 1.12)
+
+
+def player_hurt(seed, pitch):
+    # A blow taken by the player: a punchy body thud, a slap and a short, low grunt under them.
+    rnd = np.random.RandomState(seed)
+    t = times(0.3)
+    thud = kick(0.25, 150 * pitch, 60 * pitch, 0.01)
+    slap = highpass(noise(0.3, rnd), 1500) * np.exp(-t / 0.012)
+    body = lowpass(noise(0.3, rnd), 900) * np.exp(-t / 0.05)
+    grunt = growl(0.2, 175 * pitch, 120 * pitch, (620.0, 1150.0, 2500.0), rough=0.25, flutter=18.0, seed=seed)
+    grunt = grunt * np.sin(np.linspace(0, np.pi, len(grunt))) ** 0.5
+    x = mix(0.35, [(0, thud, 1.0), (0, slap, 0.7), (0, body, 0.5), (0.015, grunt, 0.22)])
+    return finish(x, -4)
+
+
+@sound
+def Player_Hurt1():
+    return player_hurt(101, 1.0)
+
+
+@sound
+def Player_Hurt2():
+    return player_hurt(102, 0.9)
+
+
 def main(names):
     todo = names or list(SOUNDS)
     for name in todo:

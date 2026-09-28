@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using ZombiCar.Car;
@@ -56,6 +57,11 @@ namespace ZombiCar.Enemies
         private float m_BaseSpeed;
         private float m_SpeedScale = 1f;
 
+        private static readonly List<ZombieController> s_Active = new List<ZombieController>();
+
+        /// <summary>Zombies out on the map (alive, or dead and still sinking): what may be on screen.</summary>
+        public static IReadOnlyList<ZombieController> Active => s_Active;
+
         public ZombieConfig Config => m_Config;
         public bool IsAlive => m_State != State.Dead;
         public int Health => m_Health;
@@ -100,6 +106,10 @@ namespace ZombiCar.Enemies
 
         /// <summary>This zombie died.</summary>
         public event Action<ZombieController> Died;
+
+        private void OnEnable() => s_Active.Add(this);
+
+        private void OnDisable() => s_Active.Remove(this);
 
         private void Awake()
         {

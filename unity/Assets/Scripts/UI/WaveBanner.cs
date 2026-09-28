@@ -30,6 +30,9 @@ namespace ZombiCar.UI
         /// <summary>The title shown last (tests).</summary>
         public string LastTitle { get; private set; }
 
+        /// <summary>The banner is on screen (other HUD warnings wait for it).</summary>
+        public bool IsShowing => m_Group.alpha > 0.01f;
+
         /// <summary>The subtitle shown last (tests).</summary>
         public string LastSubtitle { get; private set; }
 

@@ -85,6 +85,21 @@ MonoBehaviour:
     Volume: 0.6
     PitchJitter: 0.08
     MinInterval: 0.2
+  - Id: 13
+    Clips:
+    - {fileID: 8300000, guid: 7326a6d297b3c204ba684ef3cd124ed1, type: 3}
+    - {fileID: 8300000, guid: b77ddc0f5d23cfc42bc2b4c37e676ae5, type: 3}
+    - {fileID: 8300000, guid: 29ee5f42b04d74d4a921f8bd3c36687c, type: 3}
+    Volume: 0.55
+    PitchJitter: 0.1
+    MinInterval: 0.12
+  - Id: 14
+    Clips:
+    - {fileID: 8300000, guid: b4521b7efdff38e46801f45f5d16790b, type: 3}
+    - {fileID: 8300000, guid: d2a9860bb4679ec42814b644c8a95b6b, type: 3}
+    Volume: 0.75
+    PitchJitter: 0.08
+    MinInterval: 0.15
   - Id: 15
     Clips:
     - {fileID: 8300000, guid: 0ba0be9a7731ed1428d29e6972007f4e, type: 3}

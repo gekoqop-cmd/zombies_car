@@ -76,6 +76,7 @@ namespace ZombiCar.Player
             if (!IsAlive || m_Stats == null || amount <= 0)
                 return;
             m_Stats.SetHealth(m_Stats.Health - amount);
+            AudioManager.PlaySfx(Sound.PlayerHurt);
             if (m_View != null)
                 m_View.ShowHurt();
             Damaged?.Invoke(amount);

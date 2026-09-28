@@ -451,7 +451,8 @@ namespace ZombiCar.EditorTools
             RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue,
                 out TextMeshProUGUI killsValue);
             BuildInteractionPrompt(safe, outline);
-            BuildWaveBanner(safe, outline);
+            WaveBanner banner = BuildWaveBanner(safe, outline);
+            BuildCarAttackAlert(safe, outline, banner);
             BuildWeaponSlots(safe, outline);
 
             BuildTouchControls(safe, outline);

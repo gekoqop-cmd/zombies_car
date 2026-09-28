@@ -105,6 +105,7 @@ namespace ZombiCar.Car
                 return;
             int damage = Mathf.Max(1, Mathf.RoundToInt(amount * (1f - Armor)));
             SetHealth(m_Health - damage);
+            AudioManager.PlaySfx(Sound.CarHit);
             Damaged?.Invoke(damage);
             if (m_State != null)
                 m_State.RaiseAttacked(damage);

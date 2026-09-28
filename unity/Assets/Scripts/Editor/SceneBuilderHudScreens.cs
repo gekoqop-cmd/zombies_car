@@ -81,8 +81,32 @@ namespace ZombiCar.EditorTools
             return plate;
         }
 
+        // ------------------------------------------------------------------ car under attack
+        private static readonly Color s_AlertColor = new Color(1f, 0.32f, 0.24f, 1f);
+
+        /// <summary>"МАШИНУ АТАКУЮТ!" right under the wave panel: car icon and blinking red text on a dark pill.</summary>
+        private static void BuildCarAttackAlert(RectTransform safe, Material outline, WaveBanner banner)
+        {
+            var top = new Vector2(0.5f, 1f);
+            RectTransform root = UiFactory.Rect("CarAttackAlert", safe, top, top, new Vector2(0f, -156f), new Vector2(540f, 70f));
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = group.interactable = false;
+            RectTransform body = UiFactory.Stretch("Body", root);
+            UiFactory.Image(body, UiFactory.Sprite("UI_Panel"), s_PillColor, true);
+            var midLeft = new Vector2(0f, 0.5f);
+            RectTransform tile = UiFactory.Rect("IconFrame", body, midLeft, midLeft, new Vector2(9f, 0f), new Vector2(52f, 52f));
+            UiFactory.Image(tile, UiFactory.Sprite("UI_Panel"), UiFactory.TextColor, true);
+            UiFactory.Image(Inset(UiFactory.Stretch("Icon", tile), 4f), UiFactory.Sprite("UI_IconCar"), Color.white, false);
+            TextMeshProUGUI text = OutlinedLabel("Text", body, midLeft, midLeft, new Vector2(66f, 0f), new Vector2(464f, 70f),
+                "МАШИНУ АТАКУЮТ!", 42f, TextAlignmentOptions.Center, s_AlertColor, outline);
+            PrefabBuilder.Wire(root.gameObject.AddComponent<CarAttackAlert>(),
+                ("m_Car", DataAssetsBuilder.Load<CarState>(DataAssetsBuilder.c_CarState)), ("m_Banner", banner), ("m_Group", group),
+                ("m_Body", body), ("m_Text", text));
+        }
+
         // ------------------------------------------------------------------ wave banner
-        private static void BuildWaveBanner(RectTransform safe, Material outline)
+        private static WaveBanner BuildWaveBanner(RectTransform safe, Material outline)
         {
             var top = new Vector2(0.5f, 1f);
             RectTransform root = UiFactory.Rect("WaveBanner", safe, top, top, new Vector2(0f, -190f), new Vector2(1400f, 170f));
@@ -97,6 +121,7 @@ namespace ZombiCar.EditorTools
             var banner = root.gameObject.AddComponent<WaveBanner>();
             PrefabBuilder.Wire(banner, ("m_Waves", DataAssetsBuilder.Load<ZombiCar.Waves.WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_Group", group), ("m_Body", body), ("m_Title", title), ("m_Subtitle", subtitle));
+            return banner;
         }
 
         // ------------------------------------------------------------------ interaction prompt
