@@ -57,6 +57,7 @@ namespace ZombiCar.EditorTools
             // Run.
             new Perk("scrap", "БАРАХОЛЬЩИК", "Металлолома +25%", Icon("ScrapGain"), s_Run, StatEffect.MoneyGain, 0.25f, 3, 0.9f),
             new Perk("xp", "СМЕКАЛКА", "Опыта +20%", Icon("Xp"), s_Run, StatEffect.XpGain, 0.2f, 3, 0.9f),
+            new Perk("boom", "ПИРОТЕХНИК", "Взрывы бочек: радиус +25%,\nурон +50%", Icon("Bomb"), s_Run, StatEffect.ExplosionPower, 1f, 3, 0.8f),
         };
 
         private static CarUpgrade[] CarUpgrades() => new[]

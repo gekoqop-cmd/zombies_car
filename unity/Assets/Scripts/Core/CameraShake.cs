@@ -9,7 +9,6 @@ namespace ZombiCar.Core
     /// and big blasts kick hard. Applied after the camera has followed and been confined (Noise stage), so it never
     /// moves the camera's resting position. Frozen while the game is paused.
     /// </summary>
-    [ExecuteAlways]
     public sealed class CameraShake : CinemachineExtension
     {
         [SerializeField, Min(0f)] private float m_MaxOffset = 0.55f;
@@ -25,11 +24,19 @@ namespace ZombiCar.Core
         /// <summary>Current trauma 0..1 (tests).</summary>
         public static float Trauma => s_Instance != null ? s_Instance.m_Trauma : 0f;
 
+        /// <summary>A shake camera is running.</summary>
+        public static bool IsReady => s_Instance != null;
+
+        /// <summary>The last shake that was added (tests: slow batch frames decay the trauma within a frame).</summary>
+        public static float LastKick { get; private set; }
+
         /// <summary>Adds <paramref name="amount"/> (0..1) of shake.</summary>
         public static void Add(float amount)
         {
-            if (s_Instance != null && amount > 0f)
-                s_Instance.m_Trauma = Mathf.Min(1f, s_Instance.m_Trauma + amount);
+            if (s_Instance == null || amount <= 0f)
+                return;
+            s_Instance.m_Trauma = Mathf.Min(1f, s_Instance.m_Trauma + amount);
+            LastKick = amount;
         }
 
         /// <summary>Adds shake that fades with the distance of <paramref name="position"/> from the camera's view centre.</summary>
@@ -47,8 +54,7 @@ namespace ZombiCar.Core
         protected override void Awake()
         {
             base.Awake();
-            if (Application.isPlaying)
-                s_Instance = this;
+            s_Instance = this;
             m_Seed = Random.value * 100f;
         }
 
@@ -62,7 +68,7 @@ namespace ZombiCar.Core
         protected override void PostPipelineStageCallback(CinemachineVirtualCameraBase vcam, CinemachineCore.Stage stage,
             ref CameraState state, float deltaTime)
         {
-            if (stage != CinemachineCore.Stage.Noise || !Application.isPlaying)
+            if (stage != CinemachineCore.Stage.Noise)
                 return;
             float dt = Time.deltaTime;
             if (dt <= 0f || m_Trauma <= 0f)

@@ -8,6 +8,12 @@ Writes to unity/Assets/Art/VFX (alpha-blended VFX import rules):
   FX_AcidBall.png    the boss's acid glob (comic blob with ink outline)
   FX_AcidSplat.png   acid splash on the ground
   FX_Aura.png        soft glowing ring under a boss
+  FX_ComicBurst.png  jagged comic explosion burst (yellow core, orange-red rim, ink outline)
+  FX_Boom_*.png      comic lettering: БАХ!, БУМ!, БАБАХ! (fat letters, hot gradient, thick ink, drop shadow)
+  FX_Star.png        little star flying out of explosions
+  FX_Cloud.png       cartoon smoke puff (grey-white, ink outline)
+  FX_Scorch.png      dark scorch mark left on the ground
+  FX_Ring.png        thin shockwave ring
 Run: python tools/vfx/comic_fx.py
 """
 import math
@@ -15,7 +21,7 @@ import os
 import sys
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ui"))
 from paint import Painter, defringe  # noqa: E402
@@ -163,7 +169,115 @@ def aura():
     save(img, "FX_Aura")
 
 
+def comic_burst():
+    from paint import burst_points
+    p = Painter(512, 2, outline=9)
+    outer = burst_points(256, 256, 214, 140, n=14, rot=7, jitter=0.3, seed=4)
+    p.fill(p.poly_mask(outer), (240, 70, 30), gradient=(200, 40, 20))
+    mid = burst_points(256, 256, 172, 112, n=12, rot=-5, jitter=0.3, seed=9)
+    p.fill(p.poly_mask(mid), (255, 150, 30), outline=False, gradient=(245, 110, 25))
+    core = burst_points(256, 256, 130, 86, n=10, rot=12, jitter=0.25, seed=13)
+    p.fill(p.poly_mask(core), (255, 245, 150), outline=False, gradient=(255, 215, 60))
+    p.fill(p.ellipse_mask((196, 196, 316, 316)), (255, 255, 235), outline=False, shade=0.0)
+    p.save(os.path.join(OUT, "FX_ComicBurst.png"))
+    print("FX_ComicBurst")
+
+
+def lettering(text, name, rot=-8.0):
+    import cv2
+    w, h, ss = 512, 256, 3
+    size_px = 164 if len(text) <= 4 else 104
+    font = ImageFont.truetype(FONT, int(size_px * ss))
+    mask = Image.new("L", (w * ss, h * ss), 0)
+    d = ImageDraw.Draw(mask)
+    bbox = d.textbbox((0, 0), text, font=font)
+    tw, th = bbox[2] - bbox[0], bbox[3] - bbox[1]
+    d.text(((w * ss - tw) / 2 - bbox[0], (h * ss - th) / 2 - bbox[1]), text, font=font, fill=255)
+    # Fatter letters (comic style), sheared and tilted.
+    arr = np.asarray(mask)
+    k = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(9 * ss) | 1, int(9 * ss) | 1))
+    arr = cv2.dilate(arr, k)
+    shear = np.float32([[1, -0.22, 0.11 * h * ss], [0, 1, 0]])
+    arr = cv2.warpAffine(arr, shear, (w * ss, h * ss))
+    rotm = cv2.getRotationMatrix2D((w * ss / 2, h * ss / 2), -rot, 1.0)
+    arr = cv2.warpAffine(arr, rotm, (w * ss, h * ss))
+    fill = arr.astype(np.float32) / 255.0
+    outline = cv2.dilate(arr, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (int(16 * ss) | 1, int(16 * ss) | 1))).astype(np.float32) / 255.0
+    shadow = np.roll(np.roll(outline, int(10 * ss), axis=0), int(8 * ss), axis=1)
+    yy = np.linspace(0, 1, h * ss)[:, None]
+    top = np.array([255, 245, 120], np.float32)
+    bottom = np.array([245, 90, 30], np.float32)
+    color = top[None, None, :] * (1 - yy[..., None]) + bottom[None, None, :] * yy[..., None]
+    color = np.broadcast_to(color, (h * ss, w * ss, 3)).copy()
+    # A white shine stripe across the upper letters.
+    shine = ((yy > 0.28) & (yy < 0.36)).astype(np.float32)
+    color = color * (1 - shine[..., None] * 0.6) + 255 * shine[..., None] * 0.6
+    out = np.zeros((h * ss, w * ss, 4), np.float32)
+    ink = np.array([30, 18, 12], np.float32)
+    out[..., :3] = ink
+    out[..., 3] = np.maximum(shadow * 0.55, outline) * 255
+    a_fill = fill[..., None]
+    out[..., :3] = out[..., :3] * (1 - a_fill) + color * a_fill
+    img = Image.fromarray(out.astype(np.uint8), "RGBA").resize((w, h), Image.LANCZOS)
+    save(img, name)
+
+
+def star():
+    from paint import star_points
+    p = Painter(128, 4, outline=6)
+    p.fill(p.poly_mask(star_points(64, 68, 58, 25)), (255, 225, 70), gloss=0.5)
+    p.save(os.path.join(OUT, "FX_Star.png"))
+    print("FX_Star")
+
+
+def cloud():
+    p = Painter(256, 3, outline=8)
+    blobs = [(80, 150, 62), (140, 120, 76), (190, 158, 56), (120, 180, 58), (170, 190, 46)]
+    from PIL import ImageChops
+    m = p.mask()
+    for x, y, r in blobs:
+        m = ImageChops.lighter(m, p.ellipse_mask((x - r, y - r, x + r, y + r)))
+    p.fill(m, (238, 234, 228), gradient=(170, 165, 160))
+    for x, y, r in ((116, 104, 26), (170, 118, 18)):
+        p.fill(p.ellipse_mask((x - r, y - r, x + r, y + r)), (255, 255, 255), outline=False, shade=0.0)
+    p.save(os.path.join(OUT, "FX_Cloud.png"))
+    print("FX_Cloud")
+
+
+def scorch():
+    size = 256
+    rnd = np.random.RandomState(21)
+    y, x = np.mgrid[0:size, 0:size]
+    cx = cy = size / 2
+    ang = np.arctan2(y - cy, x - cx)
+    r = np.sqrt((x - cx) ** 2 + (y - cy) ** 2) / (size / 2)
+    edge = 0.72 + 0.12 * np.sin(ang * 7 + 1.3) + 0.06 * np.sin(ang * 13)
+    a = np.clip((edge - r) / 0.25, 0, 1) ** 0.8
+    noise = rnd.rand(size, size)
+    a *= 0.75 + 0.25 * noise
+    rgb = np.zeros((size, size, 3), np.float32) + np.array([28, 22, 18], np.float32)
+    img = Image.fromarray(np.dstack([rgb, a * 235]).astype(np.uint8), "RGBA").filter(ImageFilter.GaussianBlur(1.2))
+    save(img, "FX_Scorch")
+
+
+def ring():
+    size = 256
+    y, x = np.mgrid[0:size, 0:size]
+    r = np.sqrt((x - size / 2 + 0.5) ** 2 + (y - size / 2 + 0.5) ** 2) / (size / 2)
+    a = np.exp(-((r - 0.86) / 0.06) ** 2)
+    img = Image.fromarray(np.dstack([np.full((size, size, 3), 255.0), a * 255]).astype(np.uint8), "RGBA")
+    save(img, "FX_Ring")
+
+
 if __name__ == "__main__":
+    comic_burst()
+    lettering("БАХ!", "FX_Boom_Bah", -8)
+    lettering("БУМ!", "FX_Boom_Bum", 6)
+    lettering("БАБАХ!", "FX_Boom_Babah", -5)
+    star()
+    cloud()
+    scorch()
+    ring()
     shock_ring()
     marker_ring()
     target_ring()

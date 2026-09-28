@@ -49,6 +49,15 @@ namespace ZombiCar.EditorTools
         // the north sidewalk down to the south edge of the ground.
         public const float c_NorthSidewalkEdge = 15.8f;
 
+        private static ZombiCar.Props.ComicExplosion s_Explosion;
+
+        // Explosive props: red barrels (big blast) and red canisters (small blast).
+        private static readonly (string prefab, int health, float radius, int damage, float fxSize)[] s_Explosives =
+        {
+            ("Barrel_RedWhite", 20, 4.5f, 130, 1f),
+            ("Jerrycan_Red", 10, 3.2f, 80, 0.7f),
+        };
+
         public static float EastRoadLength(MapConfig map) =>
             c_NorthSidewalkEdge - (map.GroundCenter.z - map.GroundSize.y * 0.5f);
 
@@ -71,6 +80,7 @@ namespace ZombiCar.EditorTools
             EditorPaths.EnsureFolder(EditorPaths.c_PrefabsUi);
             EditorPaths.EnsureFolder(EditorPaths.c_GeneratedMeshes);
 
+            s_Explosion = FxBuilder.BuildExplosion();
             int models = BuildModelPrefabs();
             BuildGeneratedEnvironment();
             BuildStubs();
@@ -178,6 +188,15 @@ namespace ZombiCar.EditorTools
 
             if (environment)
                 SetStaticRecursively(go, StaticEditorFlags.BatchingStatic);
+            foreach ((string prefab, int health, float radius, int damage, float fxSize) in s_Explosives)
+            {
+                if (name != prefab)
+                    continue;
+                var explosive = go.AddComponent<ZombiCar.Props.ExplosiveProp>();
+                Wire(explosive, ("m_Explosion", s_Explosion), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                    ("m_Waves", DataAssetsBuilder.Load<ZombiCar.Waves.WaveState>(DataAssetsBuilder.c_WaveState)));
+                CharacterBuilder.SetProps(explosive, ("m_Health", health), ("m_Radius", radius), ("m_Damage", damage), ("m_FxSize", fxSize));
+            }
         }
 
         private static void AddSignColliders(GameObject go, string name)

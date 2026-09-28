@@ -229,6 +229,7 @@ namespace ZombiCar.EditorTools
                 VaryLayout(props, nature, map, c_NightLayoutSeed);
                 AddNightLotLamps(props);
             }
+            BuildExplosives(Root("Explosives"));
 
             GameObject car = Place("Car_Player", gameplay, 0f, 0f, c_CarPlayerYaw);
             car.name = "Car_Player";
@@ -889,6 +890,19 @@ namespace ZombiCar.EditorTools
             Place("Prop_Fence_L", p, -18.8f, -1.2f, 15f);
             Place("Prop_Fence_R", p, -18.5f, 2.2f, -10f);
             Place("Workshop_Vegetation", p, -30f, 3f);
+        }
+
+        // Red explosive barrels out in the lot (the ones by the fences are in BuildProps): where the zombies walk in
+        // from the spawn points towards the car, clear of the car's free circle.
+        private static readonly (float x, float z, float yaw)[] s_LotExplosives =
+        {
+            (-11.5f, -6.5f, 20f), (9.5f, -7.5f, 140f), (12.5f, 5f, 70f), (-13.5f, 1.5f, 200f),
+        };
+
+        private static void BuildExplosives(Transform parent)
+        {
+            foreach ((float x, float z, float yaw) in s_LotExplosives)
+                Place("Barrel_RedWhite", parent, x, z, yaw);
         }
 
         // ------------------------------------------------------------------ nature

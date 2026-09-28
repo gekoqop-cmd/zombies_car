@@ -251,6 +251,32 @@ def Boss_Slam():
     return finish(reverb(x, 0.25, 1.4), -1)
 
 
+# ================================================================================================ explosions
+def explosion(seed, low=85.0):
+    rnd = np.random.RandomState(seed)
+    t = times(2.2)
+    thump = kick(0.6, 140, low * 0.5, 0.03)
+    body = lowpass(noise(2.2, rnd), 900) * np.exp(-t / 0.45) * np.minimum(1, t / 0.004)
+    roar = bandpass(noise(2.2, rnd), 200, 3000) * np.exp(-t / 0.18)
+    crackle = np.zeros(len(t))
+    for _ in range(28):
+        i = int(rnd.uniform(0.05, 1.2) * SR)
+        c = highpass(noise(0.02, rnd), 2500) * decay(0.02, 0.004)
+        crackle[i:i + len(c)] += c * rnd.uniform(0.2, 0.6) * np.exp(-i / SR / 0.5)
+    x = mix(2.6, [(0, boom(1.8, low, 26), 1.0), (0, thump, 0.8), (0, body, 0.7), (0, roar, 0.5), (0, crackle, 0.5)])
+    return finish(reverb(drive(x * 1.4, 1.6), 0.25, 1.4, 3500), -0.8)
+
+
+@sound
+def Explosion1():
+    return explosion(31)
+
+
+@sound
+def Explosion2():
+    return explosion(47, 75.0)
+
+
 def main(names):
     todo = names or list(SOUNDS)
     for name in todo:
