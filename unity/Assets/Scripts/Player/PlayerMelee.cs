@@ -84,7 +84,7 @@ namespace ZombiCar.Player
             float halfArc = m_Config.Arc * 0.5f;
             Vector3 origin = transform.position + Vector3.up * 0.9f;
             int mask = Layers.Enemies | (1 << Layers.c_ObstacleIndex);
-            int count = Physics.OverlapSphereNonAlloc(origin, range, s_Hits, mask, QueryTriggerInteraction.Collide);
+            int count = Physics.OverlapSphereNonAlloc(origin, range, s_Hits, mask, QueryTriggerInteraction.Ignore);
             int landed = 0;
             for (int i = 0; i < count; i++)
             {

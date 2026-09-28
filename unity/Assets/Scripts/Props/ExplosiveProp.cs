@@ -105,7 +105,7 @@ namespace ZombiCar.Props
         private void DamageZombies(Vector3 center, float radius)
         {
             m_Hit.Clear();
-            int count = Physics.OverlapSphereNonAlloc(center, radius, s_Hits, Layers.Enemies, QueryTriggerInteraction.Collide);
+            int count = Physics.OverlapSphereNonAlloc(center, radius, s_Hits, Layers.Enemies, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
                 var target = s_Hits[i].GetComponentInParent<IDamageable>();

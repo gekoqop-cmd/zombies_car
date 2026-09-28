@@ -349,6 +349,9 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ zombies
+        // How much wider (and taller) than the body the shot hit box is, metres.
+        private const float c_ShotHitboxMargin = 0.25f;
+
         private static ZombieConfig BuildZombie(ZombieSpec spec, CharacterSprites sprites, List<ZombieConfig> minions = null,
             AcidGlob glob = null)
         {
@@ -360,6 +363,17 @@ namespace ZombiCar.EditorTools
             collider.radius = spec.ColliderRadius;
             collider.height = spec.ColliderHeight;
             collider.center = new Vector3(0f, spec.ColliderHeight * 0.5f, 0f);
+            // Shots only: a larger trigger around the body, so near misses still hit (bullets collide with triggers). The
+            // zombie's own attack reach (agent radius + attack range), the crowd spacing and the area damage of the
+            // explosions, the car's discharge and the axe all keep using the body collider (they ignore triggers).
+            var hitboxGo = new GameObject("ShotHitbox");
+            hitboxGo.transform.SetParent(root.transform, false);
+            var hitbox = hitboxGo.AddComponent<CapsuleCollider>();
+            hitbox.isTrigger = true;
+            hitbox.direction = 1;
+            hitbox.radius = spec.ColliderRadius + c_ShotHitboxMargin;
+            hitbox.height = spec.ColliderHeight + c_ShotHitboxMargin * 2f;
+            hitbox.center = collider.center;
             var body = root.AddComponent<Rigidbody>();
             body.isKinematic = true;                       // moved by the NavMesh agent
             body.useGravity = false;
@@ -376,7 +390,7 @@ namespace ZombiCar.EditorTools
 
             SpriteAnimator animator = BuildView(root, spec.Look, sprites, false, out _, out Transform shadow, out float height);
             var zombie = root.AddComponent<ZombieController>();
-            SetProps(zombie, ("m_Animator", animator), ("m_Shadow", shadow), ("m_VisualHeight", height));
+            SetProps(zombie, ("m_Animator", animator), ("m_Shadow", shadow), ("m_VisualHeight", height), ("m_ShotHitbox", hitbox));
             SetLayerRecursively(root, Layers.c_EnemyIndex);
             if (spec.Boss != null)
                 BuildBossParts(root, zombie, spec, minions, glob, height);

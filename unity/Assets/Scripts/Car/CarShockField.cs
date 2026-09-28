@@ -61,7 +61,7 @@ namespace ZombiCar.Car
         {
             m_PulseTime = Time.time;
             m_Zapped.Clear();
-            int count = Physics.OverlapSphereNonAlloc(transform.position, m_Radius, s_Hits, Layers.Enemies, QueryTriggerInteraction.Collide);
+            int count = Physics.OverlapSphereNonAlloc(transform.position, m_Radius, s_Hits, Layers.Enemies, QueryTriggerInteraction.Ignore);
             for (int i = 0; i < count; i++)
             {
                 var target = s_Hits[i].GetComponentInParent<IDamageable>();

@@ -23,6 +23,7 @@ namespace ZombiCar.EditorTools
             Register("axe", Axe);
             Register("refill", Refill);
             Register("carplate", CarPlate);
+            Register("hitbox", Hitbox);
         }
 
         // ================================================================== 1. workshop, levels, cards

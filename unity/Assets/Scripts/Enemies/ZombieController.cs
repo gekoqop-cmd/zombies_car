@@ -38,6 +38,8 @@ namespace ZombiCar.Enemies
         [SerializeField] private Transform m_Shadow;
         [Tooltip("Share of the attack clip after which the hit lands (the strike frame).")]
         [SerializeField, Range(0f, 1f)] private float m_StrikeMoment = 0.5f;
+        [Tooltip("Larger trigger around the body that only bullets use (near misses still hit); on and off with the body.")]
+        [SerializeField] private Collider m_ShotHitbox;
         [Tooltip("Height of the sprite, metres: rising starts this deep under the ground.")]
         [SerializeField, Min(0.1f)] private float m_VisualHeight = 2.5f;
 
@@ -139,7 +141,7 @@ namespace ZombiCar.Enemies
             m_Agent.speed = m_BaseSpeed;
             m_Agent.avoidancePriority = config.IsBoss ? 10 : UnityEngine.Random.Range(30, 70);
             m_Agent.isStopped = true;
-            m_Collider.enabled = false;           // not shootable while still in the ground
+            SetShootable(false);                  // not shootable while still in the ground
 
             m_Animator.ResetState();
             if (owner.Car != null)
@@ -167,6 +169,13 @@ namespace ZombiCar.Enemies
         {
             if (m_State == State.Busy)
                 Enter(State.Chasing);
+        }
+
+        // The body collider and the shot hit box: off while rising from the ground and once dead.
+        private void SetShootable(bool on)
+        {
+            m_Collider.enabled = on;
+            m_ShotHitbox.enabled = on;
         }
 
         /// <summary>Pushes the zombie along the NavMesh (explosions, the axe).</summary>
@@ -240,7 +249,7 @@ namespace ZombiCar.Enemies
                     break;
                 case State.Dead:
                     m_Agent.enabled = false;      // corpses are not in the crowd avoidance
-                    m_Collider.enabled = false;
+                    SetShootable(false);
                     m_Animator.Play(CharacterAnim.Dead, 1f, true);
                     m_Owner.NotifyDied(this);
                     Died?.Invoke(this);
@@ -256,7 +265,7 @@ namespace ZombiCar.Enemies
             m_Shadow.localScale = m_ShadowScale * eased;
             if (t < 1f)
                 return;
-            m_Collider.enabled = true;
+            SetShootable(true);
             Enter(State.Chasing);
         }
 
