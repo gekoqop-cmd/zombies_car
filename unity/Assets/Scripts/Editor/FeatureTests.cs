@@ -52,6 +52,18 @@ namespace ZombiCar.EditorTools
             public bool ReloadPressed => Time.frameCount <= ReloadUntilFrame;
             public int InteractUntilFrame { get; set; } = -1;
             public bool InteractPressed => Time.frameCount <= InteractUntilFrame;
+            private bool m_Switch;
+            public void PressSwitch() => m_Switch = true;
+            public bool SwitchWeaponPressed
+            {
+                get
+                {
+                    bool pressed = m_Switch;                         // one press, taken by the first reader
+                    m_Switch = false;
+                    return pressed;
+                }
+            }
+            public int WeaponSlotPressed => -1;
 
             public bool TryGetAimRay(out Ray ray)
             {

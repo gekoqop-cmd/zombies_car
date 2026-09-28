@@ -37,6 +37,15 @@ namespace ZombiCar.EditorTools
         private const int c_SmokeSortingOrder = 1;
         private const int c_GlowSortingOrder = 2;
         private const int c_FlashSortingOrder = 3;
+        private const int c_AxeSortingOrder = 4;
+        private const int c_SlashSortingOrder = 5;
+        // The axe (tools/vfx/comic_fx.py FX_AxeWeapon, 128 x 256: blade up-left, handle down): size in metres, where the
+        // hand holds it (texture fraction), the grip in front of the body (view space, the height is pitch-stretched).
+        private static readonly Vector2 s_AxeSize = new Vector2(0.5f, 1f);
+        private static readonly Vector2 s_AxeGripUv = new Vector2(0.7f, 0.2f);
+        private static readonly Vector2 s_AxeGrip = new Vector2(0.25f, 1.25f);
+        private const float c_SlashSize = 1.5f;
+        private const float c_SlashAngle = -60f;             // the crescent runs from above the head down to the front
         private const int c_FlashFrames = 3;
         private const int c_SmokePuffs = 2;
         private const float c_FlashScale = 1.35f;          // body space: ~0.5 m wide star
@@ -283,7 +292,8 @@ namespace ZombiCar.EditorTools
         /// Adds the view (billboard + body sprite with the Animator, animated barrel, muzzle flash, blob shadow),
         /// PlayerView, PlayerHealth (returned) and the crowd obstacle to the player root, and wires the weapon's muzzle.
         /// </summary>
-        public static PlayerHealth BuildView(GameObject root, PlayerInputProvider input, PlayerWeapon weapon, DesktopPlayerInput desktop)
+        public static PlayerHealth BuildView(GameObject root, PlayerInputProvider input, PlayerWeapon weapon, DesktopPlayerInput desktop,
+            PlayerMelee melee)
         {
             FramesMeta meta = LoadMeta();
             Vector2 scale = BodyScale(meta);
@@ -355,7 +365,7 @@ namespace ZombiCar.EditorTools
             var playerView = view.gameObject.AddComponent<PlayerView>();
             PrefabBuilder.Wire(playerView, ("m_Animator", animator), ("m_Body", body), ("m_MuzzleFlash", flash), ("m_MuzzleGlow", glow),
                 ("m_Controller", cc),
-                ("m_InputProvider", input), ("m_Weapon", weapon),
+                ("m_InputProvider", input), ("m_Weapon", weapon), ("m_Melee", melee),
                 ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
                 ("m_ShotSound", Sound("Player_Shot")), ("m_ReloadSound", Sound("Player_Reload")));
             CharacterBuilder.SetProps(playerView, ("m_Scale", scale), ("m_Tint", CharacterBuilder.s_SpriteTint),
@@ -363,6 +373,7 @@ namespace ZombiCar.EditorTools
                 ("m_StepSounds", new Object[] { Sound("Player_Step1"), Sound("Player_Step2"), Sound("Player_Step3") }),
                 ("m_FlashFrames", flashFrames.Cast<Object>().ToArray()), ("m_Smoke", smoke.Cast<Object>().ToArray()));
             PrefabBuilder.Wire(bodyGo.AddComponent<PlayerAnimationEvents>(), ("m_View", playerView));
+            BuildAxe(view, bodyGo.transform, melee);
 
             WeaponConfig config = DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig);
             PrefabBuilder.Wire(weapon, ("m_Muzzle", muzzle));
@@ -371,6 +382,32 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(health, ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)), ("m_View", playerView),
                 ("m_Run", DataAssetsBuilder.Load<ZombiCar.Progression.RunState>(DataAssetsBuilder.c_RunState)));
             return health;
+        }
+
+        /// <summary>
+        /// The axe in hand (<see cref="AxeView"/>): Axe (placed at the grip, mirrored with the facing, pitch-stretched)
+        /// / Pivot (turned by the swing) / Blade quad with the grip on the pivot, mirrored so the edge leads the downward
+        /// chop; the Slash crescent beside the pivot (not turned). Hidden while the gun is in hand.
+        /// </summary>
+        private static void BuildAxe(Transform view, Transform body, PlayerMelee melee)
+        {
+            var root = new GameObject("Axe").transform;
+            root.SetParent(view, false);
+            var pivot = new GameObject("Pivot").transform;
+            pivot.SetParent(root, false);
+            Vector3 gripOffset = new Vector3((s_AxeGripUv.x - 0.5f) * s_AxeSize.x, (0.5f - s_AxeGripUv.y) * s_AxeSize.y, 0f);
+            MeshRenderer blade = FxBuilder.Billboard("Blade", pivot, FxBuilder.Material("M_FX_AxeWeapon", "FX_AxeWeapon", Color.white, false),
+                gripOffset, new Vector2(-s_AxeSize.x, s_AxeSize.y), 1f);
+            blade.sortingOrder = c_AxeSortingOrder;
+            blade.enabled = false;
+            MeshRenderer slash = FxBuilder.Billboard("Slash", root, FxBuilder.Material("M_FX_Slash", "FX_Slash", new Color(1f, 0.97f, 0.86f, 0.9f), false),
+                new Vector3(0f, 0f, -0.01f), new Vector2(c_SlashSize, c_SlashSize), 1f);
+            slash.transform.localRotation = Quaternion.Euler(0f, 0f, c_SlashAngle);
+            slash.sortingOrder = c_SlashSortingOrder;
+            slash.enabled = false;
+            var axeView = root.gameObject.AddComponent<AxeView>();
+            PrefabBuilder.Wire(axeView, ("m_Melee", melee), ("m_Body", body), ("m_Pivot", pivot), ("m_Axe", blade), ("m_Slash", slash));
+            CharacterBuilder.SetProps(axeView, ("m_Grip", s_AxeGrip), ("m_PitchCompensation", CharacterBuilder.PitchCompensation));
         }
 
         private static SpriteRenderer EffectSprite(string name, Transform parent, Sprite sprite, Material material, int order,

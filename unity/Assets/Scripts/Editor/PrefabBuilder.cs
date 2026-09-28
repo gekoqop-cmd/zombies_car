@@ -506,6 +506,8 @@ namespace ZombiCar.EditorTools
             var weapon = root.AddComponent<PlayerWeapon>();
             var aimGizmos = root.AddComponent<AimGizmos>();
             var interactor = root.AddComponent<PlayerInteractor>();
+            var melee = root.AddComponent<PlayerMelee>();
+            var switcher = root.AddComponent<WeaponSwitcher>();
             var run = DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState);
 
             Wire(desktop, ("m_AimOrigin", root.transform));
@@ -518,7 +520,12 @@ namespace ZombiCar.EditorTools
             Wire(mobile, ("m_Weapon", weapon));
             Wire(interactor, ("m_InputProvider", provider), ("m_Run", run),
                 ("m_State", DataAssetsBuilder.Load<InteractionState>(DataAssetsBuilder.c_InteractionState)));
-            PlayerHealth health = PlayerBuilder.BuildView(root, provider, weapon, desktop);
+            PlayerHealth health = PlayerBuilder.BuildView(root, provider, weapon, desktop, melee);
+            // The axe: the second weapon (Q / wheel / 1-2 on PC, the weapon button on touch screens).
+            Wire(melee, ("m_Config", DataAssetsBuilder.Load<MeleeConfig>(DataAssetsBuilder.c_MeleeConfig)),
+                ("m_InputProvider", provider), ("m_Weapon", weapon), ("m_Health", health), ("m_Run", run));
+            Wire(switcher, ("m_InputProvider", provider), ("m_Gun", weapon), ("m_Axe", melee),
+                ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)), ("m_Run", run));
             Wire(controller, ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
                 ("m_InputProvider", provider), ("m_Interactor", interactor), ("m_Health", health), ("m_Run", run));
             SetLayerRecursively(root, Layers.c_PlayerIndex);
@@ -534,7 +541,8 @@ namespace ZombiCar.EditorTools
             aimRenderer.sharedMaterial = aimMaterial;
             aimRenderer.shadowCastingMode = ShadowCastingMode.Off;
             aimRenderer.receiveShadows = false;
-            Wire(aimLine.AddComponent<AimIndicator>(), ("m_InputProvider", provider), ("m_Weapon", weapon), ("m_Follow", root.transform));
+            Wire(aimLine.AddComponent<AimIndicator>(), ("m_InputProvider", provider), ("m_Weapon", weapon), ("m_Melee", melee),
+                ("m_Follow", root.transform));
 
             SavePrefab(root, $"{EditorPaths.c_PrefabsCharacters}/Player.prefab");
         }

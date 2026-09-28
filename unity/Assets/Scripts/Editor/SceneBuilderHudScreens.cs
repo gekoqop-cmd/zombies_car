@@ -47,6 +47,40 @@ namespace ZombiCar.EditorTools
             return pill;
         }
 
+        // ------------------------------------------------------------------ weapon slots (desktop)
+        private const float c_WeaponSlot = 96f;
+
+        /// <summary>Bottom right (desktop): the gun [1] and the axe [2], the one in hand lit orange, the switch hint above.</summary>
+        private static void BuildWeaponSlots(RectTransform safe, Material outline)
+        {
+            var bottomRight = new Vector2(1f, 0f);
+            RectTransform root = UiFactory.Rect("WeaponSlots", safe, bottomRight, bottomRight, new Vector2(-24f, 24f),
+                new Vector2(c_WeaponSlot * 2f + 14f, c_WeaponSlot + 44f));
+            Image gun = WeaponSlotPlate("Gun", root, 0f, "UI_Icon_Rifle", "1", outline);
+            Image axe = WeaponSlotPlate("Axe", root, c_WeaponSlot + 14f, "UI_Icon_Axe", "2", outline);
+            var top = new Vector2(1f, 1f);
+            TextMeshProUGUI hint = OutlinedLabel("Hint", root, top, top, Vector2.zero, new Vector2(520f, 38f), "Q: СМЕНИТЬ ОРУЖИЕ", 26f,
+                TextAlignmentOptions.Right, Color.white, outline);
+            PrefabBuilder.Wire(root.gameObject.AddComponent<WeaponSlotsView>(),
+                ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)),
+                ("m_GunPlate", gun), ("m_AxePlate", axe), ("m_Hint", hint));
+        }
+
+        private static Image WeaponSlotPlate(string name, RectTransform parent, float x, string icon, string key, Material outline)
+        {
+            var bottomLeft = new Vector2(0f, 0f);
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform slot = UiFactory.Rect(name, parent, bottomLeft, center, new Vector2(x + c_WeaponSlot * 0.5f, c_WeaponSlot * 0.5f),
+                new Vector2(c_WeaponSlot, c_WeaponSlot));
+            Image plate = UiFactory.Image(slot, UiFactory.Sprite("UI_Panel"), s_PillColor, true);
+            RectTransform iconRt = UiFactory.Rect("Icon", slot, center, center, new Vector2(4f, -2f), new Vector2(c_WeaponSlot * 0.74f, c_WeaponSlot * 0.74f));
+            UiFactory.Image(iconRt, UiFactory.Sprite(icon), Color.white, false).preserveAspect = true;
+            var topLeft = new Vector2(0f, 1f);
+            OutlinedLabel("Key", slot, topLeft, topLeft, new Vector2(8f, -2f), new Vector2(40f, 40f), key, 30f,
+                TextAlignmentOptions.TopLeft, Color.white, outline);
+            return plate;
+        }
+
         // ------------------------------------------------------------------ wave banner
         private static void BuildWaveBanner(RectTransform safe, Material outline)
         {

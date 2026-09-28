@@ -452,6 +452,7 @@ namespace ZombiCar.EditorTools
                 out TextMeshProUGUI killsValue);
             BuildInteractionPrompt(safe, outline);
             BuildWaveBanner(safe, outline);
+            BuildWeaponSlots(safe, outline);
 
             BuildTouchControls(safe, outline);
             BuildLevelUpScreen(safe, outline);
@@ -530,6 +531,21 @@ namespace ZombiCar.EditorTools
                 ("m_State", DataAssetsBuilder.Load<ZombiCar.Progression.InteractionState>(DataAssetsBuilder.c_InteractionState)),
                 ("m_Layout", layout), ("m_Visual", actionVisual), ("m_Icon", actionImage));
 
+            // Weapon (gun / axe): under the reload button; shows the weapon it switches to.
+            RectTransform weapon = UiFactory.Rect("WeaponButton", area, bottomRight, new Vector2(0.5f, 0.5f),
+                new Vector2(-c_StickTouch - 30f, c_StickTouch * 0.5f - 10f), new Vector2(c_TouchButton, c_TouchButton));
+            UiFactory.Image(weapon, UiFactory.Sprite("UI_RoundButton"), Color.white, false, true);
+            RectTransform weaponIcon = UiFactory.Rect("Icon", weapon, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
+                new Vector2(c_TouchButton * 0.62f, c_TouchButton * 0.62f));
+            Image weaponImage = UiFactory.Image(weaponIcon, UiFactory.Sprite("UI_Icon_Axe"), Color.white, false);
+            weaponImage.preserveAspect = true;
+            var weaponButton = weapon.gameObject.AddComponent<TouchButton>();
+            PrefabBuilder.Wire(weaponButton, ("m_Layout", layout));
+            CharacterBuilder.SetProps(weaponButton, ("m_Action", (int)TouchButton.Action.SwitchWeapon));
+            PrefabBuilder.Wire(weapon.gameObject.AddComponent<WeaponButtonView>(),
+                ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)), ("m_Icon", weaponImage),
+                ("m_GunIcon", UiFactory.Sprite("UI_Icon_Rifle")), ("m_AxeIcon", UiFactory.Sprite("UI_Icon_Axe")));
+
             // Edit overlay: dims the game, shows where the controls may go, takes the drags.
             RectTransform overlay = UiFactory.Stretch("EditOverlay", root);
             UiFactory.Image(overlay, null, new Color(0f, 0f, 0f, 0.45f), false, true);
@@ -548,7 +564,7 @@ namespace ZombiCar.EditorTools
             var so = new SerializedObject(layout);
             so.FindProperty("m_Area").objectReferenceValue = area;
             SerializedProperty controls = so.FindProperty("m_Controls");
-            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload), ("action", action) };
+            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload), ("action", action), ("weapon", weapon) };
             controls.arraySize = list.Length;
             for (int i = 0; i < list.Length; i++)
             {

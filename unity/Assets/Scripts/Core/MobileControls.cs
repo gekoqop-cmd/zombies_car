@@ -26,6 +26,9 @@ namespace ZombiCar.Core
         /// <summary>Frame of the last press of the action button (workshop, ammo at the car).</summary>
         public static int InteractFrame { get; set; } = -1;
 
+        /// <summary>Frame of the last press of the weapon button (gun / axe).</summary>
+        public static int SwitchWeaponFrame { get; set; } = -1;
+
         public static void Reset()
         {
             Move = Aim = Vector2.zero;

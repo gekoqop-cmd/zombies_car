@@ -34,6 +34,8 @@ namespace ZombiCar.Player
         public bool QuickTap => false;
         public bool ReloadPressed => MobileControls.ReloadFrame >= Time.frameCount - 1;
         public bool InteractPressed => MobileControls.InteractFrame >= Time.frameCount - 1;
+        public bool SwitchWeaponPressed => MobileControls.SwitchWeaponFrame >= Time.frameCount - 1;
+        public int WeaponSlotPressed => -1;
 
         public bool TryGetAimRay(out Ray ray)
         {

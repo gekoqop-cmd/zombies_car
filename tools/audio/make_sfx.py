@@ -277,6 +277,57 @@ def Explosion2():
     return explosion(47, 75.0)
 
 
+# ================================================================================================ axe
+def swing(seed, f0, f1, seconds=0.32):
+    rnd = np.random.RandomState(seed)
+    t = times(seconds)
+    env = np.sin(np.clip(t / seconds, 0, 1) * np.pi) ** 1.6
+    x = sweep(noise(seconds, rnd), glide(f0, f1, seconds), "band") * env
+    x += sweep(noise(seconds, rnd), glide(f0 * 0.5, f1 * 0.5, seconds), "band") * env * 0.5
+    return finish(x, -5)
+
+
+@sound
+def Axe_Swing1():
+    return swing(61, 700, 2600)
+
+
+@sound
+def Axe_Swing2():
+    return swing(62, 600, 2200, 0.36)
+
+
+def chop(seed, pitch):
+    rnd = np.random.RandomState(seed)
+    t = times(0.35)
+    thud = kick(0.3, 190 * pitch, 70 * pitch, 0.015)
+    crunch = bandpass(noise(0.35, rnd), 900, 5000) * np.exp(-t / 0.05)
+    squelch = lowpass(noise(0.35, rnd), 1200) * (0.5 + 0.5 * np.sin(2 * np.pi * 45 * t)) * np.exp(-t / 0.09)
+    blade = (np.sin(2 * np.pi * 2300 * pitch * t) + 0.5 * np.sin(2 * np.pi * 3470 * pitch * t)) * np.exp(-t / 0.05) * 0.25
+    x = mix(0.5, [(0, thud, 0.9), (0, crunch, 0.6), (0.005, squelch, 0.5), (0, blade, 1.0)])
+    return finish(drive(x * 1.3, 1.5), -2)
+
+
+@sound
+def Axe_Hit1():
+    return chop(71, 1.0)
+
+
+@sound
+def Axe_Hit2():
+    return chop(72, 0.9)
+
+
+@sound
+def Weapon_Switch():
+    t = times(0.25)
+    click1 = highpass(noise(0.03), 2000) * decay(0.03, 0.006)
+    click2 = bandpass(noise(0.05), 800, 4000) * decay(0.05, 0.012)
+    tone = np.sin(2 * np.pi * 1400 * t[:len(click2)]) * decay(0.05, 0.01) * 0.3
+    x = mix(0.3, [(0, click1, 0.8), (0.09, click2 + tone, 0.9)])
+    return finish(x, -6)
+
+
 def main(names):
     todo = names or list(SOUNDS)
     for name in todo:

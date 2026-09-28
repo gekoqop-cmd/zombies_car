@@ -36,6 +36,12 @@ namespace ZombiCar.Player
         /// <summary>Use what is nearby this frame: workshop, ammo at the car (PC: E; mobile: the action button).</summary>
         bool InteractPressed { get; }
 
+        /// <summary>Switch to the other weapon this frame (PC: Q or the mouse wheel; mobile: the weapon button).</summary>
+        bool SwitchWeaponPressed { get; }
+
+        /// <summary>A weapon picked directly this frame: 0 = gun, 1 = axe, -1 = none (PC: keys 1 / 2).</summary>
+        int WeaponSlotPressed { get; }
+
         /// <summary>
         /// Camera ray through the aim cursor (PC mouse). Devices that aim with a direction only (stick) return false
         /// and the weapon fires along <see cref="AimDirection"/>.

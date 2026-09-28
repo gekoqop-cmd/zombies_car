@@ -44,6 +44,8 @@ namespace ZombiCar.EditorTools
             public int ReloadUntilFrame { get; set; } = -1;
             public bool ReloadPressed => Time.frameCount <= ReloadUntilFrame;   // held for a couple of frames
             public bool InteractPressed => false;
+            public bool SwitchWeaponPressed => false;
+            public int WeaponSlotPressed => -1;
 
             public bool TryGetAimRay(out Ray ray)
             {

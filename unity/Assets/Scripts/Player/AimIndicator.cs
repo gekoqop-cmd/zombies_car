@@ -5,7 +5,8 @@ namespace ZombiCar.Player
 {
     /// <summary>
     /// Brawl Stars style aim line for the touch controls: a thin strip on the ground from the player along the aim
-    /// while the aim stick is held, as long as the weapon's range and cut at the first wall / car / cover in the way.
+    /// while the aim stick is held, as long as the weapon's range (the axe's reach with the axe in hand) and cut at the
+    /// first wall / car / cover in the way.
     /// Hidden on desktop (the mouse cursor shows the aim there).
     /// </summary>
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
@@ -15,6 +16,8 @@ namespace ZombiCar.Player
 
         [SerializeField] private PlayerInputProvider m_InputProvider;
         [SerializeField] private PlayerWeapon m_Weapon;
+        [Tooltip("With the axe in hand the line only reaches as far as the axe.")]
+        [SerializeField] private PlayerMelee m_Melee;
         [SerializeField] private Transform m_Follow;
         [SerializeField, Min(0.01f)] private float m_Width = 0.45f;
         [Tooltip("Gap between the player's feet and the start of the strip.")]
@@ -42,7 +45,7 @@ namespace ZombiCar.Player
                 return;
             }
             m_Input = m_InputProvider != null ? m_InputProvider.Input : null;
-            m_Length = m_Weapon != null && m_Weapon.Config != null ? m_Weapon.Range - m_StartOffset : 1f;
+            m_Length = GunLength();
             // Unit-long strip, stretched along z to the free length each frame.
             GetComponent<MeshFilter>().sharedMesh = BuildStrip(m_Width);
         }
@@ -63,6 +66,7 @@ namespace ZombiCar.Player
             origin.y = m_Height;
             Vector3 start = origin + direction * m_StartOffset;
 
+            m_Length = m_Melee != null && m_Melee.Active ? Mathf.Max(0.3f, m_Melee.Range - m_StartOffset) : GunLength();
             float length = m_Length;
             Vector3 test = new Vector3(start.x, m_TestHeight, start.z);
             if (Physics.Raycast(test, direction, out RaycastHit hit, m_Length, c_CoverMask, QueryTriggerInteraction.Ignore))
@@ -70,6 +74,8 @@ namespace ZombiCar.Player
             transform.SetPositionAndRotation(start, Quaternion.LookRotation(direction, Vector3.up));
             transform.localScale = new Vector3(1f, 1f, Mathf.Max(0.05f, length));
         }
+
+        private float GunLength() => m_Weapon != null && m_Weapon.Config != null ? m_Weapon.Range - m_StartOffset : 1f;
 
         private static Mesh BuildStrip(float width)
         {

@@ -45,6 +45,9 @@ namespace ZombiCar.EditorTools
             new Perk("pierce", "БРОНЕБОЙНЫЕ ПУЛИ", "Пуля пробивает\nещё одного зомби", Icon("Pierce"), s_Gun, StatEffect.BulletPierce, 1f, 3, 0.8f),
             new Perk("crit", "ТОЧНЫЙ ГЛАЗ", "10% шанс\nдвойного урона", Icon("Crit"), s_Gun, StatEffect.CritChance, 0.1f, 4, 1f),
             new Perk("range", "ДАЛЬНОБОЙ", "Дальность стрельбы +20%", Icon("Range"), s_Gun, StatEffect.WeaponRange, 0.2f, 3, 0.8f),
+            // Axe.
+            new Perk("axedamage", "ОСТРЫЙ ТОПОР", "Урон топора +40%", Icon("Axe"), s_Axe, StatEffect.AxeDamage, 0.4f, 4, 0.9f),
+            new Perk("axerange", "ШИРОКИЙ ЗАМАХ", "Дальность удара\nтопором +20%", Icon("AxeRange"), s_Axe, StatEffect.AxeRange, 0.2f, 3, 0.8f),
             // Survival.
             new Perk("health", "ЖИВУЧЕСТЬ", "+25 к максимуму здоровья\nи лечение на 25", Icon("Health"), s_Survival, StatEffect.PlayerMaxHealth, 25f, 5, 1f),
             new Perk("regen", "РЕГЕНЕРАЦИЯ", "Восстанавливает\n1 здоровья в секунду", Icon("Regen"), s_Survival, StatEffect.PlayerRegen, 1f, 3, 1f),

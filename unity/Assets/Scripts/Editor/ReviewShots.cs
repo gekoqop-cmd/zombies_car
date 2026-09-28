@@ -39,6 +39,8 @@ namespace ZombiCar.EditorTools
             public bool QuickTap => false;
             public bool ReloadPressed => false;
             public bool InteractPressed => false;
+            public bool SwitchWeaponPressed => false;
+            public int WeaponSlotPressed => -1;
 
             public bool TryGetAimRay(out Ray ray)
             {

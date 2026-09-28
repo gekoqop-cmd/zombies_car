@@ -33,6 +33,8 @@ namespace ZombiCar.Player
         [SerializeField] private CharacterController m_Controller;
         [SerializeField] private PlayerInputProvider m_InputProvider;
         [SerializeField] private PlayerWeapon m_Weapon;
+        [Tooltip("The axe: the body lunges forward on every swing.")]
+        [SerializeField] private PlayerMelee m_Melee;
         [SerializeField] private PlayerConfig m_Config;
 
         [Header("Clips (lengths in seconds at 1x)")]
@@ -50,6 +52,9 @@ namespace ZombiCar.Player
         [SerializeField, Min(0f)] private float m_RecoilDistance = 0.05f;
         [SerializeField, Min(0.01f)] private float m_RecoilTime = 0.08f;
         [SerializeField, Min(0f)] private float m_HurtTime = 0.2f;
+        [Tooltip("Lunge of the body into an axe swing, metres.")]
+        [SerializeField, Min(0f)] private float m_LungeDistance = 0.14f;
+        [SerializeField, Min(0.01f)] private float m_LungeTime = 0.3f;
 
         [Header("Muzzle flash")]
         [Tooltip("Frames of the flash, brightest first; each shows for Flash Frame Time.")]
@@ -85,6 +90,7 @@ namespace ZombiCar.Player
         private float m_HurtUntil;
         private float m_Speed;
         private float m_DownSince = float.NegativeInfinity;
+        private float m_LungeStart = float.NegativeInfinity;
         private bool m_Down;
 
         private void Awake()
@@ -111,6 +117,8 @@ namespace ZombiCar.Player
                 return;
             m_Weapon.Fired += OnFired;
             m_Weapon.ReloadStarted += OnReloadStarted;
+            if (m_Melee != null)
+                m_Melee.Swung += OnSwung;
         }
 
         private void OnDisable()
@@ -119,7 +127,11 @@ namespace ZombiCar.Player
                 return;
             m_Weapon.Fired -= OnFired;
             m_Weapon.ReloadStarted -= OnReloadStarted;
+            if (m_Melee != null)
+                m_Melee.Swung -= OnSwung;
         }
+
+        private void OnSwung() => m_LungeStart = Time.time;
 
         private void Start() => m_Input = m_InputProvider != null ? m_InputProvider.Input : null;
 
@@ -235,7 +247,8 @@ namespace ZombiCar.Player
             float recoil = 1f - Mathf.Clamp01((Time.time - m_RecoilStart) / m_RecoilTime);
             Transform body = m_Body.transform;
             body.localScale = new Vector3(m_Scale.x * m_Facing, m_Scale.y, 1f);
-            body.localPosition = new Vector3(-m_Facing * m_RecoilDistance * recoil * recoil, 0f, 0f);
+            float lunge = Mathf.Sin(Mathf.Clamp01((Time.time - m_LungeStart) / m_LungeTime) * Mathf.PI);
+            body.localPosition = new Vector3(m_Facing * (m_LungeDistance * lunge - m_RecoilDistance * recoil * recoil), 0f, 0f);
             m_Body.color = (Time.time < m_HurtUntil ? s_HurtColor * m_Tint : m_Tint) * SceneTint.Characters;
 
             UpdateMuzzleEffects();

@@ -16,6 +16,7 @@ namespace ZombiCar.EditorTools
         public const string c_GameSettings = EditorPaths.c_Data + "/GameSettings.asset";
         public const string c_PlayerConfig = EditorPaths.c_Data + "/PlayerConfig.asset";
         public const string c_WeaponConfig = EditorPaths.c_Data + "/WeaponConfig_Default.asset";
+        public const string c_MeleeConfig = EditorPaths.c_Data + "/MeleeConfig_Axe.asset";
         public const string c_WaveConfig = EditorPaths.c_Data + "/WaveConfig_Map01.asset";
         public const string c_CameraConfig = EditorPaths.c_Data + "/CameraConfig.asset";
         public const string c_CarConfig = EditorPaths.c_Data + "/CarConfig.asset";
@@ -25,6 +26,7 @@ namespace ZombiCar.EditorTools
         public const string c_RunState = EditorPaths.c_DataState + "/RunState.asset";
         public const string c_InteractionState = EditorPaths.c_DataState + "/InteractionState.asset";
         public const string c_CarState = EditorPaths.c_DataState + "/CarState.asset";
+        public const string c_WeaponState = EditorPaths.c_DataState + "/WeaponState.asset";
         public const string c_ProgressionConfig = EditorPaths.c_Data + "/ProgressionConfig.asset";
         public const string c_PerkPool = EditorPaths.c_Data + "/PerkPool.asset";
         public const string c_CarUpgrades = EditorPaths.c_Data + "/CarUpgrades.asset";
@@ -39,6 +41,7 @@ namespace ZombiCar.EditorTools
             Ensure<GameSettings>(c_GameSettings);
             Ensure<PlayerConfig>(c_PlayerConfig);
             Ensure<WeaponConfig>(c_WeaponConfig);
+            Ensure<MeleeConfig>(c_MeleeConfig);
             Ensure<WaveConfig>(c_WaveConfig);
             Ensure<CameraConfig>(c_CameraConfig);
             Ensure<CarConfig>(c_CarConfig);
@@ -48,6 +51,7 @@ namespace ZombiCar.EditorTools
             Ensure<RunState>(c_RunState);
             Ensure<InteractionState>(c_InteractionState);
             Ensure<CarState>(c_CarState);
+            Ensure<WeaponState>(c_WeaponState);
             Ensure<ProgressionConfig>(c_ProgressionConfig);
             Ensure<PerkPool>(c_PerkPool);
             Ensure<CarUpgradeCatalog>(c_CarUpgrades);

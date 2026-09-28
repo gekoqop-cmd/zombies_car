@@ -14,6 +14,8 @@ Writes to unity/Assets/Art/VFX (alpha-blended VFX import rules):
   FX_Cloud.png       cartoon smoke puff (grey-white, ink outline)
   FX_Scorch.png      dark scorch mark left on the ground
   FX_Ring.png        thin shockwave ring
+  FX_AxeWeapon.png   the player's axe, upright, grip at the bottom (the swing turns it around the grip)
+  FX_Slash.png       white comic slash crescent left by an axe swing
 Run: python tools/vfx/comic_fx.py
 """
 import math
@@ -269,7 +271,38 @@ def ring():
     save(img, "FX_Ring")
 
 
+def axe_weapon():
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "ui"))
+    from make_icons import axe
+    p = Painter((128, 256), 4, outline=5)
+    # make_icons.axe draws on a 256 grid around its centre: head up-left, handle down; shrink into 128 x 256.
+    axe(p, 90, 132, 0.95, 0.0)
+    p.save(os.path.join(OUT, "FX_AxeWeapon.png"))
+    print("FX_AxeWeapon")
+
+
+def slash():
+    size, ss = 256, 4
+    W = size * ss
+    m = Image.new("L", (W, W), 0)
+    d = ImageDraw.Draw(m)
+    c = W / 2
+    # A crescent: thick arc tapering to both ends, brightest in the middle.
+    for i in range(60):
+        t = i / 59.0
+        a0 = 200 + t * 140
+        width = int(W * 0.07 * math.sin(t * math.pi) + 2)
+        r = W * 0.42
+        d.arc([c - r, c - r, c + r, c + r], a0, a0 + 3, fill=255, width=width)
+    glow = m.filter(ImageFilter.GaussianBlur(W * 0.012))
+    a = np.maximum(np.asarray(glow, np.float32) * 0.9, np.asarray(m, np.float32))
+    img = Image.fromarray(np.dstack([np.full((W, W, 3), 255.0), a]).astype(np.uint8), "RGBA").resize((size, size), Image.LANCZOS)
+    save(img, "FX_Slash")
+
+
 if __name__ == "__main__":
+    axe_weapon()
+    slash()
     comic_burst()
     lettering("БАХ!", "FX_Boom_Bah", -8)
     lettering("БУМ!", "FX_Boom_Bum", 6)

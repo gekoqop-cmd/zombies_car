@@ -20,6 +20,7 @@ namespace ZombiCar.EditorTools
             Register("gameover", GameOver);
             Register("victory", Victory);
             Register("explosions", Explosions);
+            Register("axe", Axe);
         }
 
         // ================================================================== 1. workshop, levels, cards

@@ -7,14 +7,19 @@ namespace ZombiCar.Player
     /// <summary>
     /// PC input through the Input System: WASD / arrows move, the mouse cursor aims (the weapon resolves the exact
     /// target from <see cref="TryGetAimRay"/>; the facing uses the cursor on the barrel-height plane),
-    /// the left mouse button fires (hold = automatic fire), R reloads, E uses what is nearby (workshop, ammo at the
-    /// car). Keyboard bindings use physical key positions,
+    /// the left mouse button attacks with the weapon in hand (hold = automatic fire / repeated swings), R reloads,
+    /// E uses what is nearby (workshop, ammo at the car), Q or the mouse wheel switches between the gun and the axe,
+    /// 1 / 2 pick them. Keyboard bindings use physical key positions,
     /// so they work with any keyboard layout (Yandex Games requirement).
     /// </summary>
     [DefaultExecutionOrder(-50)]
     public sealed class DesktopPlayerInput : MonoBehaviour, IPlayerInput
     {
         private const string c_Vector2Composite = "2DVector";
+        private const float c_WheelNotch = 60f;             // one mouse-wheel notch is 120 on Windows
+        private const float c_WheelCooldown = 0.2f;
+
+        private float m_WheelReadyTime;
 
         [Tooltip("Where aiming starts from (the player). The aim direction is cursor-on-ground minus this position.")]
         [SerializeField] private Transform m_AimOrigin;
@@ -31,6 +36,10 @@ namespace ZombiCar.Player
         private InputAction m_PointAction;
         private InputAction m_ReloadAction;
         private InputAction m_InteractAction;
+        private InputAction m_SwitchAction;
+        private InputAction m_Slot1Action;
+        private InputAction m_Slot2Action;
+        private InputAction m_WheelAction;
         private Camera m_Camera;
         private Vector3 m_AimDirection = Vector3.forward;
         private bool m_FireStartedOverUi;
@@ -46,6 +55,8 @@ namespace ZombiCar.Player
         public bool QuickTap => false;
         public bool ReloadPressed { get; private set; }
         public bool InteractPressed { get; private set; }
+        public bool SwitchWeaponPressed { get; private set; }
+        public int WeaponSlotPressed { get; private set; } = -1;
 
         /// <summary>Cursor position on the barrel-height plane (valid while <see cref="AimActive"/>).</summary>
         public Vector3 AimPoint { get; private set; }
@@ -74,6 +85,10 @@ namespace ZombiCar.Player
             m_PointAction = new InputAction("Point", InputActionType.Value, "<Mouse>/position");
             m_ReloadAction = new InputAction("Reload", InputActionType.Button, "<Keyboard>/r");   // physical key: any layout
             m_InteractAction = new InputAction("Interact", InputActionType.Button, "<Keyboard>/e");
+            m_SwitchAction = new InputAction("SwitchWeapon", InputActionType.Button, "<Keyboard>/q");
+            m_Slot1Action = new InputAction("Gun", InputActionType.Button, "<Keyboard>/1");
+            m_Slot2Action = new InputAction("Axe", InputActionType.Button, "<Keyboard>/2");
+            m_WheelAction = new InputAction("WeaponWheel", InputActionType.Value, "<Mouse>/scroll/y");
         }
 
         private void OnEnable()
@@ -83,6 +98,10 @@ namespace ZombiCar.Player
             m_PointAction.Enable();
             m_ReloadAction.Enable();
             m_InteractAction.Enable();
+            m_SwitchAction.Enable();
+            m_Slot1Action.Enable();
+            m_Slot2Action.Enable();
+            m_WheelAction.Enable();
         }
 
         private void OnDisable()
@@ -92,7 +111,12 @@ namespace ZombiCar.Player
             m_PointAction.Disable();
             m_ReloadAction.Disable();
             m_InteractAction.Disable();
-            ReloadPressed = InteractPressed = false;
+            m_SwitchAction.Disable();
+            m_Slot1Action.Disable();
+            m_Slot2Action.Disable();
+            m_WheelAction.Disable();
+            ReloadPressed = InteractPressed = SwitchWeaponPressed = false;
+            WeaponSlotPressed = -1;
             Move = Vector2.zero;
             FireHeld = FirePressed = FireReleased = AimActive = m_HasAimRay = false;
         }
@@ -104,6 +128,10 @@ namespace ZombiCar.Player
             m_PointAction?.Dispose();
             m_ReloadAction?.Dispose();
             m_InteractAction?.Dispose();
+            m_SwitchAction?.Dispose();
+            m_Slot1Action?.Dispose();
+            m_Slot2Action?.Dispose();
+            m_WheelAction?.Dispose();
         }
 
         private void Update()
@@ -111,6 +139,13 @@ namespace ZombiCar.Player
             Move = Vector2.ClampMagnitude(m_MoveAction.ReadValue<Vector2>(), 1f);
             ReloadPressed = m_ReloadAction.WasPressedThisFrame();
             InteractPressed = m_InteractAction.WasPressedThisFrame();
+            // The wheel switches on a clear notch (not on every small scroll event of a touchpad).
+            float wheel = m_WheelAction.ReadValue<float>();
+            bool wheelNotch = Mathf.Abs(wheel) >= c_WheelNotch && Time.unscaledTime >= m_WheelReadyTime;
+            if (wheelNotch)
+                m_WheelReadyTime = Time.unscaledTime + c_WheelCooldown;
+            SwitchWeaponPressed = m_SwitchAction.WasPressedThisFrame() || wheelNotch;
+            WeaponSlotPressed = m_Slot1Action.WasPressedThisFrame() ? 0 : m_Slot2Action.WasPressedThisFrame() ? 1 : -1;
             // A click that starts on a HUD button (settings, etc.) must not shoot.
             bool pressedNow = m_FireAction.WasPressedThisFrame();
             if (pressedNow)
