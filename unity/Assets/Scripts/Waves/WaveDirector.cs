@@ -123,6 +123,16 @@ namespace ZombiCar.Waves
             StartCountdown(countdown);
         }
 
+        // Play-mode shortcuts to the boss waves (the component's context menu in the Inspector).
+        [ContextMenu("Debug/Skip to wave 10 (boss)")]
+        private void DebugWave10() => SkipTo(10, 3f);
+
+        [ContextMenu("Debug/Skip to wave 20 (boss)")]
+        private void DebugWave20() => SkipTo(20, 3f);
+
+        [ContextMenu("Debug/Skip to wave 30 (boss)")]
+        private void DebugWave30() => SkipTo(30, 3f);
+
         private void SpawnBoss(ZombieConfig boss)
         {
             m_Boss = m_Spawner.SpawnFar(boss);

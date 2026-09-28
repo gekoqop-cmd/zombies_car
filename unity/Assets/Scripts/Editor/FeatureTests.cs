@@ -118,8 +118,23 @@ namespace ZombiCar.EditorTools
         /// <summary>Batch entry: the scenario comes from -featureTest.</summary>
         public static void Run() => Run(Argument(c_ScenarioArgument) ?? "progression");
 
+        // The scenarios from the editor: the map opens, plays the scenario and leaves Play Mode (results in the Console).
+        [MenuItem("Tools/Diagnostics/Feature Tests/1 Progression (workshop, cards)")] private static void MenuProgression() => Run("progression");
+        [MenuItem("Tools/Diagnostics/Feature Tests/2 Sound and music")] private static void MenuSound() => Run("sound");
+        [MenuItem("Tools/Diagnostics/Feature Tests/3 Bosses")] private static void MenuBosses() => Run("bosses");
+        [MenuItem("Tools/Diagnostics/Feature Tests/4 Game over")] private static void MenuGameOver() => Run("gameover");
+        [MenuItem("Tools/Diagnostics/Feature Tests/4 Victory")] private static void MenuVictory() => Run("victory");
+        [MenuItem("Tools/Diagnostics/Feature Tests/5 Explosions")] private static void MenuExplosions() => Run("explosions");
+        [MenuItem("Tools/Diagnostics/Feature Tests/6 Axe")] private static void MenuAxe() => Run("axe");
+        [MenuItem("Tools/Diagnostics/Feature Tests/7 Ammo refill")] private static void MenuRefill() => Run("refill");
+        [MenuItem("Tools/Diagnostics/Feature Tests/8 Car plate")] private static void MenuCarPlate() => Run("carplate");
+        [MenuItem("Tools/Diagnostics/Feature Tests/9 Shot hit box")] private static void MenuHitbox() => Run("hitbox");
+
         public static void Run(string scenario)
         {
+            if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                return;                                              // the user kept the unsaved scene open
+            s_Started = false;                                       // statics survive between plays (no domain reload)
             string scene = Argument(c_MapArgument) == "night" ? SceneBuilder.c_NightMapScene : SceneBuilder.c_MapScene;
             EditorSceneManager.OpenScene(scene, OpenSceneMode.Single);
             SessionState.SetString(c_ScenarioKey, scenario);
@@ -180,11 +195,8 @@ namespace ZombiCar.EditorTools
             s_Started = true;
             s_StartTime = Time.realtimeSinceStartup;
             s_Checks = s_Failures = s_Errors = 0;
-            Application.logMessageReceived += (message, stack, type) =>
-            {
-                if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
-                    s_Errors++;
-            };
+            Application.logMessageReceived -= CountErrors;
+            Application.logMessageReceived += CountErrors;
             s_Scenario = SessionState.GetString(c_ScenarioKey, "progression");
             Rebind();
 
@@ -201,6 +213,12 @@ namespace ZombiCar.EditorTools
             }
             s_Steps.Sort((a, b) => a.Time != b.Time ? a.Time.CompareTo(b.Time) : a.Order.CompareTo(b.Order));
             Debug.Log($"[FeatureTests] Scenario '{s_Scenario}': {s_Steps.Count} steps.");
+        }
+
+        private static void CountErrors(string message, string stack, LogType type)
+        {
+            if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert)
+                s_Errors++;
         }
 
         /// <summary>Finds the map's objects and puts the bot in charge of the player (again after a map reload).</summary>
