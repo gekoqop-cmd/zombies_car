@@ -157,6 +157,100 @@ def Car_Shock():
     return finish(x, -4)
 
 
+# ================================================================================================ bosses
+def growl(seconds, f0, f1, formants=(420.0, 950.0, 2300.0), rough=0.45, flutter=28.0, seed=1):
+    """Monster voice: a low sawtooth pair with a wandering pitch, fluttering amplitude and formant filters."""
+    rnd = np.random.RandomState(seed)
+    n = len(times(seconds))
+    wander = lowpass(rnd.randn(n), 18.0) * 60.0
+    f = glide(f0, f1, seconds) * (1.0 + wander * 0.02)
+    src = saw(f, seconds) + 0.7 * saw(f * 1.013, seconds, 0.4) + 0.35 * saw(f * 0.5, seconds, 0.2)
+    src += bandpass(noise(seconds, rnd), 300, 3500) * rough
+    t = times(seconds)
+    src *= 1.0 + 0.45 * np.sin(2 * np.pi * flutter * t + rnd.rand() * 6) * (0.6 + 0.4 * np.sin(2 * np.pi * 3.1 * t))
+    voice = sum(bandpass(src, fc * 0.8, fc * 1.25) * g for fc, g in zip(formants, (1.0, 0.7, 0.35)))
+    return drive(voice * 3.0, 2.5)
+
+
+@sound
+def Boss_Roar():
+    v = growl(1.9, 115, 72, seed=3) * adsr(1.9, 0.12, 0.4, 0.85, 0.7)
+    x = mix(2.4, [(0, v, 0.8), (0, boom(1.4, 70, 30), 0.6), (0.05, lowpass(noise(1.6), 400) * decay(1.6, 0.6), 0.4)])
+    return finish(reverb(x, 0.3, 1.6, 3500), -1.5)
+
+
+@sound
+def Boss_Attack():
+    grunt = growl(0.35, 130, 90, seed=5, rough=0.6) * adsr(0.35, 0.02, 0.1, 0.8, 0.15)
+    crunch = bandpass(noise(0.3), 600, 4500) * decay(0.3, 0.05)
+    x = mix(0.8, [(0, kick(0.5, 110, 38, 0.04), 1.0), (0, crunch, 0.6), (0.02, grunt, 0.55)])
+    return finish(reverb(x, 0.15, 0.8), -2)
+
+
+@sound
+def Boss_Death():
+    t = times(2.6)
+    v = growl(2.6, 105, 32, seed=7, rough=0.7) * adsr(2.6, 0.08, 0.5, 0.9, 1.4) * (1.0 - 0.5 * t / 2.6)
+    x = mix(3.4, [(0, v, 0.8), (1.25, boom(1.8, 80, 26), 0.9), (1.25, bandpass(noise(0.6), 200, 2000) * decay(0.6, 0.15), 0.5)])
+    return finish(reverb(x, 0.35, 2.0, 3000), -1.5)
+
+
+@sound
+def Boss_Summon():
+    t = times(1.5)
+    rise = sweep(saw(glide(55, 110, 1.5), 1.5) + saw(glide(55.7, 111, 1.5), 1.5, 0.5), glide(200, 2200, 1.5), "low")
+    rise *= np.linspace(0, 1, len(t)) ** 1.5
+    rnd = np.random.RandomState(9)
+    bubbles = np.zeros(len(t))
+    for _ in range(18):
+        start = rnd.uniform(0.1, 1.3)
+        f = rnd.uniform(300, 900)
+        b = sine(glide(f, f * 1.8, 0.06), 0.06) * decay(0.06, 0.02)
+        i = int(start * SR)
+        bubbles[i:i + len(b)] += b * rnd.uniform(0.3, 0.7)
+    x = mix(2.0, [(0, rise, 0.5), (0, bubbles, 0.35), (0.9, boom(1.0, 60, 30), 0.5)])
+    return finish(reverb(x, 0.35, 1.4), -3)
+
+
+@sound
+def Boss_Spit():
+    t = times(0.4)
+    hawk = sweep(noise(0.4), glide(3200, 500, 0.4), "band") * decay(0.4, 0.12, 0.01)
+    gurgle = lowpass(noise(0.4), 900) * (0.5 + 0.5 * np.sin(2 * np.pi * 38 * t)) * decay(0.4, 0.1)
+    return finish(hawk * 0.8 + gurgle * 0.6, -4)
+
+
+@sound
+def Spit_Splat():
+    t = times(0.5)
+    splash = lowpass(noise(0.5), 1800) * decay(0.5, 0.07, 0.002)
+    fizz = highpass(noise(0.5), 3500) * decay(0.5, 0.18) * 0.35
+    rnd = np.random.RandomState(4)
+    drips = np.zeros(len(t))
+    for _ in range(5):
+        i = int(rnd.uniform(0.08, 0.4) * SR)
+        f = rnd.uniform(900, 1800)
+        d = sine(glide(f, f * 0.6, 0.04), 0.04) * decay(0.04, 0.012)
+        drips[i:i + len(d)] += d * 0.4
+    return finish(splash + fizz + drips, -4)
+
+
+@sound
+def Boss_Charge():
+    v = growl(1.0, 70, 150, seed=12, rough=0.5, flutter=34) * adsr(1.0, 0.05, 0.2, 0.9, 0.2)
+    engine = sweep(saw(glide(45, 95, 1.0), 1.0) * 1.5, glide(300, 1600, 1.0), "low") * np.linspace(0.3, 1, SR)
+    x = mix(1.3, [(0, v, 0.6), (0, drive(engine, 2.0), 0.4)])
+    return finish(reverb(x, 0.2, 1.0), -2)
+
+
+@sound
+def Boss_Slam():
+    crack = highpass(noise(0.2), 2500) * decay(0.2, 0.02)
+    debris = bandpass(noise(1.0), 200, 1500) * decay(1.0, 0.3)
+    x = mix(1.6, [(0, boom(1.4, 100, 28), 1.0), (0, crack, 0.7), (0.02, debris, 0.5), (0, kick(0.4, 180, 40, 0.02), 0.6)])
+    return finish(reverb(x, 0.25, 1.4), -1)
+
+
 def main(names):
     todo = names or list(SOUNDS)
     for name in todo:

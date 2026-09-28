@@ -80,6 +80,25 @@ namespace ZombiCar.Enemies
             return zombie;
         }
 
+        /// <summary>Spawns <paramref name="config"/> at the spawn point farthest from the player (bosses: time to see it coming).</summary>
+        public ZombieController SpawnFar(ZombieConfig config)
+        {
+            Vector3 player = m_Player != null ? m_Player.transform.position : Vector3.zero;
+            Transform best = null;
+            float bestSqr = -1f;
+            foreach (Transform point in m_SpawnPoints)
+            {
+                Vector3 d = point.position - player;
+                d.y = 0f;
+                if (d.sqrMagnitude > bestSqr)
+                {
+                    bestSqr = d.sqrMagnitude;
+                    best = point;
+                }
+            }
+            return best != null ? SpawnAt(config, best.position, 3f) : null;
+        }
+
         public void NotifyDied(ZombieController zombie)
         {
             Alive = Mathf.Max(0, Alive - 1);

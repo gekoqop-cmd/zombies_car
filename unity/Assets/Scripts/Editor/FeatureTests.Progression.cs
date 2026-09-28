@@ -16,6 +16,7 @@ namespace ZombiCar.EditorTools
         {
             Register("progression", Progression);
             Register("sound", SoundAndMusic);
+            Register("bosses", Bosses);
         }
 
         // ================================================================== 1. workshop, levels, cards

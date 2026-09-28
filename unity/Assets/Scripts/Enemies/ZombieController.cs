@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.AI;
 using ZombiCar.Car;
@@ -11,7 +12,9 @@ namespace ZombiCar.Enemies
     /// One zombie: rises out of the ground at its spawn point, walks on the NavMesh to the car (or to the player once
     /// the player is close; hunters always go for the player), hits in melee, staggers when shot, dies, then sinks back
     /// into the ground and returns to the <see cref="ZombieSpawner"/> pool. The body is a 2D sprite driven by
-    /// <see cref="SpriteAnimator"/>; the root never rotates.
+    /// <see cref="SpriteAnimator"/>; the root never rotates. Bosses (<see cref="BossBrain"/>) take it over for their
+    /// abilities through <see cref="BeginAction"/> / <see cref="EndAction"/> and scale its speed, damage and the damage
+    /// it takes.
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent), typeof(CapsuleCollider))]
     public sealed class ZombieController : MonoBehaviour, IDamageable
@@ -28,7 +31,7 @@ namespace ZombiCar.Enemies
         private const float c_HitFlashTime = 0.15f;
         private static readonly Color s_HitFlash = new Color(1f, 0.3f, 0.25f, 1f);
 
-        private enum State { Rising, Chasing, Attacking, Staggered, Dead }
+        private enum State { Rising, Chasing, Attacking, Staggered, Busy, Dead }
 
         [SerializeField] private SpriteAnimator m_Animator;
         [SerializeField] private Transform m_Shadow;
@@ -50,11 +53,53 @@ namespace ZombiCar.Enemies
         private float m_StaggerAllowedAt;
         private bool m_Struck;
         private bool m_ChasingPlayer;
+        private float m_BaseSpeed;
+        private float m_SpeedScale = 1f;
 
         public ZombieConfig Config => m_Config;
         public bool IsAlive => m_State != State.Dead;
         public int Health => m_Health;
         public int MaxHealth => m_Config != null ? m_Config.MaxHealth : 1;
+        public NavMeshAgent Agent => m_Agent;
+        public SpriteAnimator Animator => m_Animator;
+        public ZombieSpawner Owner => m_Owner;
+        public float VisualHeight => m_VisualHeight;
+
+        /// <summary>Walking and fighting normally: an ability may start (<see cref="BeginAction"/>).</summary>
+        public bool CanAct => m_State == State.Chasing;
+
+        /// <summary>An ability drives the zombie (it neither walks nor attacks by itself).</summary>
+        public bool IsBusy => m_State == State.Busy;
+
+        /// <summary>Multiplies the walking speed (boss enrage).</summary>
+        public float SpeedScale
+        {
+            get => m_SpeedScale;
+            set
+            {
+                m_SpeedScale = Mathf.Max(0.05f, value);
+                if (m_Agent.enabled)
+                    m_Agent.speed = m_BaseSpeed * m_SpeedScale;
+            }
+        }
+
+        /// <summary>Multiplies the melee damage.</summary>
+        public float DamageScale { get; set; } = 1f;
+
+        /// <summary>Multiplies the damage taken (a stunned boss takes more).</summary>
+        public float DamageTakenScale { get; set; } = 1f;
+
+        /// <summary>A pooled zombie came out (again).</summary>
+        public event Action<ZombieController> Spawned;
+
+        /// <summary>A hit landed on this zombie (the damage after scaling).</summary>
+        public event Action<ZombieController, int> Damaged;
+
+        /// <summary>This zombie's melee strike landed on its target.</summary>
+        public event Action<ZombieController> Struck;
+
+        /// <summary>This zombie died.</summary>
+        public event Action<ZombieController> Died;
 
         private void Awake()
         {
@@ -77,8 +122,12 @@ namespace ZombiCar.Enemies
             transform.SetPositionAndRotation(position, Quaternion.identity);
             m_Agent.enabled = true;
             m_Agent.Warp(position);
-            m_Agent.speed = config.MoveSpeed * Random.Range(1f - config.SpeedVariation, 1f + config.SpeedVariation);
-            m_Agent.avoidancePriority = Random.Range(30, 70);
+            m_BaseSpeed = config.MoveSpeed * UnityEngine.Random.Range(1f - config.SpeedVariation, 1f + config.SpeedVariation);
+            m_SpeedScale = 1f;
+            DamageScale = 1f;
+            DamageTakenScale = 1f;
+            m_Agent.speed = m_BaseSpeed;
+            m_Agent.avoidancePriority = config.IsBoss ? 10 : UnityEngine.Random.Range(30, 70);
             m_Agent.isStopped = true;
             m_Collider.enabled = false;           // not shootable while still in the ground
 
@@ -88,19 +137,52 @@ namespace ZombiCar.Enemies
             m_Animator.SetLift(-m_VisualHeight);
             m_Shadow.localScale = Vector3.zero;
             Enter(State.Rising);
+            Spawned?.Invoke(this);
+        }
+
+        /// <summary>
+        /// Stops the zombie for an ability (from walking only: not while rising, attacking, staggered or dead) and plays
+        /// <paramref name="anim"/>. The ability ends it with <see cref="EndAction"/>.
+        /// </summary>
+        public bool BeginAction(CharacterAnim anim, float animSpeed = 1f)
+        {
+            if (!CanAct)
+                return false;
+            Enter(State.Busy);
+            m_Animator.Play(anim, animSpeed, true);
+            return true;
+        }
+
+        public void EndAction()
+        {
+            if (m_State == State.Busy)
+                Enter(State.Chasing);
+        }
+
+        /// <summary>Pushes the zombie along the NavMesh (explosions, the axe).</summary>
+        public void Push(Vector3 displacement)
+        {
+            if (m_State == State.Dead || !m_Agent.enabled || (m_Config != null && m_Config.IsBoss))
+                return;
+            displacement.y = 0f;
+            m_Agent.Move(displacement);
         }
 
         public void TakeDamage(int amount, Vector3 direction)
         {
             if (m_State == State.Dead || m_State == State.Rising)
                 return;
+            amount = Mathf.Max(1, Mathf.RoundToInt(amount * DamageTakenScale));
             m_Health -= amount;
             m_Animator.Flash(s_HitFlash, c_HitFlashTime);
+            Damaged?.Invoke(this, amount);
             if (m_Health <= 0)
             {
                 Enter(State.Dead);
                 return;
             }
+            if (m_State == State.Busy)
+                return;                                                // abilities are not interrupted
             if (m_Config.Knockback > 0f && direction.sqrMagnitude > 1e-4f)
             {
                 direction.y = 0f;
@@ -151,6 +233,7 @@ namespace ZombiCar.Enemies
                     m_Collider.enabled = false;
                     m_Animator.Play(CharacterAnim.Dead, 1f, true);
                     m_Owner.NotifyDied(this);
+                    Died?.Invoke(this);
                     break;
             }
         }
@@ -215,7 +298,8 @@ namespace ZombiCar.Enemies
                 if (FindTarget(out IDamageable target, out Vector3 point, out float gap) &&
                     gap <= m_Config.AttackRange * c_StrikeReachSlack)
                 {
-                    target.TakeDamage(m_Config.Damage, point - transform.position);
+                    target.TakeDamage(Mathf.RoundToInt(m_Config.Damage * DamageScale), point - transform.position);
+                    Struck?.Invoke(this);
                     // The car's spikes (workshop upgrade) hurt whoever hits it.
                     if (target is CarHealth car && car.Spikes > 0)
                     {

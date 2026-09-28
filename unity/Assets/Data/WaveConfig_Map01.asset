@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d5588e9b09c7744f8c9df4eea8e2990, type: 3}
   m_Name: WaveConfig_Map01
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Waves.WaveConfig
-  m_WaveCount: 10
+  m_WaveCount: 30
   m_WaveDuration: 60
   m_BreakBetweenWaves: 10
   m_FirstWaveDelay: 5
@@ -20,6 +20,7 @@ MonoBehaviour:
   m_EnemiesGrowthPerWave: 4
   m_SpawnWindow: 0.6
   m_MaxAlive: 30
+  m_AmmoResupplyPerWave: 40
   m_Enemies:
   - m_Zombie: {fileID: 11400000, guid: b9accf8975114a04cbd6286e9b314e5b, type: 2}
     m_FromWave: 1
@@ -39,3 +40,13 @@ MonoBehaviour:
   - m_Zombie: {fileID: 11400000, guid: 9ef02c5b47402e24284a7d915ed1996a, type: 2}
     m_FromWave: 5
     m_Weight: 0.5
+  m_Bosses:
+  - m_Wave: 10
+    m_Boss: {fileID: 11400000, guid: 6c955d206a8206542ba1f029349d192d, type: 2}
+    m_RegularShare: 0.5
+  - m_Wave: 20
+    m_Boss: {fileID: 11400000, guid: b739d3bbe8a753742a4b298abfd7f725, type: 2}
+    m_RegularShare: 0.5
+  - m_Wave: 30
+    m_Boss: {fileID: 11400000, guid: 0318ae51d8b07e8459f8b56d9046099b, type: 2}
+    m_RegularShare: 0.4

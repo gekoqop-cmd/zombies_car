@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eda7e6ab08fc935448bd15d9114c69d0, type: 3}
+  m_Name: Zombie_Boss2
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.ZombieConfig
+  m_Prefab: {fileID: 4185825342110785119, guid: e29706b0e83f6684a9a768d38c68e717, type: 3}
+  m_MaxHealth: 3200
+  m_MoveSpeed: 1.2
+  m_SpeedVariation: 0.02
+  m_Damage: 30
+  m_AttackInterval: 1.6
+  m_AttackRange: 1
+  m_AttackAnimSpeed: 1
+  m_Preference: 1
+  m_AggroRadius: 30
+  m_StaggerTime: 0
+  m_Knockback: 0
+  m_Xp: 600
+  m_Reward: 300
+  m_IsBoss: 1
+  m_DisplayName: "\u0422\u0410\u0420\u0410\u041D"

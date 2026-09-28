@@ -28,6 +28,27 @@ namespace ZombiCar.Waves
             public float Weight => m_Weight;
         }
 
+        /// <summary>A boss that comes out at the start of its wave.</summary>
+        [Serializable]
+        public sealed class BossWave
+        {
+            [SerializeField, Min(1)] private int m_Wave = 10;
+            [SerializeField] private ZombieConfig m_Boss;
+            [Tooltip("Share of the wave's usual zombies that still come with the boss.")]
+            [SerializeField, Range(0f, 1f)] private float m_RegularShare = 0.5f;
+
+            public BossWave(int wave, ZombieConfig boss, float regularShare)
+            {
+                m_Wave = wave;
+                m_Boss = boss;
+                m_RegularShare = regularShare;
+            }
+
+            public int Wave => m_Wave;
+            public ZombieConfig Boss => m_Boss;
+            public float RegularShare => m_RegularShare;
+        }
+
         [SerializeField, Min(1)] private int m_WaveCount = 10;
         [SerializeField, Min(1f)] private float m_WaveDuration = 60f;
         [SerializeField, Min(0f)] private float m_BreakBetweenWaves = 10f;
@@ -43,6 +64,8 @@ namespace ZombiCar.Waves
         [Tooltip("Reserve ammo the car resupplies the player with when a wave ends.")]
         [SerializeField, Min(0)] private int m_AmmoResupplyPerWave = 40;
         [SerializeField] private Entry[] m_Enemies = Array.Empty<Entry>();
+        [Tooltip("Boss waves: the wave lasts until its boss and all its zombies are dead (no time limit).")]
+        [SerializeField] private BossWave[] m_Bosses = Array.Empty<BossWave>();
 
         public int WaveCount => m_WaveCount;
         public float WaveDuration => m_WaveDuration;
@@ -54,6 +77,18 @@ namespace ZombiCar.Waves
         public int MaxAlive => m_MaxAlive;
         public int AmmoResupplyPerWave => m_AmmoResupplyPerWave;
         public Entry[] Enemies => m_Enemies;
+        public BossWave[] Bosses => m_Bosses;
+
+        /// <summary>The boss of <paramref name="wave"/>, or null.</summary>
+        public BossWave BossFor(int wave)
+        {
+            foreach (BossWave b in m_Bosses)
+            {
+                if (b != null && b.Boss != null && b.Wave == wave)
+                    return b;
+            }
+            return null;
+        }
 
         public int EnemiesInWave(int wave) => m_EnemiesFirstWave + m_EnemiesGrowthPerWave * (wave - 1);
 
@@ -82,6 +117,12 @@ namespace ZombiCar.Waves
 
 #if UNITY_EDITOR
         public void EditorSetEnemies(Entry[] enemies) => m_Enemies = enemies;
+
+        public void EditorSetBosses(BossWave[] bosses, int waveCount)
+        {
+            m_Bosses = bosses;
+            m_WaveCount = Mathf.Max(m_WaveCount, waveCount);
+        }
 #endif
     }
 }

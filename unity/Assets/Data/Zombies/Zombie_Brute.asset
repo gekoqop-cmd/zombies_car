@@ -24,3 +24,7 @@ MonoBehaviour:
   m_AggroRadius: 3
   m_StaggerTime: 0
   m_Knockback: 0
+  m_Xp: 40
+  m_Reward: 15
+  m_IsBoss: 0
+  m_DisplayName: 

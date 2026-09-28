@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Core.MapConfig
   m_SceneName: Map02
   m_MapNumber: 2
-  m_WaveThreshold: 10
+  m_WaveThreshold: 30
   m_PlayAreaCenter: {x: 0, y: 0, z: 0}
   m_PlayAreaSize: {x: 44, y: 30}
   m_GroundCenter: {x: 0, y: 0, z: 5}

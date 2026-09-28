@@ -39,6 +39,12 @@ namespace ZombiCar.Characters
 
         public CharacterSprites Sprites => m_Sprites;
         public CharacterAnim Anim => m_Anim;
+
+        /// <summary>Extra size of the sprite (an enraged boss grows).</summary>
+        public float ScaleMultiplier { get; set; } = 1f;
+
+        /// <summary>Multiplies the sprite colour on top of the tint (an enraged boss glows red).</summary>
+        public Color TintMultiplier { get; set; } = Color.white;
         public int Facing => m_Facing;
         public Vector2 Scale => m_Scale;
 
@@ -95,6 +101,8 @@ namespace ZombiCar.Characters
             m_Alpha = 1f;
             m_FlashEnd = 0f;
             m_Facing = 1;
+            ScaleMultiplier = 1f;
+            TintMultiplier = Color.white;
             Play(CharacterAnim.Idle, 1f, true);
             ApplyPose();
         }
@@ -118,11 +126,11 @@ namespace ZombiCar.Characters
             }
             transform.localPosition = new Vector3(0f, m_Lift + bounce, 0f);
             transform.localRotation = Quaternion.Euler(0f, 0f, sway);
-            transform.localScale = new Vector3(m_Scale.x * m_Facing, m_Scale.y, 1f);
+            transform.localScale = new Vector3(m_Scale.x * m_Facing, m_Scale.y, 1f) * ScaleMultiplier;
 
-            Color color = m_Tint;
+            Color color = m_Tint * TintMultiplier;
             if (Time.time < m_FlashEnd)
-                color = Color.Lerp(m_Tint, m_FlashColor, (m_FlashEnd - Time.time) / m_FlashDuration);
+                color = Color.Lerp(m_Tint * TintMultiplier, m_FlashColor, (m_FlashEnd - Time.time) / m_FlashDuration);
             color *= SceneTint.Characters;
             color.a = m_Alpha;
             m_Renderer.color = color;

@@ -8,8 +8,10 @@ namespace ZombiCar.Waves
     /// Runs the waves of a map from <see cref="WaveConfig"/>: a countdown, then every wave spawns its zombies spread
     /// over the first part of the wave time (never more than MaxAlive at once). A wave ends when its zombies are all
     /// dead or its time is up (zombies that did not fit are carried into the next wave), then the break counts down
-    /// to the next one. Publishes the wave number, countdown and phase to <see cref="WaveState"/> (the HUD, rewards and
-    /// the between-waves services listen to its wave start / end); during a break the HUD shows the upcoming wave.
+    /// to the next one. Boss waves (10 / 20 / 30) bring their boss out at the farthest spawn point at the start, with
+    /// fewer regular zombies, and last until the boss and every zombie are dead (no time limit).
+    /// Publishes the wave number, countdown, phase and boss to <see cref="WaveState"/> (the HUD, rewards, music and
+    /// the between-waves services listen to it); during a break the HUD shows the upcoming wave.
     /// </summary>
     public sealed class WaveDirector : MonoBehaviour
     {
@@ -29,9 +31,15 @@ namespace ZombiCar.Waves
         private int m_ToSpawn;
         private float m_SpawnInterval;
         private float m_NextSpawnTime;
+        private ZombieController m_Boss;
+        private bool m_BossWave;
 
         public int Wave => m_Wave;
         public bool IsWaveRunning => m_Phase == Phase.Wave;
+        public bool IsFinished => m_Phase == Phase.Finished;
+
+        /// <summary>The boss of the running wave (null when there is none or it died).</summary>
+        public ZombieController Boss => m_Boss != null && m_Boss.IsAlive ? m_Boss : null;
 
         private void Start()
         {
@@ -45,6 +53,11 @@ namespace ZombiCar.Waves
             {
                 if (entry.Zombie != null)
                     m_Spawner.Prewarm(entry.Zombie, c_PrewarmPerType);
+            }
+            foreach (WaveConfig.BossWave boss in m_Config.Bosses)
+            {
+                if (boss != null && boss.Boss != null)
+                    m_Spawner.Prewarm(boss.Boss, 1);                       // no hitch when the boss comes out
             }
             m_Wave = 1;
             if (m_WaveState != null)
@@ -66,8 +79,11 @@ namespace ZombiCar.Waves
             else
             {
                 SpawnDue();
-                bool cleared = m_ToSpawn == 0 && m_Spawner.Alive == 0;
-                if (cleared || m_TimeLeft <= 0f)
+                if (m_BossWave && m_Boss != null && !m_Boss.IsAlive)
+                    BossDown();
+                bool cleared = m_ToSpawn == 0 && m_Spawner.Alive == 0 && (!m_BossWave || m_Boss == null);
+                bool timeUp = !m_BossWave && m_TimeLeft <= 0f;
+                if (cleared || timeUp)
                     EndWave();
             }
             Publish();
@@ -80,16 +96,54 @@ namespace ZombiCar.Waves
             Publish();
         }
 
-        private void StartWave()
+        /// <summary>Starts the next wave now (tests; the countdown does it otherwise).</summary>
+        public void StartWave()
         {
             m_Phase = Phase.Wave;
             m_TimeLeft = m_Config.WaveDuration;
-            m_ToSpawn += m_Config.EnemiesInWave(m_Wave);
+            WaveConfig.BossWave boss = m_Config.BossFor(m_Wave);
+            m_BossWave = boss != null;
+            int regular = m_Config.EnemiesInWave(m_Wave);
+            if (m_BossWave)
+                regular = Mathf.RoundToInt(regular * boss.RegularShare);
+            m_ToSpawn += regular;
             m_SpawnInterval = m_Config.WaveDuration * m_Config.SpawnWindow / Mathf.Max(1, m_ToSpawn);
             m_NextSpawnTime = Time.time;
-            Debug.Log($"[WaveDirector] Wave {m_Wave}: {m_ToSpawn} zombies, one every {m_SpawnInterval:F1} s.");
+            Debug.Log($"[WaveDirector] Wave {m_Wave}: {m_ToSpawn} zombies, one every {m_SpawnInterval:F1} s" +
+                      (m_BossWave ? $", boss {boss.Boss.DisplayName}." : "."));
             if (m_WaveState != null)
                 m_WaveState.StartWave(m_Wave);
+            if (m_BossWave)
+                SpawnBoss(boss.Boss);
+        }
+
+        /// <summary>Jumps to <paramref name="wave"/> (tests): the countdown to it starts now.</summary>
+        public void SkipTo(int wave, float countdown = 1f)
+        {
+            m_Wave = Mathf.Clamp(wave, 1, m_Config.WaveCount);
+            m_ToSpawn = 0;
+            StartCountdown(countdown);
+        }
+
+        private void SpawnBoss(ZombieConfig boss)
+        {
+            m_Boss = m_Spawner.SpawnFar(boss);
+            if (m_Boss == null)
+            {
+                Debug.LogError($"[WaveDirector] Boss {boss.name} could not be placed on the NavMesh.", this);
+                m_BossWave = false;
+                return;
+            }
+            if (m_WaveState != null)
+                m_WaveState.SetBoss(boss.DisplayName);
+        }
+
+        private void BossDown()
+        {
+            Debug.Log($"[WaveDirector] Boss {m_Boss.Config.DisplayName} killed in wave {m_Wave}.");
+            m_Boss = null;
+            if (m_WaveState != null)
+                m_WaveState.SetBoss(null);
         }
 
         private void SpawnDue()
@@ -106,6 +160,8 @@ namespace ZombiCar.Waves
 
         private void EndWave()
         {
+            m_BossWave = false;
+            m_Boss = null;
             if (m_PlayerWeapon != null)
                 m_PlayerWeapon.Resupply(m_Config.AmmoResupplyPerWave);
             bool last = m_Wave >= m_Config.WaveCount;
@@ -116,6 +172,7 @@ namespace ZombiCar.Waves
                 m_Phase = Phase.Finished;
                 m_TimeLeft = 0f;
                 Debug.Log($"[WaveDirector] All {m_Config.WaveCount} waves survived.");
+                Publish();
                 return;
             }
             m_Wave++;

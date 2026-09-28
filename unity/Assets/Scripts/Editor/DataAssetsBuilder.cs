@@ -70,12 +70,16 @@ namespace ZombiCar.EditorTools
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        /// <summary>Waves of a map: the last boss comes at wave 30.</summary>
+        public const int c_WaveCount = 30;
+
         // The evening map plays the driving track, the night map the dark one; both switch to the boss track for bosses.
         private static void SetMapMusic(string mapConfig, string music)
         {
             var so = new SerializedObject(AssetDatabase.LoadAssetAtPath<MapConfig>(mapConfig));
             so.FindProperty("m_Music").objectReferenceValue = AudioBuilder.Music(music);
             so.FindProperty("m_BossMusic").objectReferenceValue = AudioBuilder.Music("Music_Boss");
+            so.FindProperty("m_WaveThreshold").intValue = c_WaveCount;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 

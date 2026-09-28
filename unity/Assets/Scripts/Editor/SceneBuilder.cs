@@ -278,6 +278,8 @@ namespace ZombiCar.EditorTools
                 ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_PlayerWeapon", player.GetComponent<PlayerWeapon>()),
                 ("m_Spawner", spawner));
+            PrefabBuilder.Wire(systemsGo.AddComponent<MusicDirector>(), ("m_Map", systemsGo.GetComponent<MapBootstrap>().Map),
+                ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)));
             PrefabBuilder.Wire(systemsGo.AddComponent<PlayerProgression>(),
                 ("m_Config", DataAssetsBuilder.Load<ProgressionConfig>(DataAssetsBuilder.c_ProgressionConfig)),
                 ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
@@ -328,8 +330,8 @@ namespace ZombiCar.EditorTools
         private static readonly Vector2 s_CarHealthBarSize = new Vector2(520f, 150f);
         private const float c_CarHealthBarScreenHeight = 0.085f;  // share of the screen height (two rows: title, bar)
         private const int c_CarHealthBarSortingOrder = 100;          // after every sprite of the scene
-        private const string c_UiOverlayShader = "ZombiCar/UI World Overlay";
-        private const string c_TmpOverlayShader = "TextMeshPro/Mobile/Distance Field Overlay";
+        internal const string c_UiOverlayShader = "ZombiCar/UI World Overlay";
+        internal const string c_TmpOverlayShader = "TextMeshPro/Mobile/Distance Field Overlay";
 
         private static void BuildCarHealthBar(GameObject car)
         {
@@ -427,7 +429,7 @@ namespace ZombiCar.EditorTools
             value.SetText($"{car.GetComponent<CarHealth>().MaxHealth} / {car.GetComponent<CarHealth>().MaxHealth}");
         }
 
-        private static RectTransform Inset(RectTransform rt, float inset)
+        internal static RectTransform Inset(RectTransform rt, float inset)
         {
             rt.offsetMin = new Vector2(inset, inset);
             rt.offsetMax = new Vector2(-inset, -inset);
@@ -435,7 +437,7 @@ namespace ZombiCar.EditorTools
         }
 
         /// <summary>A material asset drawing UI with no depth test (copies <paramref name="source"/>'s properties when given).</summary>
-        private static Material OverlayMaterial(string name, Shader shader, Material source)
+        internal static Material OverlayMaterial(string name, Shader shader, Material source)
         {
             if (shader == null)
                 throw new InvalidOperationException($"[SceneBuilder] Shader for {name} not found");
@@ -662,6 +664,7 @@ namespace ZombiCar.EditorTools
                 ("m_InputProvider", target.GetComponent<PlayerInputProvider>()),
                 ("m_Weapon", target.GetComponent<PlayerWeapon>()), ("m_Follow", follow));
             vcamGo.AddComponent<CameraAspectAdapter>();
+            vcamGo.AddComponent<CameraShake>();
 
             var boundsGo = new GameObject("CameraBounds") { layer = Layers.c_CameraBoundsIndex };
             boundsGo.transform.SetParent(parent, false);

@@ -116,8 +116,14 @@ namespace ZombiCar.EditorTools
         private static GameObject BuildZombieLineup()
         {
             var root = new GameObject("[ZombieLineup]");
+            // Regular zombies only (not the bosses nor their acid glob).
             string[] prefabs = AssetDatabase.FindAssets("t:Prefab", new[] { EditorPaths.c_PrefabsEnemies })
-                .Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p).ToArray();
+                .Select(AssetDatabase.GUIDToAssetPath).OrderBy(p => p)
+                .Where(p =>
+                {
+                    var go = AssetDatabase.LoadAssetAtPath<GameObject>(p);
+                    return go.GetComponent<ZombiCar.Enemies.ZombieController>() != null && go.GetComponent<ZombiCar.Enemies.BossBrain>() == null;
+                }).ToArray();
             for (int column = 0; column < prefabs.Length; column++)
             {
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabs[column]);

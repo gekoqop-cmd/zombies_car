@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
@@ -34,6 +35,7 @@ namespace ZombiCar.EditorTools
         {
             public string Name;
             public float Size = 1f;                                  // relative to the sheet scale
+            public float PixelScale = 1f;                            // frames upscaled by this (tools/characters/boss_frames.py)
             public Vector2 Shadow = new Vector2(1.2f, 0.6f);        // blob width (x) and depth (z), metres
             public (CharacterAnim anim, string[] frames, float fps, bool loop)[] Clips;
         }
@@ -56,9 +58,23 @@ namespace ZombiCar.EditorTools
             public float Aggro = 4.5f;
             public float Stagger = 0.2f;
             public float Knockback = 0.2f;
+            public int Xp = 5;
+            public int Reward = 2;
             // Wave line-up.
             public int FromWave;
             public float Weight;
+            // Bosses.
+            public string DisplayName;
+            public BossSpec Boss;
+        }
+
+        /// <summary>Abilities of a boss (written once into its BossConfig asset) and where it comes.</summary>
+        private sealed class BossSpec
+        {
+            public int Wave;
+            public float RegularShare = 0.5f;
+            public string[] Minions = Array.Empty<string>();
+            public (string field, object value)[] Abilities = Array.Empty<(string, object)>();
         }
 
         /// <summary>Numeric frame indices shared by one character's clips (characters.png, one sheet per character).</summary>
@@ -79,28 +95,28 @@ namespace ZombiCar.EditorTools
             new ZombieSpec
             {
                 Look = new Look { Name = "Walker", Clips = HumanoidClips(new[] { 2, 1 }, 3.5f) },
-                Health = 30, Speed = 1.3f, Damage = 4, AttackInterval = 1.3f, FromWave = 1, Weight = 5f,
+                Health = 30, Speed = 1.3f, Damage = 4, AttackInterval = 1.3f, Xp = 5, Reward = 2, FromWave = 1, Weight = 5f,
             },
             new ZombieSpec
             {
                 // Hard hat: takes twice the bullets, barely flinches.
                 Look = new Look { Name = "Worker", Clips = HumanoidClips(new[] { 2, 1 }, 3.2f) },
                 Health = 60, Speed = 1.15f, SpeedVariation = 0.1f, Damage = 5, AttackInterval = 1.4f,
-                Stagger = 0.12f, Knockback = 0.1f, FromWave = 2, Weight = 2f,
+                Stagger = 0.12f, Knockback = 0.1f, Xp = 10, Reward = 3, FromWave = 2, Weight = 2f,
             },
             new ZombieSpec
             {
                 // Runner.
                 Look = new Look { Name = "RedCap", Clips = HumanoidClips(new[] { 2, 3 }, 5f) },
                 Health = 25, Speed = 2.1f, Damage = 4, AttackInterval = 1.1f, AttackAnimSpeed = 1.2f, Aggro = 6f,
-                Knockback = 0.25f, FromWave = 2, Weight = 2f,
+                Knockback = 0.25f, Xp = 5, Reward = 3, FromWave = 2, Weight = 2f,
             },
             new ZombieSpec
             {
                 // Stalker: hunts the player instead of the car.
                 Look = new Look { Name = "Hoodie", Clips = HumanoidClips(new[] { 2, 3 }, 4f) },
                 Health = 40, Speed = 1.6f, Damage = 6, AttackInterval = 1.2f, Preference = ZombieTarget.Player,
-                FromWave = 3, Weight = 1.5f,
+                Xp = 7, Reward = 3, FromWave = 3, Weight = 1.5f,
             },
             new ZombieSpec
             {
@@ -118,7 +134,7 @@ namespace ZombiCar.EditorTools
                 },
                 AgentRadius = 0.5f, ColliderRadius = 0.5f, ColliderHeight = 1.6f,
                 Health = 18, Speed = 3.6f, SpeedVariation = 0.1f, Damage = 3, AttackInterval = 0.8f, AttackRange = 0.5f,
-                Preference = ZombieTarget.Player, Stagger = 0.15f, Knockback = 0.35f, FromWave = 4, Weight = 1.2f,
+                Preference = ZombieTarget.Player, Stagger = 0.15f, Knockback = 0.35f, Xp = 4, Reward = 2, FromWave = 4, Weight = 1.2f,
             },
             new ZombieSpec
             {
@@ -136,7 +152,86 @@ namespace ZombiCar.EditorTools
                 },
                 AgentRadius = 0.75f, ColliderRadius = 0.75f, ColliderHeight = 2.6f,
                 Health = 250, Speed = 0.95f, SpeedVariation = 0.05f, Damage = 20, AttackInterval = 2f, AttackRange = 0.8f,
-                Aggro = 3f, Stagger = 0f, Knockback = 0f, FromWave = 5, Weight = 0.5f,
+                Aggro = 3f, Stagger = 0f, Knockback = 0f, Xp = 40, Reward = 15, FromWave = 5, Weight = 0.5f,
+            },
+        };
+
+        private static (CharacterAnim, string[], float, bool)[] BruteClips() => new[]
+        {
+            (CharacterAnim.Idle, Idx(0, 1), 1.6f, true),
+            (CharacterAnim.Move, Idx(2, 1), 2.4f, true),
+            (CharacterAnim.Attack, Idx(3, 4), 3f, false),
+            (CharacterAnim.Hit, Idx(5), 1f, true),
+            (CharacterAnim.Dead, Idx(5, 6), 4f, false),
+        };
+
+        // Bosses of waves 10 / 20 / 30: recoloured, 2x upscaled brute / worker frames (tools/characters/boss_frames.py).
+        private static readonly ZombieSpec[] s_Bosses =
+        {
+            new ZombieSpec
+            {
+                // Brood mother: slow, goes for the car, keeps calling minions out of the ground.
+                Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BruteClips() },
+                AgentRadius = 1f, ColliderRadius = 1f, ColliderHeight = 3.4f,
+                Health = 1600, Speed = 0.85f, SpeedVariation = 0.02f, Damage = 25, AttackInterval = 2.2f, AttackRange = 1f,
+                AttackAnimSpeed = 0.9f, Aggro = 4f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 150,
+                DisplayName = "МАТКА",
+                Boss = new BossSpec
+                {
+                    Wave = 10, RegularShare = 0.5f, Minions = new[] { "Walker", "RedCap", "Hound" },
+                    Abilities = new (string, object)[]
+                    {
+                        ("m_Summon", true), ("m_SummonInterval", 7f), ("m_SummonWindup", 1f), ("m_SummonCount", 4),
+                        ("m_SummonRadius", 2.8f), ("m_MaxMinions", 12), ("m_VoicePitch", 1.1f),
+                        ("m_AuraColor", new Color(0.5f, 1f, 0.3f, 0.55f)),
+                    },
+                },
+            },
+            new ZombieSpec
+            {
+                // Juggernaut: hunts the player, charges and spits acid; dazed after a charge.
+                Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f),
+                    Clips = HumanoidClips(new[] { 2, 1 }, 3.2f) },
+                AgentRadius = 0.9f, ColliderRadius = 0.85f, ColliderHeight = 3.6f,
+                Health = 3200, Speed = 1.2f, SpeedVariation = 0.02f, Damage = 30, AttackInterval = 1.6f, AttackRange = 1f,
+                Preference = ZombieTarget.Player, Aggro = 30f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 300,
+                DisplayName = "ТАРАН",
+                Boss = new BossSpec
+                {
+                    Wave = 20, RegularShare = 0.5f,
+                    Abilities = new (string, object)[]
+                    {
+                        ("m_Spit", true), ("m_SpitInterval", 5f), ("m_SpitVolley", 3), ("m_SpitDamage", 14), ("m_SpitRadius", 1.5f),
+                        ("m_Charge", true), ("m_ChargeInterval", 8f), ("m_ChargeWindup", 1f), ("m_ChargeSpeed", 13f),
+                        ("m_ChargeDistance", 12f), ("m_ChargeMinRange", 3.5f), ("m_ChargeDamage", 30), ("m_ChargeCarDamage", 40),
+                        ("m_VoicePitch", 0.9f), ("m_AuraColor", new Color(0.75f, 0.45f, 1f, 0.55f)),
+                    },
+                },
+            },
+            new ZombieSpec
+            {
+                // The reaper (final): everything the other two do, then a second phase with the ground slam.
+                Look = new Look { Name = "Boss3", Size = 2.3f, PixelScale = 2f, Shadow = new Vector2(2.5f, 1.2f), Clips = BruteClips() },
+                AgentRadius = 1.15f, ColliderRadius = 1.15f, ColliderHeight = 4f,
+                Health = 6500, Speed = 1f, SpeedVariation = 0.02f, Damage = 40, AttackInterval = 1.8f, AttackRange = 1.2f,
+                AttackAnimSpeed = 0.9f, Aggro = 5f, Stagger = 0f, Knockback = 0f, Xp = 1000, Reward = 500,
+                DisplayName = "ЖНЕЦ",
+                Boss = new BossSpec
+                {
+                    Wave = 30, RegularShare = 0.4f, Minions = new[] { "Walker", "Worker", "RedCap", "Hoodie", "Hound" },
+                    Abilities = new (string, object)[]
+                    {
+                        ("m_Summon", true), ("m_SummonInterval", 9f), ("m_SummonWindup", 1f), ("m_SummonCount", 5),
+                        ("m_SummonRadius", 3.2f), ("m_MaxMinions", 14),
+                        ("m_Spit", true), ("m_SpitInterval", 6f), ("m_SpitVolley", 5), ("m_SpitDamage", 16), ("m_SpitRadius", 1.6f),
+                        ("m_Charge", true), ("m_ChargeInterval", 10f), ("m_ChargeWindup", 0.9f), ("m_ChargeSpeed", 14f),
+                        ("m_ChargeDamage", 36), ("m_ChargeCarDamage", 45),
+                        ("m_Enrage", true), ("m_EnrageAt", 0.5f), ("m_EnrageSpeed", 1.35f), ("m_EnrageDamage", 1.3f),
+                        ("m_EnrageCooldowns", 0.6f), ("m_EnrageScale", 1.12f), ("m_EnrageTint", new Color(1f, 0.6f, 0.5f, 1f)),
+                        ("m_Slam", true), ("m_SlamInterval", 6f), ("m_SlamRadius", 4.8f), ("m_SlamDamage", 30), ("m_SlamCarDamage", 25),
+                        ("m_VoicePitch", 0.78f), ("m_AuraColor", new Color(1f, 0.55f, 0.2f, 0.6f)),
+                    },
+                },
             },
         };
 
@@ -152,8 +247,16 @@ namespace ZombiCar.EditorTools
             foreach (ZombieSpec spec in s_Zombies)
                 configs.Add(BuildZombie(spec, BuildSprites(spec.Look)));
             ConfigureWaves(configs);
+            AcidGlob glob = BuildAcidGlob();
+            var bosses = new List<WaveConfig.BossWave>();
+            foreach (ZombieSpec spec in s_Bosses)
+            {
+                ZombieConfig boss = BuildZombie(spec, BuildSprites(spec.Look), configs, glob);
+                bosses.Add(new WaveConfig.BossWave(spec.Boss.Wave, boss, spec.Boss.RegularShare));
+            }
+            ConfigureBosses(bosses);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[CharacterBuilder] {configs.Count} zombie types.");
+            Debug.Log($"[CharacterBuilder] {configs.Count} zombie types, {bosses.Count} bosses.");
         }
 
         // ------------------------------------------------------------------ sprites
@@ -195,7 +298,7 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ zombie visuals
-        private static float SpriteScale(Look look) => ViewScale * look.Size;
+        private static float SpriteScale(Look look) => ViewScale * look.Size / look.PixelScale;
 
         /// <summary>Sheet pixels -> metres at 100 px per unit.</summary>
         private static float ViewScale => ArtImportPostprocessor.c_CharacterPixelsPerUnit / c_SheetPixelsPerMetre;
@@ -246,7 +349,8 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ zombies
-        private static ZombieConfig BuildZombie(ZombieSpec spec, CharacterSprites sprites)
+        private static ZombieConfig BuildZombie(ZombieSpec spec, CharacterSprites sprites, List<ZombieConfig> minions = null,
+            AcidGlob glob = null)
         {
             string name = "Zombie_" + spec.Look.Name;
             var root = new GameObject(name);
@@ -274,6 +378,8 @@ namespace ZombiCar.EditorTools
             var zombie = root.AddComponent<ZombieController>();
             SetProps(zombie, ("m_Animator", animator), ("m_Shadow", shadow), ("m_VisualHeight", height));
             SetLayerRecursively(root, Layers.c_EnemyIndex);
+            if (spec.Boss != null)
+                BuildBossParts(root, zombie, spec, minions, glob, height);
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{EditorPaths.c_PrefabsEnemies}/{name}.prefab");
             Object.DestroyImmediate(root);
 
@@ -288,8 +394,97 @@ namespace ZombiCar.EditorTools
                     ("m_AttackAnimSpeed", spec.AttackAnimSpeed), ("m_Preference", (int)spec.Preference), ("m_AggroRadius", spec.Aggro),
                     ("m_StaggerTime", spec.Stagger), ("m_Knockback", spec.Knockback));
             }
-            SetProps(config, ("m_Prefab", prefab.GetComponent<ZombieController>()));
+            // Fields added after the configs were created: kill rewards and the boss identity follow the lists above.
+            SetProps(config, ("m_Prefab", prefab.GetComponent<ZombieController>()), ("m_Xp", spec.Xp), ("m_Reward", spec.Reward),
+                ("m_IsBoss", spec.Boss != null));
+            var so = new SerializedObject(config);
+            so.FindProperty("m_DisplayName").stringValue = spec.DisplayName ?? string.Empty;
+            so.ApplyModifiedPropertiesWithoutUndo();
             return config;
+        }
+
+        // ------------------------------------------------------------------ bosses
+        private const float c_BossFxHeight = 0.07f;
+
+        /// <summary>
+        /// BossBrain with its abilities asset (Data/Zombies/Boss*_Abilities, created once, then tuned in the Inspector),
+        /// the health plate, the aura and the ground telegraphs (summon ring, charge path, slam shockwave).
+        /// </summary>
+        private static void BuildBossParts(GameObject root, ZombieController zombie, ZombieSpec spec, List<ZombieConfig> minions,
+            AcidGlob glob, float height)
+        {
+            string abilitiesPath = $"{EditorPaths.c_DataZombies}/{spec.Look.Name}_Abilities.asset";
+            var abilities = AssetDatabase.LoadAssetAtPath<BossConfig>(abilitiesPath);
+            if (abilities == null)
+            {
+                abilities = ScriptableObject.CreateInstance<BossConfig>();
+                AssetDatabase.CreateAsset(abilities, abilitiesPath);
+                SetProps(abilities, spec.Boss.Abilities);
+                ZombieConfig[] minionConfigs = spec.Boss.Minions
+                    .Select(n => minions?.FirstOrDefault(c => c != null && c.name == "Zombie_" + n)).Where(c => c != null).ToArray();
+                SetProps(abilities, ("m_Minions", minionConfigs.Cast<Object>().ToArray()));
+            }
+
+            Material aura = FxBuilder.Material("M_FX_BossAura", "FX_Aura", Color.white, true);
+            Material ring = FxBuilder.Material("M_FX_BossTelegraph", "FX_TargetRing", Color.white, false);
+            Material line = FxBuilder.Material("M_FX_BossCharge", "FX_ChargeLine", Color.white, false);
+            Material wave = FxBuilder.Material("M_FX_BossShockwave", "FX_ShockRing", Color.white, true);
+            float size = spec.AgentRadius * 3.6f;
+            MeshRenderer auraRenderer = FxBuilder.GroundQuad("Aura", root.transform, aura, size, c_BossFxHeight);
+            MeshRenderer telegraph = FxBuilder.GroundQuad("Telegraph", root.transform, ring, 1f, c_BossFxHeight + 0.01f);
+            MeshRenderer charge = FxBuilder.GroundQuad("ChargePath", root.transform, line, 1f, c_BossFxHeight + 0.02f);
+            MeshRenderer shock = FxBuilder.GroundQuad("Shockwave", root.transform, wave, 1f, c_BossFxHeight + 0.03f);
+            foreach (MeshRenderer r in new[] { auraRenderer, telegraph, charge, shock })
+                r.gameObject.layer = 0;
+
+            var brain = root.AddComponent<BossBrain>();
+            PrefabBuilder.Wire(brain, ("m_Config", abilities), ("m_GlobPrefab", glob), ("m_Aura", auraRenderer), ("m_Telegraph", telegraph),
+                ("m_ChargeLine", charge), ("m_Shockwave", shock));
+            BossHealthPlate plate = WorldPlateBuilder.BuildBossPlate(root, zombie, brain, height + 0.35f);
+            SetLayerRecursively(plate.transform.parent.gameObject, UiFactory.c_UiLayer);
+        }
+
+        /// <summary>The boss's acid glob: a billboarded blob, its shadow, the warning circle and the splash.</summary>
+        private static AcidGlob BuildAcidGlob()
+        {
+            var root = new GameObject("Boss_AcidGlob");
+            var ballRoot = new GameObject("Ball");
+            ballRoot.transform.SetParent(root.transform, false);
+            SetProps(ballRoot.AddComponent<YAxisBillboard>(), ("m_UpdateEveryFrame", true));
+            var ball = new GameObject("Sprite");
+            ball.transform.SetParent(ballRoot.transform, false);
+            ball.transform.localScale = new Vector3(0.7f, 0.7f * PitchCompensation, 1f);
+            ball.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+            var ballRenderer = ball.AddComponent<MeshRenderer>();
+            ballRenderer.sharedMaterial = FxBuilder.Material("M_FX_AcidBall", "FX_AcidBall", Color.white, false);
+            ballRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            ballRenderer.receiveShadows = false;
+
+            var shadowGo = new GameObject("Shadow");
+            shadowGo.transform.SetParent(root.transform, false);
+            shadowGo.transform.localScale = new Vector3(0.8f, 1f, 0.5f);
+            shadowGo.AddComponent<MeshFilter>().sharedMesh = AssetDatabase.LoadAssetAtPath<Mesh>(c_QuadMesh);
+            var shadowRenderer = shadowGo.AddComponent<MeshRenderer>();
+            shadowRenderer.sharedMaterial = MaterialLibrary.Get("M_ShadowBlob");
+            shadowRenderer.shadowCastingMode = ShadowCastingMode.Off;
+
+            MeshRenderer target = FxBuilder.GroundQuad("Target", root.transform,
+                FxBuilder.Material("M_FX_SpitTarget", "FX_TargetRing", new Color(1f, 0.3f, 0.2f, 0.85f), false), 1f, c_BossFxHeight);
+            MeshRenderer splat = FxBuilder.GroundQuad("Splat", root.transform,
+                FxBuilder.Material("M_FX_AcidSplat", "FX_AcidSplat", Color.white, false), 1f, c_BossFxHeight + 0.01f);
+            var glob = root.AddComponent<AcidGlob>();
+            PrefabBuilder.Wire(glob, ("m_Ball", ballRoot.transform), ("m_Shadow", shadowGo.transform), ("m_Target", target), ("m_Splat", splat));
+            GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{EditorPaths.c_PrefabsEnemies}/Boss_AcidGlob.prefab");
+            Object.DestroyImmediate(root);
+            return prefab.GetComponent<AcidGlob>();
+        }
+
+        /// <summary>The bosses of waves 10 / 20 / 30 (the map has at least 30 waves).</summary>
+        private static void ConfigureBosses(List<WaveConfig.BossWave> bosses)
+        {
+            WaveConfig waves = DataAssetsBuilder.Load<WaveConfig>(DataAssetsBuilder.c_WaveConfig);
+            waves.EditorSetBosses(bosses.ToArray(), bosses.Max(b => b.Wave));
+            EditorUtility.SetDirty(waves);
         }
 
         /// <summary>Fills the Map01 wave line-up once (kept when edited in the Inspector).</summary>

@@ -13,6 +13,7 @@ namespace ZombiCar.Player
     public sealed class PlayerController : MonoBehaviour
     {
         private const float c_MinLookSqr = 1e-4f;
+        private const float c_PushDecay = 9f;              // knockback velocity lost per second (exponential)
 
         [SerializeField] private PlayerConfig m_Config;
         [SerializeField] private PlayerInputProvider m_InputProvider;
@@ -24,6 +25,7 @@ namespace ZombiCar.Player
         private IPlayerInput m_Input;
         private Transform m_Camera;
         private float m_VerticalSpeed;
+        private Vector3 m_Push;
 
         private void Awake() => m_Controller = GetComponent<CharacterController>();
 
@@ -48,7 +50,8 @@ namespace ZombiCar.Player
             else
                 m_VerticalSpeed += m_Config.Gravity * dt;
 
-            Vector3 velocity = planar;
+            Vector3 velocity = planar + m_Push;
+            m_Push *= Mathf.Exp(-c_PushDecay * dt);
             velocity.y = m_VerticalSpeed;
             m_Controller.Move(velocity * dt);
 
@@ -59,6 +62,13 @@ namespace ZombiCar.Player
                 Quaternion target = Quaternion.LookRotation(look, Vector3.up);
                 transform.rotation = Quaternion.RotateTowards(transform.rotation, target, m_Config.TurnSpeed * dt);
             }
+        }
+
+        /// <summary>Knocks the player back: <paramref name="velocity"/> (m/s, level) fades out over a few tenths of a second.</summary>
+        public void Push(Vector3 velocity)
+        {
+            velocity.y = 0f;
+            m_Push += velocity;
         }
 
         private Vector3 PlanarVelocity(Vector2 move)
