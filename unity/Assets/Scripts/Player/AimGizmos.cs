@@ -37,7 +37,7 @@ namespace ZombiCar.Player
             Gizmos.color = Color.cyan;
             Gizmos.DrawSphere(muzzle, c_MuzzleRadius);
             Gizmos.color = Color.magenta;
-            float range = m_Weapon.Config != null ? m_Weapon.Config.Range : 1f;
+            float range = m_Weapon.Config != null ? m_Weapon.Range : 1f;
             Gizmos.DrawLine(muzzle, muzzle + m_Weapon.ShotDirection * range);
         }
     }

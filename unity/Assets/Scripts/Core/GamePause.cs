@@ -5,7 +5,8 @@ namespace ZombiCar.Core
 {
     /// <summary>
     /// The one owner of <see cref="Time.timeScale"/> and <see cref="AudioListener.pause"/>. Anything that must stop the
-    /// game adds its reason (settings pop-up, controls editor, the platform's pause, an ad, the tab losing focus); the
+    /// game adds its reason (settings pop-up, controls editor, level-up cards, the workshop, the game-over screen, the
+    /// platform's pause, an ad, the tab losing focus); the
     /// game runs again when no reason is left. Yandex Games rules: sound off without focus and during ads, gameplay
     /// paused during ads and platform overlays (<c>YandexSdk</c> reports it with GameplayAPI start / stop).
     /// </summary>
@@ -20,12 +21,15 @@ namespace ZombiCar.Core
             Platform = 1 << 2,
             Ad = 1 << 3,
             Focus = 1 << 4,
+            LevelUp = 1 << 5,
+            Workshop = 1 << 6,
+            GameOver = 1 << 7,
         }
 
         // Reasons that also silence the sound (the menus keep it).
         private const Reason c_Mute = Reason.Platform | Reason.Ad | Reason.Focus;
         // Reasons that belong to one map session; cleared when a scene is loaded.
-        private const Reason c_Session = Reason.Settings | Reason.ControlsLayout;
+        private const Reason c_Session = Reason.Settings | Reason.ControlsLayout | Reason.LevelUp | Reason.Workshop | Reason.GameOver;
 
         private static Reason s_Reasons;
 
@@ -35,12 +39,18 @@ namespace ZombiCar.Core
         public static bool IsPaused => s_Reasons != Reason.None;
         public static Reason Reasons => s_Reasons;
 
+        /// <summary>Frame of the last change: input that closed a pop-up this frame must not act in the game too.</summary>
+        public static int ChangedFrame { get; private set; } = -1;
+
+        public static bool Has(Reason reason) => (s_Reasons & reason) != 0;
+
         public static void Set(Reason reason, bool active)
         {
             Reason next = active ? s_Reasons | reason : s_Reasons & ~reason;
             if (next == s_Reasons)
                 return;
             s_Reasons = next;
+            ChangedFrame = Time.frameCount;
             Apply();
             Changed?.Invoke();
         }

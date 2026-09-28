@@ -8,8 +8,8 @@ namespace ZombiCar.Waves
     /// Runs the waves of a map from <see cref="WaveConfig"/>: a countdown, then every wave spawns its zombies spread
     /// over the first part of the wave time (never more than MaxAlive at once). A wave ends when its zombies are all
     /// dead or its time is up (zombies that did not fit are carried into the next wave), then the break counts down
-    /// to the next one. Publishes the wave number and countdown to <see cref="WaveState"/> for the HUD; during a
-    /// break the HUD shows the upcoming wave.
+    /// to the next one. Publishes the wave number, countdown and phase to <see cref="WaveState"/> (the HUD, rewards and
+    /// the between-waves services listen to its wave start / end); during a break the HUD shows the upcoming wave.
     /// </summary>
     public sealed class WaveDirector : MonoBehaviour
     {
@@ -20,7 +20,6 @@ namespace ZombiCar.Waves
 
         [SerializeField] private WaveConfig m_Config;
         [SerializeField] private WaveState m_WaveState;
-        [SerializeField] private PlayerStats m_PlayerStats;
         [SerializeField] private PlayerWeapon m_PlayerWeapon;
         [SerializeField] private ZombieSpawner m_Spawner;
 
@@ -36,8 +35,6 @@ namespace ZombiCar.Waves
 
         private void Start()
         {
-            if (m_PlayerStats != null)
-                m_PlayerStats.ResetToDefaults();
             if (m_Config == null || m_Spawner == null)
             {
                 Debug.LogError("[WaveDirector] Wave config or spawner is missing.", this);
@@ -50,6 +47,8 @@ namespace ZombiCar.Waves
                     m_Spawner.Prewarm(entry.Zombie, c_PrewarmPerType);
             }
             m_Wave = 1;
+            if (m_WaveState != null)
+                m_WaveState.Begin(m_Config.WaveCount);
             StartCountdown(m_Config.FirstWaveDelay);
         }
 
@@ -89,6 +88,8 @@ namespace ZombiCar.Waves
             m_SpawnInterval = m_Config.WaveDuration * m_Config.SpawnWindow / Mathf.Max(1, m_ToSpawn);
             m_NextSpawnTime = Time.time;
             Debug.Log($"[WaveDirector] Wave {m_Wave}: {m_ToSpawn} zombies, one every {m_SpawnInterval:F1} s.");
+            if (m_WaveState != null)
+                m_WaveState.StartWave(m_Wave);
         }
 
         private void SpawnDue()
@@ -107,7 +108,10 @@ namespace ZombiCar.Waves
         {
             if (m_PlayerWeapon != null)
                 m_PlayerWeapon.Resupply(m_Config.AmmoResupplyPerWave);
-            if (m_Wave >= m_Config.WaveCount)
+            bool last = m_Wave >= m_Config.WaveCount;
+            if (m_WaveState != null)
+                m_WaveState.EndWave(m_Wave, last);
+            if (last)
             {
                 m_Phase = Phase.Finished;
                 m_TimeLeft = 0f;

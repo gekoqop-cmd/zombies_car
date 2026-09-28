@@ -43,6 +43,17 @@ namespace ZombiCar.Enemies
         [Tooltip("Metres a hit pushes the zombie back.")]
         [SerializeField, Min(0f)] private float m_Knockback = 0.2f;
 
+        [Header("Reward for the kill")]
+        [Tooltip("Experience towards the player's next level.")]
+        [SerializeField, Min(0)] private int m_Xp = 5;
+        [Tooltip("Scrap (the currency spent in the workshop).")]
+        [SerializeField, Min(0)] private int m_Reward = 2;
+
+        [Header("Boss")]
+        [Tooltip("A boss: comes alone at its wave, has a health plate and a name on the HUD.")]
+        [SerializeField] private bool m_IsBoss;
+        [SerializeField] private string m_DisplayName;
+
         public ZombieController Prefab => m_Prefab;
         public int MaxHealth => m_MaxHealth;
         public float MoveSpeed => m_MoveSpeed;
@@ -55,5 +66,9 @@ namespace ZombiCar.Enemies
         public float AggroRadius => m_AggroRadius;
         public float StaggerTime => m_StaggerTime;
         public float Knockback => m_Knockback;
+        public int Xp => m_Xp;
+        public int Reward => m_Reward;
+        public bool IsBoss => m_IsBoss;
+        public string DisplayName => m_DisplayName;
     }
 }

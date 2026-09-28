@@ -2,12 +2,14 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using ZombiCar.Player;
+using ZombiCar.Progression;
 using ZombiCar.Waves;
 
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// HUD (UI_HUD scene): health, level, wave + timer, ammo with the reload progress and the settings button.
+    /// HUD (UI_HUD scene): health, level, scrap and kills, wave + timer, ammo with the reload progress and the settings
+    /// button.
     /// Listens to the shared state assets, so it works over any map scene without direct references; every number
     /// on it comes from them (the scene builder fills the saved texts with <see cref="Refresh"/> too).
     /// </summary>
@@ -19,12 +21,19 @@ namespace ZombiCar.UI
         [SerializeField] private PlayerStats m_PlayerStats;
         [SerializeField] private WaveState m_WaveState;
         [SerializeField] private AmmoState m_AmmoState;
+        [SerializeField] private RunState m_Run;
 
         [Header("Health / level")]
         [SerializeField] private Image m_HealthFill;
         [SerializeField] private TMP_Text m_HealthValue;
         [SerializeField] private Image m_LevelFill;
         [SerializeField] private TMP_Text m_LevelLabel;
+
+        [Header("Run")]
+        [SerializeField] private TMP_Text m_MoneyValue;
+        [SerializeField] private TMP_Text m_KillsValue;
+        [Tooltip("Pops when scrap comes in.")]
+        [SerializeField] private RectTransform m_MoneyPanel;
 
         [Header("Wave")]
         [SerializeField] private TMP_Text m_WaveLabel;
@@ -45,12 +54,17 @@ namespace ZombiCar.UI
         [SerializeField] private string m_WaveFormat = "ВОЛНА {0}";
         [SerializeField] private string m_ValueFormat = "{0} / {1}";
         [SerializeField] private string m_TimerFormat = "{0:00}:{1:00}";
+        [SerializeField] private string m_BossTimer = "БОСС";
+
+        private int m_ShownMoney = -1;
+        private float m_MoneyPunch = float.NegativeInfinity;
 
         private void OnEnable()
         {
             if (m_PlayerStats != null) m_PlayerStats.Changed += RefreshPlayer;
             if (m_WaveState != null) m_WaveState.Changed += RefreshWave;
             if (m_AmmoState != null) m_AmmoState.Changed += RefreshAmmo;
+            if (m_Run != null) m_Run.Changed += RefreshRun;
             if (m_SettingsButton != null) m_SettingsButton.onClick.AddListener(OpenSettings);
             Refresh();
         }
@@ -61,12 +75,15 @@ namespace ZombiCar.UI
             RefreshPlayer();
             RefreshWave();
             RefreshAmmo();
+            RefreshRun();
         }
 
         private void Update()
         {
             if (m_ReloadFill != null && m_AmmoState != null && m_AmmoState.IsReloading)
                 m_ReloadFill.fillAmount = m_AmmoState.ReloadProgress;
+            if (m_MoneyPanel != null)
+                m_MoneyPanel.localScale = Vector3.one * (1f + UiMotion.Punch((Time.unscaledTime - m_MoneyPunch) / 0.25f) * 0.18f);
         }
 
         private void OnDisable()
@@ -74,6 +91,7 @@ namespace ZombiCar.UI
             if (m_PlayerStats != null) m_PlayerStats.Changed -= RefreshPlayer;
             if (m_WaveState != null) m_WaveState.Changed -= RefreshWave;
             if (m_AmmoState != null) m_AmmoState.Changed -= RefreshAmmo;
+            if (m_Run != null) m_Run.Changed -= RefreshRun;
             if (m_SettingsButton != null) m_SettingsButton.onClick.RemoveListener(OpenSettings);
         }
 
@@ -92,8 +110,28 @@ namespace ZombiCar.UI
             if (m_WaveState == null)
                 return;
             m_WaveLabel.SetText(string.Format(m_WaveFormat, m_WaveState.Wave));
+            if (m_WaveState.IsWaveRunning && !string.IsNullOrEmpty(m_WaveState.BossName))
+            {
+                m_WaveTimer.SetText(m_BossTimer);                     // a boss wave lasts until the boss is dead
+                return;
+            }
             int seconds = m_WaveState.SecondsLeft;
             m_WaveTimer.SetText(string.Format(m_TimerFormat, seconds / c_SecondsPerMinute, seconds % c_SecondsPerMinute));
+        }
+
+        private void RefreshRun()
+        {
+            if (m_Run == null)
+                return;
+            if (m_MoneyValue != null)
+            {
+                if (m_ShownMoney >= 0 && m_Run.Money > m_ShownMoney)
+                    m_MoneyPunch = Time.unscaledTime;
+                m_ShownMoney = m_Run.Money;
+                m_MoneyValue.SetText(m_Run.Money.ToString());
+            }
+            if (m_KillsValue != null)
+                m_KillsValue.SetText(m_Run.Kills.ToString());
         }
 
         private void RefreshAmmo()

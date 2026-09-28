@@ -4,10 +4,12 @@ using ZombiCar.Core;
 
 namespace ZombiCar.UI
 {
-    /// <summary>On-screen action button of the mobile controls (reload now; more actions later). Fires on press.</summary>
+    /// <summary>
+    /// On-screen action button of the mobile controls (reload; interact: workshop, ammo at the car). Fires on press.
+    /// </summary>
     public sealed class TouchButton : MonoBehaviour, IPointerDownHandler
     {
-        public enum Action { Reload }
+        public enum Action { Reload, Interact }
 
         [SerializeField] private Action m_Action;
         [SerializeField] private MobileControlsLayout m_Layout;
@@ -20,6 +22,9 @@ namespace ZombiCar.UI
             {
                 case Action.Reload:
                     MobileControls.ReloadFrame = Time.frameCount;
+                    break;
+                case Action.Interact:
+                    MobileControls.InteractFrame = Time.frameCount;
                     break;
             }
         }

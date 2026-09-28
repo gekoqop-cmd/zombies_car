@@ -9,6 +9,7 @@ using UnityEngine.Rendering;
 using ZombiCar.Car;
 using ZombiCar.Core;
 using ZombiCar.Player;
+using ZombiCar.Progression;
 using Object = UnityEngine.Object;
 
 namespace ZombiCar.EditorTools
@@ -234,8 +235,26 @@ namespace ZombiCar.EditorTools
             navObstacle.size = CarPlayerColliderSize;
             navObstacle.carving = true;
             var health = go.AddComponent<CarHealth>();
-            Wire(health, ("m_Config", DataAssetsBuilder.Load<CarConfig>(DataAssetsBuilder.c_CarConfig)), ("m_Body", box));
+            Wire(health, ("m_Config", DataAssetsBuilder.Load<CarConfig>(DataAssetsBuilder.c_CarConfig)), ("m_Body", box),
+                ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_State", DataAssetsBuilder.Load<CarState>(DataAssetsBuilder.c_CarState)));
             BuildCarDamageView(go, health);
+            BuildCarShockField(go, health);
+        }
+
+        // Workshop upgrade "electric discharge": the pulse logic and its ring on the ground (off until a pulse).
+        private const float c_ShockRingHeight = 0.05f;
+        private static readonly Color s_ShockRingColor = new Color(0.55f, 0.9f, 1f, 1f);
+
+        private static void BuildCarShockField(GameObject car, CarHealth health)
+        {
+            Material ring = FxBuilder.Material("M_FX_ShockRing", "FX_ShockRing", s_ShockRingColor, true);
+            MeshRenderer ringRenderer = FxBuilder.GroundQuad("ShockRing", car.transform, ring, 1f, c_ShockRingHeight / car.transform.lossyScale.y);
+            ringRenderer.enabled = false;
+            ringRenderer.gameObject.layer = 0;
+            var field = car.AddComponent<CarShockField>();
+            Wire(field, ("m_Car", health), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Ring", ringRenderer));
         }
 
         // Damage stages of Car_Player (tools/car/build_car.py): the damaged / wrecked atlases share the intact UVs;
@@ -467,18 +486,22 @@ namespace ZombiCar.EditorTools
             var pool = root.AddComponent<BulletPool>();
             var weapon = root.AddComponent<PlayerWeapon>();
             var aimGizmos = root.AddComponent<AimGizmos>();
+            var interactor = root.AddComponent<PlayerInteractor>();
+            var run = DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState);
 
             Wire(desktop, ("m_AimOrigin", root.transform));
             Wire(aimGizmos, ("m_Weapon", weapon));
             Wire(provider, ("m_Desktop", desktop), ("m_Mobile", mobile));
-            Wire(controller, ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
-                ("m_InputProvider", provider));
             Wire(pool, ("m_Prefab", bulletPrefab));
             Wire(weapon, ("m_Config", weaponConfig),
                 ("m_InputProvider", provider), ("m_Pool", pool),
-                ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)));
+                ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)), ("m_Run", run));
             Wire(mobile, ("m_Weapon", weapon));
-            PlayerBuilder.BuildView(root, provider, weapon, desktop);
+            Wire(interactor, ("m_InputProvider", provider), ("m_Run", run),
+                ("m_State", DataAssetsBuilder.Load<InteractionState>(DataAssetsBuilder.c_InteractionState)));
+            PlayerHealth health = PlayerBuilder.BuildView(root, provider, weapon, desktop);
+            Wire(controller, ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
+                ("m_InputProvider", provider), ("m_Interactor", interactor), ("m_Health", health), ("m_Run", run));
             SetLayerRecursively(root, Layers.c_PlayerIndex);
 
             // Touch-controls aim line (Brawl Stars style); placed in world space by the component, off on desktop.

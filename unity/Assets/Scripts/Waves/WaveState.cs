@@ -3,17 +3,48 @@ using UnityEngine;
 
 namespace ZombiCar.Waves
 {
-    /// <summary>Runtime wave number and countdown, shared with the HUD scene.</summary>
+    /// <summary>Where the waves are: counting down to the next wave, a wave running, or all waves done.</summary>
+    public enum WavePhase
+    {
+        Countdown,
+        Running,
+        Finished,
+    }
+
+    /// <summary>
+    /// Runtime wave number, countdown and phase, shared with the HUD scene; also raises the start and the end of
+    /// every wave (banners, sounds, rewards, the car's between-waves services).
+    /// </summary>
     [CreateAssetMenu(fileName = "WaveState", menuName = "ZombiCar/State/Wave State")]
     public sealed class WaveState : ScriptableObject
     {
         [NonSerialized] private int m_Wave;
         [NonSerialized] private int m_SecondsLeft;
+        [NonSerialized] private WavePhase m_Phase;
+        [NonSerialized] private int m_WaveCount;
+        [NonSerialized] private string m_BossName;
 
+        /// <summary>Wave number or countdown changed (at most once per second).</summary>
         public event Action Changed;
+
+        /// <summary>A wave started (its number).</summary>
+        public event Action<int> WaveStarted;
+
+        /// <summary>A wave was cleared or its time ran out (its number).</summary>
+        public event Action<int> WaveEnded;
+
+        /// <summary>A boss came out (its name).</summary>
+        public event Action<string> BossAppeared;
 
         public int Wave => m_Wave;
         public int SecondsLeft => m_SecondsLeft;
+        public WavePhase Phase => m_Phase;
+        public int WaveCount => m_WaveCount;
+
+        /// <summary>The boss of the running wave (null when it has none or it is dead).</summary>
+        public string BossName => m_BossName;
+
+        public bool IsWaveRunning => m_Phase == WavePhase.Running;
 
         public void Set(int wave, int secondsLeft)
         {
@@ -22,6 +53,38 @@ namespace ZombiCar.Waves
             m_Wave = wave;
             m_SecondsLeft = Mathf.Max(0, secondsLeft);
             Changed?.Invoke();
+        }
+
+        /// <summary>Back to the state before the first wave (a map starts).</summary>
+        public void Begin(int waveCount)
+        {
+            m_WaveCount = waveCount;
+            m_Phase = WavePhase.Countdown;
+            m_BossName = null;
+        }
+
+        public void StartWave(int wave)
+        {
+            m_Phase = WavePhase.Running;
+            m_Wave = wave;
+            Changed?.Invoke();
+            WaveStarted?.Invoke(wave);
+        }
+
+        public void EndWave(int wave, bool last)
+        {
+            m_Phase = last ? WavePhase.Finished : WavePhase.Countdown;
+            m_BossName = null;
+            Changed?.Invoke();
+            WaveEnded?.Invoke(wave);
+        }
+
+        public void SetBoss(string name)
+        {
+            m_BossName = name;
+            Changed?.Invoke();
+            if (!string.IsNullOrEmpty(name))
+                BossAppeared?.Invoke(name);
         }
     }
 }

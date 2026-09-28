@@ -18,6 +18,7 @@ using ZombiCar.Car;
 using ZombiCar.Core;
 using ZombiCar.Enemies;
 using ZombiCar.Player;
+using ZombiCar.Progression;
 using ZombiCar.UI;
 using ZombiCar.Waves;
 using Object = UnityEngine.Object;
@@ -207,7 +208,9 @@ namespace ZombiCar.EditorTools
 
             var systemsGo = new GameObject("MapSystems");
             systemsGo.transform.SetParent(systems, false);
-            PrefabBuilder.Wire(systemsGo.AddComponent<MapBootstrap>(), ("m_Map", map));
+            PrefabBuilder.Wire(systemsGo.AddComponent<MapBootstrap>(), ("m_Map", map),
+                ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)));
             PrefabBuilder.Wire(systemsGo.AddComponent<CrosshairCursor>(),
                 ("m_Crosshair", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Textures/UI/UI_Crosshair.png")));
             AudioBuilder.AddManager(systemsGo);
@@ -233,6 +236,7 @@ namespace ZombiCar.EditorTools
             player.name = "Player";
             BuildCamera(cameraRoot, player.transform, map);
             BuildZombieSystems(systemsGo, gameplay, car, player);
+            BuildWorkshopZone(gameplay);
             BuildNavMesh(systems);
             UltraQualityBuilder.AddToMap(map, lighting, nature, cameraRoot, systemsGo, player, (x, z) => IsFreeForGrass(x, z, map));
             foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
@@ -271,9 +275,50 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(systemsGo.AddComponent<WaveDirector>(),
                 ("m_Config", DataAssetsBuilder.Load<WaveConfig>(DataAssetsBuilder.c_WaveConfig)),
                 ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
-                ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
                 ("m_PlayerWeapon", player.GetComponent<PlayerWeapon>()),
                 ("m_Spawner", spawner));
+            PrefabBuilder.Wire(systemsGo.AddComponent<PlayerProgression>(),
+                ("m_Config", DataAssetsBuilder.Load<ProgressionConfig>(DataAssetsBuilder.c_ProgressionConfig)),
+                ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
+                ("m_Spawner", spawner), ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Player", player.GetComponent<PlayerHealth>()));
+        }
+
+        // Workshop: the spot in front of the garage door (the building faces the lot, its front wall at z 6.4).
+        private static readonly Vector3 s_WorkshopZone = new Vector3(-8.6f, 0f, 4.9f);
+        private const float c_WorkshopZoneRadius = 2.4f;
+        private const float c_WorkshopIconHeight = 2.4f;
+        private const float c_WorkshopIconScale = 0.6f;
+        private static readonly Color s_MarkerRingColor = new Color(1f, 0.7f, 0.3f, 0.8f);
+
+        private static void BuildWorkshopZone(Transform gameplay)
+        {
+            var root = new GameObject("WorkshopZone");
+            root.transform.SetParent(gameplay, false);
+            root.transform.position = s_WorkshopZone;
+            Material ringMaterial = FxBuilder.Material("M_FX_MarkerRing", "FX_MarkerRing", s_MarkerRingColor, false);
+            MeshRenderer ring = FxBuilder.GroundQuad("Ring", root.transform, ringMaterial, c_WorkshopZoneRadius * 1.3f, 0.04f);
+
+            var iconRoot = new GameObject("Icon");
+            iconRoot.transform.SetParent(root.transform, false);
+            iconRoot.transform.localPosition = Vector3.up * c_WorkshopIconHeight;
+            CharacterBuilder.SetProps(iconRoot.AddComponent<YAxisBillboard>(), ("m_UpdateEveryFrame", false));
+            var iconGo = new GameObject("Sprite");
+            iconGo.transform.SetParent(iconRoot.transform, false);
+            iconGo.transform.localScale = new Vector3(c_WorkshopIconScale, c_WorkshopIconScale * CharacterBuilder.PitchCompensation, 1f);
+            var icon = iconGo.AddComponent<SpriteRenderer>();
+            icon.sprite = UiFactory.Sprite("UI_Icon_Repair");
+            icon.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(CharacterBuilder.c_SpriteMaterial);
+            icon.sortingOrder = 50;
+            icon.shadowCastingMode = ShadowCastingMode.Off;
+            icon.receiveShadows = false;
+
+            var zone = root.AddComponent<WorkshopZone>();
+            PrefabBuilder.Wire(zone, ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Marker", iconRoot.transform), ("m_MarkerSprite", icon), ("m_Ring", ring), ("m_Icon", icon.sprite));
+            CharacterBuilder.SetProps(zone, ("m_Radius", c_WorkshopZoneRadius));
         }
 
         // World-space durability plate above the player's car (anchor height; the plate sits on it, facing the camera).

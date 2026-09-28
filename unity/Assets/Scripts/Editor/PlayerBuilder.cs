@@ -281,9 +281,9 @@ namespace ZombiCar.EditorTools
         // ------------------------------------------------------------------ prefab view
         /// <summary>
         /// Adds the view (billboard + body sprite with the Animator, animated barrel, muzzle flash, blob shadow),
-        /// PlayerView, PlayerHealth and the crowd obstacle to the player root, and wires the weapon's muzzle.
+        /// PlayerView, PlayerHealth (returned) and the crowd obstacle to the player root, and wires the weapon's muzzle.
         /// </summary>
-        public static void BuildView(GameObject root, PlayerInputProvider input, PlayerWeapon weapon, DesktopPlayerInput desktop)
+        public static PlayerHealth BuildView(GameObject root, PlayerInputProvider input, PlayerWeapon weapon, DesktopPlayerInput desktop)
         {
             FramesMeta meta = LoadMeta();
             Vector2 scale = BodyScale(meta);
@@ -368,7 +368,9 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(weapon, ("m_Muzzle", muzzle));
             CharacterBuilder.SetProps(desktop, ("m_AimPlaneHeight", config.MuzzleHeight));
             var health = root.AddComponent<PlayerHealth>();
-            PrefabBuilder.Wire(health, ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)), ("m_View", playerView));
+            PrefabBuilder.Wire(health, ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)), ("m_View", playerView),
+                ("m_Run", DataAssetsBuilder.Load<ZombiCar.Progression.RunState>(DataAssetsBuilder.c_RunState)));
+            return health;
         }
 
         private static SpriteRenderer EffectSprite(string name, Transform parent, Sprite sprite, Material material, int order,

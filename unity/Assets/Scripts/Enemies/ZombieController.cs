@@ -53,6 +53,8 @@ namespace ZombiCar.Enemies
 
         public ZombieConfig Config => m_Config;
         public bool IsAlive => m_State != State.Dead;
+        public int Health => m_Health;
+        public int MaxHealth => m_Config != null ? m_Config.MaxHealth : 1;
 
         private void Awake()
         {
@@ -214,6 +216,13 @@ namespace ZombiCar.Enemies
                     gap <= m_Config.AttackRange * c_StrikeReachSlack)
                 {
                     target.TakeDamage(m_Config.Damage, point - transform.position);
+                    // The car's spikes (workshop upgrade) hurt whoever hits it.
+                    if (target is CarHealth car && car.Spikes > 0)
+                    {
+                        TakeDamage(car.Spikes, transform.position - point);
+                        if (m_State != State.Attacking)
+                            return;                                // killed or staggered by the spikes
+                    }
                 }
             }
             if (m_Animator.IsFinished)

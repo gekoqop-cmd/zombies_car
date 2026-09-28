@@ -7,7 +7,8 @@ namespace ZombiCar.Player
     /// <summary>
     /// PC input through the Input System: WASD / arrows move, the mouse cursor aims (the weapon resolves the exact
     /// target from <see cref="TryGetAimRay"/>; the facing uses the cursor on the barrel-height plane),
-    /// the left mouse button fires (hold = automatic fire). Keyboard bindings use physical key positions,
+    /// the left mouse button fires (hold = automatic fire), R reloads, E uses what is nearby (workshop, ammo at the
+    /// car). Keyboard bindings use physical key positions,
     /// so they work with any keyboard layout (Yandex Games requirement).
     /// </summary>
     [DefaultExecutionOrder(-50)]
@@ -29,6 +30,7 @@ namespace ZombiCar.Player
         private InputAction m_FireAction;
         private InputAction m_PointAction;
         private InputAction m_ReloadAction;
+        private InputAction m_InteractAction;
         private Camera m_Camera;
         private Vector3 m_AimDirection = Vector3.forward;
         private bool m_FireStartedOverUi;
@@ -43,6 +45,7 @@ namespace ZombiCar.Player
         public bool FireReleased { get; private set; }
         public bool QuickTap => false;
         public bool ReloadPressed { get; private set; }
+        public bool InteractPressed { get; private set; }
 
         /// <summary>Cursor position on the barrel-height plane (valid while <see cref="AimActive"/>).</summary>
         public Vector3 AimPoint { get; private set; }
@@ -70,6 +73,7 @@ namespace ZombiCar.Player
             m_FireAction = new InputAction("Fire", InputActionType.Button, "<Mouse>/leftButton");
             m_PointAction = new InputAction("Point", InputActionType.Value, "<Mouse>/position");
             m_ReloadAction = new InputAction("Reload", InputActionType.Button, "<Keyboard>/r");   // physical key: any layout
+            m_InteractAction = new InputAction("Interact", InputActionType.Button, "<Keyboard>/e");
         }
 
         private void OnEnable()
@@ -78,6 +82,7 @@ namespace ZombiCar.Player
             m_FireAction.Enable();
             m_PointAction.Enable();
             m_ReloadAction.Enable();
+            m_InteractAction.Enable();
         }
 
         private void OnDisable()
@@ -86,7 +91,8 @@ namespace ZombiCar.Player
             m_FireAction.Disable();
             m_PointAction.Disable();
             m_ReloadAction.Disable();
-            ReloadPressed = false;
+            m_InteractAction.Disable();
+            ReloadPressed = InteractPressed = false;
             Move = Vector2.zero;
             FireHeld = FirePressed = FireReleased = AimActive = m_HasAimRay = false;
         }
@@ -97,12 +103,14 @@ namespace ZombiCar.Player
             m_FireAction?.Dispose();
             m_PointAction?.Dispose();
             m_ReloadAction?.Dispose();
+            m_InteractAction?.Dispose();
         }
 
         private void Update()
         {
             Move = Vector2.ClampMagnitude(m_MoveAction.ReadValue<Vector2>(), 1f);
             ReloadPressed = m_ReloadAction.WasPressedThisFrame();
+            InteractPressed = m_InteractAction.WasPressedThisFrame();
             // A click that starts on a HUD button (settings, etc.) must not shoot.
             bool pressedNow = m_FireAction.WasPressedThisFrame();
             if (pressedNow)

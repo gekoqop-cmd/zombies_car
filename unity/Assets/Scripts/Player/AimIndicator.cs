@@ -42,7 +42,7 @@ namespace ZombiCar.Player
                 return;
             }
             m_Input = m_InputProvider != null ? m_InputProvider.Input : null;
-            m_Length = m_Weapon != null && m_Weapon.Config != null ? m_Weapon.Config.Range - m_StartOffset : 1f;
+            m_Length = m_Weapon != null && m_Weapon.Config != null ? m_Weapon.Range - m_StartOffset : 1f;
             // Unit-long strip, stretched along z to the free length each frame.
             GetComponent<MeshFilter>().sharedMesh = BuildStrip(m_Width);
         }

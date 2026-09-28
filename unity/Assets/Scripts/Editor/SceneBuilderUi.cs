@@ -445,7 +445,14 @@ namespace ZombiCar.EditorTools
             settingsButton.targetGraphic = gearPlate;
             gearRt.gameObject.AddComponent<UIButtonFx>();
 
+            // Scrap and kills under the health panel; the interaction prompt at the bottom.
+            RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue,
+                out TextMeshProUGUI killsValue);
+            BuildInteractionPrompt(safe, outline);
+
             BuildTouchControls(safe, outline);
+            BuildLevelUpScreen(safe, outline);
+            BuildWorkshopScreen(safe, outline);
             SettingsPanel settings = BuildSettingsPopup(safe, outline, true);
 
             var hud = canvas.gameObject.AddComponent<HudController>();
@@ -453,6 +460,7 @@ namespace ZombiCar.EditorTools
                 ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
                 ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_AmmoState", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)),
+                ("m_Run", Run), ("m_MoneyValue", moneyValue), ("m_KillsValue", killsValue), ("m_MoneyPanel", moneyPanel),
                 ("m_HealthFill", healthFill), ("m_HealthValue", healthValue), ("m_LevelFill", levelFill), ("m_LevelLabel", levelLabel),
                 ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_ReloadHint", reload.gameObject),
                 ("m_ReloadFill", reloadFill), ("m_SettingsButton", settingsButton), ("m_SettingsPanel", settings));
@@ -467,7 +475,7 @@ namespace ZombiCar.EditorTools
 
         // ------------------------------------------------------------------ touch controls (mobile)
         private const float c_MobileSettingsRowHeight = 110f;
-        private const float c_HudReserve = 220f;           // the top HUD panels + the reload bar: controls stay below
+        private const float c_HudReserve = 270f;           // the top HUD panels + counters: controls stay below
         private const float c_StickTouch = 380f;           // touch area of a stick
         private const float c_StickRing = 260f;
         private const float c_StickKnob = 120f;
@@ -500,6 +508,24 @@ namespace ZombiCar.EditorTools
             UiFactory.Image(reloadIcon, UiFactory.Sprite("UI_AmmoIcon"), Color.white, false).preserveAspect = true;
             PrefabBuilder.Wire(reload.gameObject.AddComponent<TouchButton>(), ("m_Layout", layout));
 
+            // Action (interact): above the aim stick; shows the pictogram of what can be used and lights up then.
+            RectTransform action = UiFactory.Rect("ActionButton", area, bottomRight, new Vector2(0.5f, 0.5f),
+                new Vector2(-c_StickTouch * 0.5f, c_StickTouch + 100f), new Vector2(c_TouchButton, c_TouchButton));
+            UiFactory.Image(action, null, Color.clear, false, true);
+            action.gameObject.AddComponent<CanvasGroup>();
+            RectTransform actionVisual = UiFactory.Stretch("Visual", action);
+            UiFactory.Image(actionVisual, UiFactory.Sprite("UI_RoundButton"), Color.white, false);
+            RectTransform actionIcon = UiFactory.Rect("Icon", actionVisual, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
+                new Vector2(c_TouchButton * 0.6f, c_TouchButton * 0.6f));
+            Image actionImage = UiFactory.Image(actionIcon, UiFactory.Sprite("UI_Icon_Repair"), Color.white, false);
+            actionImage.preserveAspect = true;
+            var actionButton = action.gameObject.AddComponent<TouchButton>();
+            PrefabBuilder.Wire(actionButton, ("m_Layout", layout));
+            CharacterBuilder.SetProps(actionButton, ("m_Action", (int)TouchButton.Action.Interact));
+            PrefabBuilder.Wire(action.gameObject.AddComponent<InteractButtonView>(),
+                ("m_State", DataAssetsBuilder.Load<ZombiCar.Progression.InteractionState>(DataAssetsBuilder.c_InteractionState)),
+                ("m_Layout", layout), ("m_Visual", actionVisual), ("m_Icon", actionImage));
+
             // Edit overlay: dims the game, shows where the controls may go, takes the drags.
             RectTransform overlay = UiFactory.Stretch("EditOverlay", root);
             UiFactory.Image(overlay, null, new Color(0f, 0f, 0f, 0.45f), false, true);
@@ -518,7 +544,7 @@ namespace ZombiCar.EditorTools
             var so = new SerializedObject(layout);
             so.FindProperty("m_Area").objectReferenceValue = area;
             SerializedProperty controls = so.FindProperty("m_Controls");
-            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload) };
+            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload), ("action", action) };
             controls.arraySize = list.Length;
             for (int i = 0; i < list.Length; i++)
             {

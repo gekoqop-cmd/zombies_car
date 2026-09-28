@@ -53,3 +53,6 @@ crashlytics-build.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Local Play-mode feature test screenshots (Editor/FeatureTests.cs)
+/Screenshots/Feature_*.png

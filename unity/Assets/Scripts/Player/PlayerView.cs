@@ -5,7 +5,7 @@ namespace ZombiCar.Player
 {
     /// <summary>
     /// 2D look of the player (frames cut from refsanim/Player/*.mp4): drives the Animator (Idle / Run by speed,
-    /// Shot while standing, Reload stretched to <see cref="WeaponConfig.ReloadTime"/>), mirrors the sprite left/right
+    /// Shot while standing, Reload stretched to <see cref="PlayerWeapon.ReloadTime"/>), mirrors the sprite left/right
     /// by the aim (never rotates it in its plane), shows a short muzzle flash (a few frames of a compact star,
     /// a soft glow and a puff of smoke) with a recoil kick on every shot (also while running, when the Run clip
     /// keeps playing), and plays the shot / reload / footstep sounds. The flash sits under the Muzzle, so it flips
@@ -161,7 +161,7 @@ namespace ZombiCar.Player
         private void OnReloadStarted()
         {
             if (AudioManager.Instance != null && m_Weapon != null)
-                AudioManager.Instance.PlayFitted(m_ReloadSound, m_Weapon.Config.ReloadTime, m_ReloadVolume);
+                AudioManager.Instance.PlayFitted(m_ReloadSound, m_Weapon.ReloadTime, m_ReloadVolume);
         }
 
         // Facing before the weapon's Update: a shot fired on the frame the player turns leaves from the new side.
@@ -198,11 +198,10 @@ namespace ZombiCar.Player
                 m_Animator.ResetTrigger(s_Shoot);
             if (m_Weapon != null && m_Weapon.Config != null)
             {
-                WeaponConfig weapon = m_Weapon.Config;
                 m_Animator.SetBool(s_Reloading, m_Weapon.IsReloading);
-                m_Animator.SetFloat(s_ReloadSpeed, m_ReloadClipLength / weapon.ReloadTime);
+                m_Animator.SetFloat(s_ReloadSpeed, m_ReloadClipLength / m_Weapon.ReloadTime);
                 // Automatic fire is faster than the clip: it is sped up so every shot still shows all of it.
-                m_Animator.SetFloat(s_ShotSpeed, Mathf.Max(1f, m_ShotClipLength / weapon.ShotInterval));
+                m_Animator.SetFloat(s_ShotSpeed, Mathf.Max(1f, m_ShotClipLength / m_Weapon.ShotInterval));
             }
 
             UpdateFacing();

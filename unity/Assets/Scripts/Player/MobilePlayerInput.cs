@@ -33,6 +33,7 @@ namespace ZombiCar.Player
         public bool FireReleased => false;
         public bool QuickTap => false;
         public bool ReloadPressed => MobileControls.ReloadFrame >= Time.frameCount - 1;
+        public bool InteractPressed => MobileControls.InteractFrame >= Time.frameCount - 1;
 
         public bool TryGetAimRay(out Ray ray)
         {
@@ -85,7 +86,7 @@ namespace ZombiCar.Player
 
         private Transform NearestEnemy()
         {
-            float range = m_Weapon != null && m_Weapon.Config != null ? m_Weapon.Config.Range : 14f;
+            float range = m_Weapon != null && m_Weapon.Config != null ? m_Weapon.Range : 14f;
             int count = Physics.OverlapSphereNonAlloc(transform.position, range, s_Candidates, Layers.Enemies, QueryTriggerInteraction.Ignore);
             Transform best = null;
             float bestDistance = float.MaxValue;

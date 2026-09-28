@@ -1,25 +1,45 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using ZombiCar.Core;
 
 namespace ZombiCar.Player
 {
+    /// <summary>Per-shot numbers of a bullet: the gun's config plus the run's cards (damage, range, pierce, crits).</summary>
+    public struct ShotStats
+    {
+        public int Damage;
+        public float Range;
+        /// <summary>Enemies the bullet passes through before it stops.</summary>
+        public int Pierce;
+        /// <summary>Chance 0..1 of a critical hit (double damage).</summary>
+        public float CritChance;
+    }
+
     /// <summary>
     /// Pooled projectile (no Rigidbody, no collider). It is drawn at the barrel height and, every frame, sweeps a
     /// vertical capsule from <see cref="WeaponConfig.HitBandBottom"/> up to that height over the distance it covers
     /// (no tunnelling at any frame rate), so cover lower than the barrel and short zombies stop it as well.
-    /// Stops at the first obstacle or enemy (damaging only enemies), or after its range, then returns to the pool.
+    /// Enemies are hit through their (larger) hit boxes; a piercing bullet goes on through as many enemies as it may.
+    /// Stops at the first obstacle, the car or the last enemy it may hit (damaging enemies and shootable props such as
+    /// explosive barrels), or after its range, then returns to the pool.
     /// </summary>
     public sealed class Bullet : MonoBehaviour
     {
-        private static readonly Collider[] s_Overlap = new Collider[4];
+        private const int c_MaxHits = 16;
+        private static readonly Collider[] s_Overlap = new Collider[8];
+        private static readonly RaycastHit[] s_Hits = new RaycastHit[c_MaxHits];
+        private static readonly IComparer<RaycastHit> s_ByDistance =
+            Comparer<RaycastHit>.Create((a, b) => a.distance.CompareTo(b.distance));
 
+        private readonly List<IDamageable> m_AlreadyHit = new List<IDamageable>();
         private Vector3 m_Direction;
         private float m_Speed;
         private float m_Remaining;
         private float m_Radius;
         private float m_BandBottom;
         private int m_Damage;
+        private int m_PierceLeft;
         private int m_BlockMask;
         private Action<Bullet> m_Release;
         private bool m_Active;
@@ -27,26 +47,30 @@ namespace ZombiCar.Player
         /// <summary>A bullet stopped: point, surface normal, and whether it hit an enemy (impact effects, sound).</summary>
         public static event Action<Vector3, Vector3, bool> Impacted;
 
-        public void Launch(Vector3 position, Vector3 direction, WeaponConfig config, int blockMask, Action<Bullet> release)
+        public void Launch(Vector3 position, Vector3 direction, WeaponConfig config, ShotStats stats, int blockMask,
+            Action<Bullet> release)
         {
             direction.y = 0f;                      // bullets always fly level
             m_Direction = direction.normalized;
             m_Speed = config.BulletSpeed;
-            m_Remaining = config.Range;
+            m_Remaining = stats.Range;
             m_Radius = config.BulletRadius;
             m_BandBottom = Mathf.Min(config.HitBandBottom, position.y);
-            m_Damage = config.Damage;
+            bool crit = stats.CritChance > 0f && UnityEngine.Random.value < stats.CritChance;
+            m_Damage = crit ? stats.Damage * 2 : stats.Damage;
+            m_PierceLeft = Mathf.Max(0, stats.Pierce);
             m_BlockMask = blockMask;
             m_Release = release;
             m_Active = true;
+            m_AlreadyHit.Clear();
             transform.SetPositionAndRotation(position, Quaternion.LookRotation(m_Direction, Vector3.up));
 
-            // Fired from inside cover (the player pressed against a wall or the car): a cast would start inside
-            // the collider and miss it, so check the start position first.
+            // Fired from inside cover (the player pressed against a wall or the car) or point blank into a zombie:
+            // a cast would start inside the collider and miss it, so check the start position first.
             Band(position, out Vector3 bottom, out Vector3 top);
-            int count = Physics.OverlapCapsuleNonAlloc(bottom, top, m_Radius, s_Overlap, m_BlockMask, QueryTriggerInteraction.Ignore);
-            if (count > 0)
-                Stop(s_Overlap[0], position, -m_Direction);
+            int count = Physics.OverlapCapsuleNonAlloc(bottom, top, m_Radius, s_Overlap, m_BlockMask, QueryTriggerInteraction.Collide);
+            for (int i = 0; i < count && m_Active; i++)
+                Hit(s_Overlap[i], position, -m_Direction);
         }
 
         private void Update()
@@ -56,13 +80,22 @@ namespace ZombiCar.Player
 
             float step = Mathf.Min(m_Speed * Time.deltaTime, m_Remaining);
             Band(transform.position, out Vector3 bottom, out Vector3 top);
-            if (Physics.CapsuleCast(bottom, top, m_Radius, m_Direction, out RaycastHit hit, step, m_BlockMask,
-                    QueryTriggerInteraction.Ignore))
+            int count = Physics.CapsuleCastNonAlloc(bottom, top, m_Radius, m_Direction, s_Hits, step, m_BlockMask,
+                QueryTriggerInteraction.Collide);
+            if (count > 0)
             {
-                // The visible bullet ends where the sweep touched, at its own height.
-                Vector3 end = transform.position + m_Direction * hit.distance;
-                Stop(hit.collider, new Vector3(hit.point.x, end.y, hit.point.z), hit.normal);
-                return;
+                Array.Sort(s_Hits, 0, count, s_ByDistance);
+                for (int i = 0; i < count && m_Active; i++)
+                {
+                    RaycastHit hit = s_Hits[i];
+                    // The visible bullet ends where the sweep touched, at its own height (a cast that starts
+                    // touching a collider reports distance 0 and no point: use the bullet's position).
+                    Vector3 end = transform.position + m_Direction * hit.distance;
+                    Vector3 point = hit.distance > 0f ? new Vector3(hit.point.x, end.y, hit.point.z) : end;
+                    Hit(hit.collider, point, hit.normal);
+                }
+                if (!m_Active)
+                    return;
             }
 
             transform.position += m_Direction * step;
@@ -77,13 +110,34 @@ namespace ZombiCar.Player
             bottom = new Vector3(position.x, Mathf.Min(m_BandBottom + m_Radius, position.y), position.z);
         }
 
-        private void Stop(Collider collider, Vector3 point, Vector3 normal)
+        // Enemies take damage and may let the bullet through; anything else stops it (shootable props take damage).
+        private void Hit(Collider collider, Vector3 point, Vector3 normal)
+        {
+            bool enemy = ((1 << collider.gameObject.layer) & Layers.Enemies) != 0;
+            var target = collider.GetComponentInParent<IDamageable>();
+            if (enemy)
+            {
+                if (target == null || m_AlreadyHit.Contains(target) || !target.IsAlive)
+                    return;                                          // second collider of a zombie already hit, or a corpse
+                m_AlreadyHit.Add(target);
+                Impacted?.Invoke(point, normal, true);
+                target.TakeDamage(m_Damage, m_Direction);
+                if (m_PierceLeft-- > 0)
+                    return;
+                Stop(point);
+                return;
+            }
+            if (collider.isTrigger)
+                return;                                              // other triggers never stop bullets
+            Impacted?.Invoke(point, normal, false);
+            if (target is IShootable shootable)
+                shootable.TakeDamage(m_Damage, m_Direction);
+            Stop(point);
+        }
+
+        private void Stop(Vector3 point)
         {
             transform.position = point;
-            bool enemy = ((1 << collider.gameObject.layer) & Layers.Enemies) != 0;
-            Impacted?.Invoke(point, normal, enemy);
-            if (enemy && collider.TryGetComponent(out IDamageable target))
-                target.TakeDamage(m_Damage, m_Direction);
             Despawn();
         }
 

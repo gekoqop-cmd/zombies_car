@@ -3,6 +3,7 @@ using UnityEngine;
 using ZombiCar.Car;
 using ZombiCar.Core;
 using ZombiCar.Player;
+using ZombiCar.Progression;
 using ZombiCar.Waves;
 
 namespace ZombiCar.EditorTools
@@ -21,6 +22,12 @@ namespace ZombiCar.EditorTools
         public const string c_AmmoState = EditorPaths.c_DataState + "/AmmoState.asset";
         public const string c_PlayerStats = EditorPaths.c_DataState + "/PlayerStats.asset";
         public const string c_WaveState = EditorPaths.c_DataState + "/WaveState.asset";
+        public const string c_RunState = EditorPaths.c_DataState + "/RunState.asset";
+        public const string c_InteractionState = EditorPaths.c_DataState + "/InteractionState.asset";
+        public const string c_CarState = EditorPaths.c_DataState + "/CarState.asset";
+        public const string c_ProgressionConfig = EditorPaths.c_Data + "/ProgressionConfig.asset";
+        public const string c_PerkPool = EditorPaths.c_Data + "/PerkPool.asset";
+        public const string c_CarUpgrades = EditorPaths.c_Data + "/CarUpgrades.asset";
 
         [MenuItem("Tools/Setup/Create Data Assets")]
         public static void Run()
@@ -38,6 +45,13 @@ namespace ZombiCar.EditorTools
             Ensure<AmmoState>(c_AmmoState);
             Ensure<PlayerStats>(c_PlayerStats);
             Ensure<WaveState>(c_WaveState);
+            Ensure<RunState>(c_RunState);
+            Ensure<InteractionState>(c_InteractionState);
+            Ensure<CarState>(c_CarState);
+            Ensure<ProgressionConfig>(c_ProgressionConfig);
+            Ensure<PerkPool>(c_PerkPool);
+            Ensure<CarUpgradeCatalog>(c_CarUpgrades);
+            ProgressionBuilder.Run();
             AssetDatabase.SaveAssets();
         }
 

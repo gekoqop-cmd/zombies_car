@@ -474,6 +474,7 @@ GameObject:
   - component: {fileID: 2196967554506101149}
   - component: {fileID: 1305879416160015679}
   - component: {fileID: 1760234931379749298}
+  - component: {fileID: 1520311216230528941}
   - component: {fileID: 841469169246565615}
   - component: {fileID: 3697103502134594972}
   m_Layer: 8
@@ -583,6 +584,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.PlayerController
   m_Config: {fileID: 11400000, guid: 0686f09f5aa1d1a44a1aa739e17f3cf0, type: 2}
   m_InputProvider: {fileID: 5096280400247978864}
+  m_Interactor: {fileID: 1520311216230528941}
+  m_Health: {fileID: 3697103502134594972}
+  m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
 --- !u!114 &2196967554506101149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -613,6 +617,7 @@ MonoBehaviour:
   m_Muzzle: {fileID: 8463539802740295110}
   m_Pool: {fileID: 2196967554506101149}
   m_Ammo: {fileID: 11400000, guid: 282b154e39b06d24c9a59f7d5cab53e4, type: 2}
+  m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
 --- !u!114 &1760234931379749298
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -627,6 +632,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.AimGizmos
   m_Weapon: {fileID: 1305879416160015679}
   m_Show: 1
+--- !u!114 &1520311216230528941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6296356515415113490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 838928329d8fd984d82f967d9b18e707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Progression.PlayerInteractor
+  m_InputProvider: {fileID: 5096280400247978864}
+  m_State: {fileID: 11400000, guid: d6cd34da9c09dae4fabe071ed8d9f39d, type: 2}
+  m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
 --- !u!208 &841469169246565615
 NavMeshObstacle:
   m_ObjectHideFlags: 0
@@ -657,6 +677,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.PlayerHealth
   m_Stats: {fileID: 11400000, guid: a237cafb7e8e08948be62a8fa6d7e060, type: 2}
   m_View: {fileID: 2110435572988969131}
+  m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
 --- !u!1 &7927436713221072103
 GameObject:
   m_ObjectHideFlags: 0

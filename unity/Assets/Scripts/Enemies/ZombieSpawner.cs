@@ -1,7 +1,9 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Pool;
+using Random = UnityEngine.Random;
 using ZombiCar.Car;
 using ZombiCar.Player;
 
@@ -40,6 +42,9 @@ namespace ZombiCar.Enemies
         /// <summary>Zombies killed on this map so far.</summary>
         public int Killed { get; private set; }
 
+        /// <summary>A zombie was killed (experience, scrap, kill counters).</summary>
+        public event Action<ZombieController> ZombieDied;
+
         public void Prewarm(ZombieConfig config, int count)
         {
             ObjectPool<ZombieController> pool = PoolFor(config);
@@ -60,10 +65,26 @@ namespace ZombiCar.Enemies
             return true;
         }
 
+        /// <summary>
+        /// Spawns <paramref name="config"/> at the NavMesh point nearest to <paramref name="position"/> (boss minions,
+        /// tests). Returns the zombie, or null when there is no NavMesh close by.
+        /// </summary>
+        public ZombieController SpawnAt(ZombieConfig config, Vector3 position, float searchRadius = c_NavMeshSnap)
+        {
+            if (config == null || config.Prefab == null ||
+                !NavMesh.SamplePosition(position, out NavMeshHit hit, searchRadius, NavMesh.AllAreas))
+                return null;
+            ZombieController zombie = PoolFor(config).Get();
+            zombie.Spawn(config, this, hit.position);
+            Alive++;
+            return zombie;
+        }
+
         public void NotifyDied(ZombieController zombie)
         {
             Alive = Mathf.Max(0, Alive - 1);
             Killed++;
+            ZombieDied?.Invoke(zombie);
         }
 
         /// <summary>Called by a zombie when its corpse has sunk into the ground.</summary>

@@ -1,14 +1,20 @@
 using UnityEngine;
+using ZombiCar.Player;
+using ZombiCar.Progression;
 
 namespace ZombiCar.Core
 {
     /// <summary>
-    /// Lives in every map scene. Makes the map playable when it is opened directly in the Editor:
-    /// loads settings and adds the HUD scene if the normal Boot -> MainMenu flow was skipped.
+    /// Lives in every map scene. Starts a fresh run (<see cref="RunState"/>, the player's stats) before anything else
+    /// of the map wakes up, and makes the map playable when it is opened directly in the Editor: loads settings and
+    /// adds the HUD scene if the normal Boot -> MainMenu flow was skipped.
     /// </summary>
+    [DefaultExecutionOrder(-1000)]
     public sealed class MapBootstrap : MonoBehaviour
     {
         [SerializeField] private MapConfig m_Map;
+        [SerializeField] private RunState m_Run;
+        [SerializeField] private PlayerStats m_PlayerStats;
 
         public MapConfig Map => m_Map;
 
@@ -18,6 +24,10 @@ namespace ZombiCar.Core
         {
             SettingsService.EnsureLoaded();
             SceneTint.Characters = m_Map != null ? m_Map.CharacterTint : Color.white;
+            if (m_PlayerStats != null)
+                m_PlayerStats.ResetToDefaults();
+            if (m_Run != null)
+                m_Run.BeginRun(m_Map);
         }
 
         private void Start()
