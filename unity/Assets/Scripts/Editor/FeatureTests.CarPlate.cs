@@ -21,7 +21,7 @@ namespace ZombiCar.EditorTools
         {
             CarHealthBar plate = null;
             CarAttackAlert alert = null;
-            bool covered = false, fadedWhenCovered = true, carHit = false, alertSeen = false;
+            bool covered = false, carHit = false, alertSeen = false;
             float minAlpha = 1f;
 
             At(1.0f, () =>

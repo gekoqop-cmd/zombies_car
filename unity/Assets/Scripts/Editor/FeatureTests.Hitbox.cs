@@ -19,7 +19,7 @@ namespace ZombiCar.EditorTools
         {
             ZombieController zombie = null;
             CapsuleCollider body = null, hitbox = null;
-            int before = 0;
+            int before = 0, shots = 0;
             bool frozen = false;
             Vector3 start = Vector3.zero;
 
@@ -29,6 +29,12 @@ namespace ZombiCar.EditorTools
                 Find<LevelUpScreen>().enabled = false;
                 start = s_Car.transform.position + new Vector3(0f, 0f, -6f);
                 Teleport(start);
+                // Fire is held until the gun actually fires once (steps can share one slow batch frame).
+                s_Weapon.Fired += () =>
+                {
+                    shots++;
+                    s_Bot.FireHeld = false;
+                };
                 zombie = s_Spawner.SpawnAt(Zombie("Walker"), start + new Vector3(6f, 0f, 0.6f));
                 body = zombie.GetComponent<CapsuleCollider>();
                 hitbox = zombie.transform.Find("ShotHitbox").GetComponent<CapsuleCollider>();
@@ -53,21 +59,22 @@ namespace ZombiCar.EditorTools
                 Check(frozen && hitbox.enabled && body.enabled, "risen: body and hit box on");
                 AimPast(zombie, 0.6f);
                 before = zombie.Health;
+                shots = 0;
                 s_Bot.FireHeld = true;
             });
-            At(5.12f, () => s_Bot.FireHeld = false);
             At(6.0f, () =>
             {
-                Check(zombie.Health < before, $"a shot 0.6 m from the centre (outside the body) hits: {before} -> {zombie.Health}");
+                Check(shots == 1 && zombie.Health < before,
+                    $"a shot 0.6 m from the centre (outside the body) hits: {shots} shot, {before} -> {zombie.Health}");
                 s_Weapon.Refill();
                 AimPast(zombie, 0.9f);
                 before = zombie.Health;
+                shots = 0;
                 s_Bot.FireHeld = true;
             });
-            At(6.12f, () => s_Bot.FireHeld = false);
             At(7.0f, () =>
             {
-                Check(zombie.Health == before, "a shot 0.9 m from the centre still misses");
+                Check(shots == 1 && zombie.Health == before, $"a shot 0.9 m from the centre still misses ({shots} shot)");
                 // The axe: the body 0.12 m out of reach, the hit box within it.
                 var melee = s_Player.GetComponent<PlayerMelee>();
                 s_Player.GetComponent<WeaponSwitcher>().Switch(WeaponSlot.Axe);
