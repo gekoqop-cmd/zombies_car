@@ -78,9 +78,11 @@ namespace ZombiCar.EditorTools
 
             var menu = canvas.gameObject.AddComponent<MainMenuController>();
             PrefabBuilder.Wire(menu, ("m_PlayButton", play), ("m_SettingsButton", settingsButton), ("m_BackButton", back),
-                ("m_MainScreen", mainGroup), ("m_MapScreen", mapGroup), ("m_Dim", dim), ("m_Settings", settings));
+                ("m_MainScreen", mainGroup), ("m_MapScreen", mapGroup), ("m_Dim", dim), ("m_Settings", settings),
+                ("m_Music", AudioBuilder.Music("Music_Menu")));
             SaveUiPrefab(canvas.gameObject, "MainMenu");
             UiFactory.EventSystem();
+            AudioBuilder.AddAudio();
             EditorSceneManager.SaveScene(scene, c_MenuScene);
         }
 
@@ -449,6 +451,7 @@ namespace ZombiCar.EditorTools
             RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue,
                 out TextMeshProUGUI killsValue);
             BuildInteractionPrompt(safe, outline);
+            BuildWaveBanner(safe, outline);
 
             BuildTouchControls(safe, outline);
             BuildLevelUpScreen(safe, outline);

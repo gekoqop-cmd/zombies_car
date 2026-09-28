@@ -21,3 +21,6 @@ MonoBehaviour:
   m_GroundSize: {x: 92, y: 58}
   m_FreeZoneRadius: 8
   m_CameraEdgeMargin: 4
+  m_CharacterTint: {r: 1, g: 1, b: 1, a: 1}
+  m_Music: {fileID: 8300000, guid: bbf860720cd0d3d4d90a6ce011fe96f3, type: 3}
+  m_BossMusic: {fileID: 8300000, guid: 1c482f5d0a2a26c4da37aedcb18605b1, type: 3}

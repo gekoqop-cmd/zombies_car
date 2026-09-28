@@ -102,6 +102,8 @@ namespace ZombiCar.UI
             if (m_EditControlsButton != null)
                 m_EditControlsButton.gameObject.SetActive(MobileControlsLayout.Instance != null);
             Highlight(SettingsService.Quality);
+            if (m_Target <= 0f)
+                AudioManager.PlaySfx(Sound.UiOpen);
             m_Target = 1f;
             m_Group.interactable = m_Group.blocksRaycasts = true;
             GamePause.Set(GamePause.Reason.Settings, true);        // the game waits while the settings are open
@@ -109,6 +111,8 @@ namespace ZombiCar.UI
 
         public void Hide()
         {
+            if (m_Target > 0f)
+                AudioManager.PlaySfx(Sound.UiClose);
             m_Target = 0f;
             if (m_Group != null)
                 m_Group.interactable = m_Group.blocksRaycasts = false;

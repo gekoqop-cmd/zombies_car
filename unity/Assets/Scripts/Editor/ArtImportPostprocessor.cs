@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ZombiCar.EditorTools
 {
     /// <summary>
-    /// Import rules for everything under Assets/Art (and the SFX under Assets/Audio/SFX): FBX at scale 1 without cameras/lights/animation,
+    /// Import rules for everything under Assets/Art (and the sounds under Assets/Audio): FBX at scale 1 without cameras/lights/animation,
     /// textures sized and compressed for WebGL, sprites/cursor/normal maps typed by folder and name.
     /// Character frames (tools/characters) are sprites with the pivot at the feet (bottom centre).
     /// </summary>
@@ -16,6 +16,9 @@ namespace ZombiCar.EditorTools
         private const string c_CharactersRoot = EditorPaths.c_CharacterTextures + "/";
         private const string c_VfxRoot = "Assets/Art/VFX/";
         private const string c_SfxRoot = "Assets/Audio/SFX/";
+        private const string c_MusicRoot = "Assets/Audio/Music/";
+        private const float c_MusicQuality = 0.4f;
+        private const int c_MusicSampleRate = 32000;
         private const string c_WebGL = "WebGL";
         private const float c_SfxQuality = 0.5f;
 
@@ -57,6 +60,23 @@ namespace ZombiCar.EditorTools
 
         private void OnPreprocessAudio()
         {
+            if (assetPath.StartsWith(c_MusicRoot))
+            {
+                // Music loops: mono Vorbis kept compressed in memory, 32 kHz, loaded in the background (no hitch).
+                var music = (AudioImporter)assetImporter;
+                music.forceToMono = true;
+                music.loadInBackground = true;
+                music.defaultSampleSettings = new AudioImporterSampleSettings
+                {
+                    loadType = AudioClipLoadType.CompressedInMemory,
+                    compressionFormat = AudioCompressionFormat.Vorbis,
+                    quality = c_MusicQuality,
+                    sampleRateSetting = AudioSampleRateSetting.OverrideSampleRate,
+                    sampleRateOverride = c_MusicSampleRate,
+                    preloadAudioData = true,
+                };
+                return;
+            }
             if (!assetPath.StartsWith(c_SfxRoot))
                 return;
             // Short effects: mono Vorbis, decompressed on load (no per-play decode cost, small download).

@@ -111,6 +111,7 @@ namespace ZombiCar.UI
                 GamePause.Set(GamePause.Reason.LevelUp, true);
             }
             Animate();
+            AudioManager.PlaySfx(Sound.LevelUp);
             Dealt?.Invoke();
         }
 
@@ -123,6 +124,7 @@ namespace ZombiCar.UI
                 return;                                            // a click still meant for the previous hand
             m_Picked = index;
             m_PickStart = Time.unscaledTime;
+            AudioManager.PlaySfx(Sound.CardPick);
             Picked?.Invoke(m_Hand[index]);
         }
 

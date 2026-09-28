@@ -1,12 +1,13 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using ZombiCar.Core;
 
 namespace ZombiCar.UI
 {
     /// <summary>
     /// Hover / press feedback of a button: eases its scale up on hover and down while pressed (unscaled time, so it
-    /// also works in pause menus). Disabled (non-interactable) buttons do not react.
+    /// also works in pause menus) and clicks on press. Disabled (non-interactable) buttons do not react.
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
     public sealed class UIButtonFx : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
@@ -41,7 +42,12 @@ namespace ZombiCar.UI
             m_Pressed = false;
         }
 
-        public void OnPointerDown(PointerEventData eventData) => m_Pressed = true;
+        public void OnPointerDown(PointerEventData eventData)
+        {
+            m_Pressed = true;
+            if (m_Selectable == null || m_Selectable.IsInteractable())
+                AudioManager.PlaySfx(Sound.UiClick);
+        }
 
         public void OnPointerUp(PointerEventData eventData) => m_Pressed = false;
 

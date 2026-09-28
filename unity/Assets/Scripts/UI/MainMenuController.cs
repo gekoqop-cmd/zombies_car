@@ -21,6 +21,8 @@ namespace ZombiCar.UI
         [SerializeField, Range(0f, 1f)] private float m_DimAlpha = 0.65f;
         [SerializeField] private SettingsPanel m_Settings;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.3f;
+        [Tooltip("Calm menu track (cross-fades from the map's music when coming back).")]
+        [SerializeField] private AudioClip m_Music;
 
         private bool m_MapOpen;
 
@@ -38,10 +40,16 @@ namespace ZombiCar.UI
         }
 
         // The menu is the first screen the player can use: the game is loaded for the platform.
-        private void Start() => YandexSdk.NotifyGameReady();
+        private void Start()
+        {
+            YandexSdk.NotifyGameReady();
+            AudioManager.PlayMusic(m_Music);
+        }
 
         public void ShowMapSelection(bool open)
         {
+            if (open != m_MapOpen)
+                AudioManager.PlaySfx(open ? Sound.UiOpen : Sound.UiClose);
             m_MapOpen = open;
             m_MapScreen.gameObject.SetActive(true);
         }

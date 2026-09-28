@@ -6,8 +6,8 @@ namespace ZombiCar.Core
 {
     /// <summary>
     /// Lives in every map scene. Starts a fresh run (<see cref="RunState"/>, the player's stats) before anything else
-    /// of the map wakes up, and makes the map playable when it is opened directly in the Editor: loads settings and
-    /// adds the HUD scene if the normal Boot -> MainMenu flow was skipped.
+    /// of the map wakes up, starts the map's music, and makes the map playable when it is opened directly in the
+    /// Editor: loads settings and adds the HUD scene if the normal Boot -> MainMenu flow was skipped.
     /// </summary>
     [DefaultExecutionOrder(-1000)]
     public sealed class MapBootstrap : MonoBehaviour
@@ -36,6 +36,8 @@ namespace ZombiCar.Core
             DynamicGI.UpdateEnvironment();
             GameSession.EnterMap();
             SceneLoader.EnsureExists().EnsureHudLoaded();
+            if (m_Map != null)
+                AudioManager.PlayMusic(m_Map.Music);
             if (QualityAutoTuner.IsNeeded)
                 gameObject.AddComponent<QualityAutoTuner>();
         }

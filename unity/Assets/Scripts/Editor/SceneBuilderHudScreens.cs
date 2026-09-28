@@ -47,6 +47,24 @@ namespace ZombiCar.EditorTools
             return pill;
         }
 
+        // ------------------------------------------------------------------ wave banner
+        private static void BuildWaveBanner(RectTransform safe, Material outline)
+        {
+            var top = new Vector2(0.5f, 1f);
+            RectTransform root = UiFactory.Rect("WaveBanner", safe, top, top, new Vector2(0f, -190f), new Vector2(1400f, 170f));
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = group.interactable = false;
+            RectTransform body = UiFactory.Stretch("Body", root);
+            TextMeshProUGUI title = OutlinedLabel("Title", body, top, top, Vector2.zero, new Vector2(1400f, 96f), "ВОЛНА 1", 84f,
+                TextAlignmentOptions.Center, s_TitleColor, outline);
+            TextMeshProUGUI subtitle = OutlinedLabel("Subtitle", body, top, top, new Vector2(0f, -94f), new Vector2(1400f, 50f),
+                "ЗОМБИ ИДУТ!", 36f, TextAlignmentOptions.Center, Color.white, outline);
+            var banner = root.gameObject.AddComponent<WaveBanner>();
+            PrefabBuilder.Wire(banner, ("m_Waves", DataAssetsBuilder.Load<ZombiCar.Waves.WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Group", group), ("m_Body", body), ("m_Title", title), ("m_Subtitle", subtitle));
+        }
+
         // ------------------------------------------------------------------ interaction prompt
         private static void BuildInteractionPrompt(RectTransform safe, Material outline)
         {

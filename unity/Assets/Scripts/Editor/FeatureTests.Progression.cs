@@ -15,6 +15,7 @@ namespace ZombiCar.EditorTools
         private static void RegisterScenarios()
         {
             Register("progression", Progression);
+            Register("sound", SoundAndMusic);
         }
 
         // ================================================================== 1. workshop, levels, cards

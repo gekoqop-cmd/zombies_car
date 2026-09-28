@@ -22,3 +22,5 @@ MonoBehaviour:
   m_FreeZoneRadius: 8
   m_CameraEdgeMargin: 4
   m_CharacterTint: {r: 0.74, g: 0.8, b: 1, a: 1}
+  m_Music: {fileID: 8300000, guid: 503c55a5f4c8153428396f591355bf2f, type: 3}
+  m_BossMusic: {fileID: 8300000, guid: 1c482f5d0a2a26c4da37aedcb18605b1, type: 3}

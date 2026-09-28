@@ -20,8 +20,6 @@ namespace ZombiCar.Car
         [SerializeField, Min(0.5f)] private float m_Radius = 4.5f;
         [SerializeField, Min(0.5f)] private float m_Interval = 6f;
         [SerializeField, Min(0.05f)] private float m_RingTime = 0.4f;
-        [SerializeField, OptionalReference] private AudioClip m_Sound;
-        [SerializeField, Range(0f, 1f)] private float m_Volume = 0.6f;
 
         private readonly System.Collections.Generic.HashSet<IDamageable> m_Zapped = new System.Collections.Generic.HashSet<IDamageable>();
         private MaterialPropertyBlock m_Block;
@@ -72,8 +70,7 @@ namespace ZombiCar.Car
                 Vector3 away = s_Hits[i].transform.position - transform.position;
                 target.TakeDamage(damage, away);
             }
-            if (AudioManager.Instance != null)
-                AudioManager.Instance.Play(m_Sound, m_Volume, 0.08f);
+            AudioManager.PlaySfx(Sound.CarShock);
             AnimateRing();                                          // the ring shows from this frame on
             return m_Zapped.Count;
         }

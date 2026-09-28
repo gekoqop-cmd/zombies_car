@@ -25,6 +25,11 @@ namespace ZombiCar.Core
         [Tooltip("Multiplies the character sprites' colour (they are unlit): white by day, cool at night.")]
         [SerializeField] private Color m_CharacterTint = Color.white;
 
+        [Header("Music")]
+        [SerializeField] private AudioClip m_Music;
+        [Tooltip("Plays while a boss is alive.")]
+        [SerializeField] private AudioClip m_BossMusic;
+
         public string SceneName => m_SceneName;
         public int MapNumber => m_MapNumber;
         public int WaveThreshold => m_WaveThreshold;
@@ -35,6 +40,8 @@ namespace ZombiCar.Core
         public float FreeZoneRadius => m_FreeZoneRadius;
         public float CameraEdgeMargin => m_CameraEdgeMargin;
         public Color CharacterTint => m_CharacterTint;
+        public AudioClip Music => m_Music;
+        public AudioClip BossMusic => m_BossMusic;
 
         public Bounds PlayAreaBounds => new Bounds(m_PlayAreaCenter, new Vector3(m_PlayAreaSize.x, 0f, m_PlayAreaSize.y));
     }

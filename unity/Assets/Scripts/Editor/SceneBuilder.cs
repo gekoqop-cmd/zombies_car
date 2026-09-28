@@ -149,6 +149,7 @@ namespace ZombiCar.EditorTools
             CreateUiCamera(Color.black);
             var boot = new GameObject("Boot").AddComponent<BootLoader>();
             PrefabBuilder.Wire(boot, ("m_Settings", DataAssetsBuilder.Load<GameSettings>(DataAssetsBuilder.c_GameSettings)));
+            AudioBuilder.AddAudio();
             EditorSceneManager.SaveScene(scene, c_BootScene);
         }
 
@@ -213,7 +214,7 @@ namespace ZombiCar.EditorTools
                 ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)));
             PrefabBuilder.Wire(systemsGo.AddComponent<CrosshairCursor>(),
                 ("m_Crosshair", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Textures/UI/UI_Crosshair.png")));
-            AudioBuilder.AddManager(systemsGo);
+            AudioBuilder.AddAudio();
 
             BuildLights(lighting);
             BuildGround(environment, background, map);

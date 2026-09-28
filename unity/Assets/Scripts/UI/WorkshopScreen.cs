@@ -83,6 +83,7 @@ namespace ZombiCar.UI
             }
             m_Root.interactable = m_Root.blocksRaycasts = m_Open;
             GamePause.Set(GamePause.Reason.Workshop, m_Open);
+            AudioManager.PlaySfx(m_Open ? Sound.UiOpen : Sound.UiClose);
             OpenChanged?.Invoke(m_Open);
         }
 
@@ -94,9 +95,11 @@ namespace ZombiCar.UI
             CarUpgrade upgrade = m_Catalog.Upgrades[index];
             if (!m_Run.TryBuy(upgrade))
             {
+                AudioManager.PlaySfx(Sound.UiDenied);
                 Refused?.Invoke();
                 return false;
             }
+            AudioManager.PlaySfx(Sound.UiBuy);
             Debug.Log($"[WorkshopScreen] Bought {upgrade.Id} level {m_Run.LevelOf(upgrade)}, scrap left {m_Run.Money}.");
             m_Rows[index].Punch();
             Refresh();

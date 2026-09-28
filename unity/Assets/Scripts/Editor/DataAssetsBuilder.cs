@@ -52,6 +52,9 @@ namespace ZombiCar.EditorTools
             Ensure<PerkPool>(c_PerkPool);
             Ensure<CarUpgradeCatalog>(c_CarUpgrades);
             ProgressionBuilder.Run();
+            AudioBuilder.BuildSoundBank();
+            SetMapMusic(c_MapConfig, "Music_Day");
+            SetMapMusic(c_NightMapConfig, "Music_Night");
             AssetDatabase.SaveAssets();
         }
 
@@ -64,6 +67,15 @@ namespace ZombiCar.EditorTools
             so.FindProperty("m_SceneName").stringValue = SceneNames.c_Map02;
             so.FindProperty("m_MapNumber").intValue = 2;
             so.FindProperty("m_CharacterTint").colorValue = new Color(0.74f, 0.8f, 1f, 1f);
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // The evening map plays the driving track, the night map the dark one; both switch to the boss track for bosses.
+        private static void SetMapMusic(string mapConfig, string music)
+        {
+            var so = new SerializedObject(AssetDatabase.LoadAssetAtPath<MapConfig>(mapConfig));
+            so.FindProperty("m_Music").objectReferenceValue = AudioBuilder.Music(music);
+            so.FindProperty("m_BossMusic").objectReferenceValue = AudioBuilder.Music("Music_Boss");
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 

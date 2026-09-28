@@ -2851,8 +2851,6 @@ MonoBehaviour:
   m_Radius: 4.5
   m_Interval: 6
   m_RingTime: 0.4
-  m_Sound: {fileID: 0}
-  m_Volume: 0.6
 --- !u!4 &5207039630127113790 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: dee42e9c012027240a0febe22f6264ef, type: 3}
