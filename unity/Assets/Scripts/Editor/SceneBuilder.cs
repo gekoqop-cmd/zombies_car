@@ -935,10 +935,10 @@ namespace ZombiCar.EditorTools
 
         // Red explosive barrels out in the lot (the ones by the fences are in BuildProps): where the zombies walk in
         // from the spawn points towards the car, clear of the car's free circle. None by the workshop (removed on
-        // request: the one at (-13.5, 1.5) stood in front of it).
+        // request: the one at (-13.5, 1.5) stood in front of it). The two on the right were moved by hand in Map01.
         private static readonly (float x, float z, float yaw)[] s_LotExplosives =
         {
-            (-11.5f, -6.5f, 20f), (9.5f, -7.5f, 140f), (12.5f, 5f, 70f),
+            (-11.5f, -6.5f, 20f), (9.327f, -6.497f, 140f), (12.695f, 5.071f, 70f),
         };
 
         private static void BuildExplosives(Transform parent)

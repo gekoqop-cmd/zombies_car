@@ -181,6 +181,8 @@ Unity.exe -batchmode -projectPath unity -buildTarget WebGL -executeMethod ZombiC
 python tools/yandex/pack.py
 ```
 
+Без Python — то же самое на PowerShell: `powershell -ExecutionPolicy Bypass -File tools/yandex/pack.ps1`. Архив собирается из релизной сборки (**Tools → Build WebGL Player**): в ней нет читов, они компилируются только в редакторе и development-сборке.
+
 Скрипт собирает `unity/Builds/Rustwave_yandex.zip`: `index.html` в корне, файлы `Build/` и `TemplateData/`. Заодно проверяет требования Яндекса: размер до 100 МБ, имена без пробелов и кириллицы, только относительные пути. Этот архив загружается в консоль разработчика как черновик.
 
 WebGL-шаблон Rustwave:
