@@ -439,3 +439,4 @@ MonoBehaviour:
   m_HitTime: 0.28
   m_DeathThud: 0.14
   m_RiseWobble: 7
+  m_StepShake: 0

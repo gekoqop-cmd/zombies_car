@@ -176,6 +176,20 @@ namespace ZombiCar.EditorTools
             (CharacterAnim.Dead, Idx(5, 6), 4f, false),
         };
 
+        // A full painted boss sheet + dead pose (BossSheetImporter, 9 frames): idle, breath, walk x4 (step, passing,
+        // step, passing), wind-up, attack, dead. No hit pose: a boss does not flinch, it only flashes (the idle pose).
+        private static (CharacterAnim, string[], float, bool)[] FullSheetClips() => new[]
+        {
+            (CharacterAnim.Idle, Idx(0, 1), 1.4f, true),
+            (CharacterAnim.Move, Idx(2, 3, 4, 5), 4.4f, true),
+            (CharacterAnim.Attack, Idx(6, 6, 7, 7), 3.2f, false),     // the wind-up is held, then the blow
+            (CharacterAnim.Hit, Idx(0), 1f, true),
+            (CharacterAnim.Dead, Idx(8), 4f, false),
+        };
+
+        private static (CharacterAnim, string[], float, bool)[] BossClips(string boss) =>
+            BossSheetImporter.FrameCount(boss) == 9 ? FullSheetClips() : SheetClips();
+
         // Bosses of waves 10 / 20 / 30: painted sheets (referens/bosses/boss<N>_sheet.png, BossSheetImporter) or, until a
         // boss has one, recoloured 2x upscaled brute / worker frames (tools/characters/boss_frames.py).
         private static readonly ZombieSpec[] s_Bosses =
@@ -183,7 +197,7 @@ namespace ZombiCar.EditorTools
             new ZombieSpec
             {
                 // Brood mother: slow, goes for the car, keeps calling minions out of the ground.
-                Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = SheetClips() },
+                Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BossClips("Boss1") },
                 AgentRadius = 1f, ColliderRadius = 1f, ColliderHeight = 3.4f,
                 Health = 1600, Speed = 0.85f, SpeedVariation = 0.02f, Damage = 25, AttackInterval = 2.2f, AttackRange = 1f,
                 AttackAnimSpeed = 0.9f, Aggro = 4f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 150,
@@ -202,7 +216,7 @@ namespace ZombiCar.EditorTools
             new ZombieSpec
             {
                 // Juggernaut: hunts the player, charges and spits acid; dazed after a charge.
-                Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = SheetClips() },
+                Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = BossClips("Boss2") },
                 AgentRadius = 0.9f, ColliderRadius = 0.85f, ColliderHeight = 3.6f,
                 Health = 3200, Speed = 1.2f, SpeedVariation = 0.02f, Damage = 30, AttackInterval = 1.6f, AttackRange = 1f,
                 Preference = ZombieTarget.Player, Aggro = 30f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 300,
@@ -309,7 +323,21 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ zombie visuals
-        private static float SpriteScale(Look look) => ViewScale * look.Size / look.PixelScale;
+        private static float SpriteScale(Look look)
+        {
+            float scale = ViewScale * look.Size / look.PixelScale;
+            // A painted boss sheet may be drawn at any resolution: its idle pose is shown as tall as the reference
+            // boss frames (c_BossIdlePx at PixelScale 2), so a sharper or smaller sheet keeps the boss's size.
+            if (look.Name.StartsWith("Boss"))
+            {
+                float idle = Frame(look.Name, "0").rect.height;
+                if (idle > 1f)
+                    scale *= c_BossIdlePx / idle;
+            }
+            return scale;
+        }
+
+        private const float c_BossIdlePx = 330f;
 
         /// <summary>Sheet pixels -> metres at 100 px per unit.</summary>
         private static float ViewScale => ArtImportPostprocessor.c_CharacterPixelsPerUnit / c_SheetPixelsPerMetre;
@@ -342,9 +370,14 @@ namespace ZombiCar.EditorTools
             var scale2 = new Vector2(scale, scale * PitchCompensation);
             spriteGo.transform.localScale = new Vector3(scale2.x, scale2.y, 1f);
             var animator = spriteGo.AddComponent<SpriteAnimator>();
-            // Squash & stretch on the regular zombies first; the bosses get it once their new sheets are in.
-            SetProps(animator, ("m_Sprites", sprites), ("m_Scale", scale2), ("m_Tint", s_SpriteTint),
-                ("m_Procedural", !look.Name.StartsWith("Boss")));
+            // Squash & stretch over the painted frames for everyone; the bosses move heavy: a slow deep breath, a
+            // stomp that shakes the screen on every foot fall, a small lean (their painted poses already swing), barely
+            // flinching when hit, a big thud when they fall.
+            SetProps(animator, ("m_Sprites", sprites), ("m_Scale", scale2), ("m_Tint", s_SpriteTint), ("m_Procedural", true));
+            if (look.Name.StartsWith("Boss"))
+                SetProps(animator, ("m_Breath", 0.025f), ("m_BreathRate", 0.35f), ("m_StepBounce", 0.03f), ("m_StepSway", 1.5f),
+                    ("m_StepSquash", 0.05f), ("m_WalkLean", 2f), ("m_AttackLean", 5f), ("m_AttackLunge", 0.3f),
+                    ("m_HitLean", 3f), ("m_DeathThud", 0.2f), ("m_RiseWobble", 4f), ("m_StepShake", 0.07f));
             visualHeight = idle.rect.height / ArtImportPostprocessor.c_CharacterPixelsPerUnit * scale2.y;
 
             var shadowGo = new GameObject("Shadow");

@@ -50,11 +50,62 @@ namespace ZombiCar.EditorTools
             Debug.Log($"[BossSheetImporter] {done} boss sheet(s) imported.");
         }
 
-        public static void Import(string sheetPath, string boss)
+        /// <summary>
+        /// The frames of a boss: a 7-pose sheet (idle, idle, walk, walk, attack, hit, dead) or, when
+        /// boss&lt;N&gt;_dead.png lies next to it, a 9-pose sheet (idle, breath, 4 walk poses, wind-up, attack, hit) + the dead
+        /// pose from that picture = 10 frames. Frames are Boss&lt;N&gt;_0..count-1.
+        /// </summary>
+        public static int FrameCount(string boss) =>
+            File.Exists($"{c_Sheets}/{boss.ToLowerInvariant()}_dead.png") ? c_FullFrames : c_Frames;
+
+        private const int c_FullFrames = 9;            // idle, breath, walk x4, wind-up, attack, dead
+
+        // Separate big pictures on a cleaned sheet (bits under 15 % of the biggest are drops and splashes).
+        private static int CountPictures(Color[] px, int w, int h)
+        {
+            var seen = new bool[px.Length];
+            var sizes = new List<int>();
+            var stack = new Stack<int>();
+            for (int s = 0; s < px.Length; s++)
+            {
+                if (seen[s] || px[s].a <= 0.1f)
+                    continue;
+                int size = 0;
+                seen[s] = true;
+                stack.Push(s);
+                while (stack.Count > 0)
+                {
+                    int i = stack.Pop();
+                    size++;
+                    int x = i % w, y = i / w;
+                    for (int dy = -1; dy <= 1; dy++)
+                    for (int dx = -1; dx <= 1; dx++)
+                    {
+                        int nx = x + dx, ny = y + dy;
+                        if (nx < 0 || ny < 0 || nx >= w || ny >= h)
+                            continue;
+                        int n = ny * w + nx;
+                        if (!seen[n] && px[n].a > 0.1f)
+                        {
+                            seen[n] = true;
+                            stack.Push(n);
+                        }
+                    }
+                }
+                sizes.Add(size);
+            }
+            int biggest = sizes.Count > 0 ? sizes.Max() : 0;
+            return sizes.Count(s => s >= biggest * 0.15f);
+        }
+        private const float c_DeadLength = 1.1f;       // a body lying down is about as long as it stands tall
+
+        // Loads a painted picture and clears its background (white or transparent) and its caption strip.
+        private static Color[] LoadClean(string path, out int w, out int h)
         {
             var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-            tex.LoadImage(File.ReadAllBytes(sheetPath));
-            int w = tex.width, h = tex.height;
+            tex.LoadImage(File.ReadAllBytes(path));
+            w = tex.width;
+            h = tex.height;
             Color[] px = tex.GetPixels();
             UnityEngine.Object.DestroyImmediate(tex);
 
@@ -73,10 +124,23 @@ namespace ZombiCar.EditorTools
                 RemoveBackground(px, w, h);
             }
             DropCaptions(px, w, h);
-            List<(RectInt rect, Color[] px)> poses = SplitBlobs(px, w, h);
-            if (poses.Count != c_Frames)
-                throw new InvalidOperationException($"[BossSheetImporter] {sheetPath}: found {poses.Count} poses, expected {c_Frames}. " +
+            return px;
+        }
+
+        public static void Import(string sheetPath, string boss)
+        {
+            string deadPath = $"{c_Sheets}/{boss.ToLowerInvariant()}_dead.png";
+            bool full = File.Exists(deadPath);
+            Color[] px = LoadClean(sheetPath, out int w, out int h);
+            // A full sheet has 8 poses (idle, breath, 4 walk, wind-up, attack) or 9 with a hit pose last, which is not
+            // used (a boss does not flinch: it only flashes). Told apart by the separate big pictures on the sheet.
+            int sheetPoses = full ? (CountPictures(px, w, h) == c_FullFrames - 1 ? c_FullFrames - 1 : c_FullFrames) : c_Frames;
+            List<(RectInt rect, Color[] px)> poses = SplitBlobs(px, w, h, sheetPoses);
+            if (poses.Count != sheetPoses)
+                throw new InvalidOperationException($"[BossSheetImporter] {sheetPath}: found {poses.Count} poses, expected {sheetPoses}. " +
                                                     "Leave clear white space between the poses.");
+            if (full && poses.Count == c_FullFrames)
+                poses.RemoveAt(c_FullFrames - 1);                         // the hit pose
 
             // The poses keep the size they are painted at: each boss is as big as its sheet draws it (a sheet with the
             // character about 350-450 px tall gives a boss about 4-5 m tall at PixelScale 2).
@@ -88,6 +152,16 @@ namespace ZombiCar.EditorTools
                 Color[] scaled = Resample(crop, r.width, r.height, cw, ch);
                 frames.Add((scaled, cw, ch, LegsCentre(scaled, cw, ch)));
             }
+            if (full)
+            {
+                // The dead pose is painted at its own scale: as long as the boss stands tall (idle pose height).
+                Color[] dpx = LoadClean(deadPath, out int dw, out int dh);
+                (RectInt r, Color[] crop) = SplitBlobs(dpx, dw, dh, 1).First();
+                float k = poses[0].rect.height * c_DeadLength / r.width;
+                int cw = Mathf.Max(1, Mathf.RoundToInt(r.width * k)), ch = Mathf.Max(1, Mathf.RoundToInt(r.height * k));
+                Color[] scaled = Resample(crop, r.width, r.height, cw, ch);
+                frames.Add((scaled, cw, ch, cw * 0.5f));
+            }
 
             // One canvas for all poses: feet on the bottom row, the legs' centre on the canvas centre.
             float left = frames.Max(f => f.anchorX), right = frames.Max(f => f.w - f.anchorX);
@@ -95,7 +169,7 @@ namespace ZombiCar.EditorTools
             int canvasW = half * 2, canvasH = frames.Max(f => f.h) + c_Pad;
             string folder = $"{EditorPaths.c_CharacterTextures}/{boss}";
             Directory.CreateDirectory(folder);
-            var check = new Color[canvasW * c_Frames * canvasH];
+            var check = new Color[canvasW * frames.Count * canvasH];
             for (int i = 0; i < frames.Count; i++)
             {
                 var canvas = new Color[canvasW * canvasH];
@@ -114,12 +188,15 @@ namespace ZombiCar.EditorTools
                 for (int x = 0; x < canvasW; x++)
                 {
                     Color c = canvas[y * canvasW + x];
-                    check[y * canvasW * c_Frames + i * canvasW + x] = Color.Lerp(new Color(0.3f, 0.32f, 0.36f, 1f), new Color(c.r, c.g, c.b, 1f), c.a);
+                    check[y * canvasW * frames.Count + i * canvasW + x] = Color.Lerp(new Color(0.3f, 0.32f, 0.36f, 1f), new Color(c.r, c.g, c.b, 1f), c.a);
                 }
             }
+            // Frames left over from a longer sheet are removed.
+            for (int i = frames.Count; File.Exists($"{folder}/{boss}_{i}.png"); i++)
+                AssetDatabase.DeleteAsset($"{folder}/{boss}_{i}.png");
             Directory.CreateDirectory("Logs");
-            Save($"Logs/BossSheet_{boss}.png", check, canvasW * c_Frames, canvasH);
-            Debug.Log($"[BossSheetImporter] {boss}: {c_Frames} frames {canvasW}x{canvasH} from {sheetPath} (x{scale:F2}).");
+            Save($"Logs/BossSheet_{boss}.png", check, canvasW * frames.Count, canvasH);
+            Debug.Log($"[BossSheetImporter] {boss}: {frames.Count} frames {canvasW}x{canvasH} from {sheetPath} (x{scale:F2}).");
         }
 
         // ------------------------------------------------------------------ background
@@ -244,7 +321,7 @@ namespace ZombiCar.EditorTools
         /// (claws and splashes may reach over a neighbour's columns, so columns alone cannot cut them), smaller bits (drops,
         /// splashes) go with the nearest pose. Returns the poses left to right with their bounds.
         /// </summary>
-        private static List<(RectInt rect, Color[] px)> SplitBlobs(Color[] px, int w, int h)
+        private static List<(RectInt rect, Color[] px)> SplitBlobs(Color[] px, int w, int h, int count)
         {
             var label = new int[px.Length];
             var sizes = new List<int> { 0 };
@@ -286,7 +363,7 @@ namespace ZombiCar.EditorTools
             while (true)
             {
                 int[] big = Enumerable.Range(1, sizes.Count - 1).Where(i => sizes[i] >= biggest * 0.15f).ToArray();
-                if (big.Length >= c_Frames)
+                if (big.Length >= count)
                     break;
                 int widest = big.OrderByDescending(i => boxes[i].width).First();
                 float median = big.Select(i => (float)boxes[i].width).OrderBy(v => v).ElementAt(big.Length / 2);
@@ -295,8 +372,8 @@ namespace ZombiCar.EditorTools
                 CutBlob(px, w, h, label, sizes, boxes, widest);
             }
             int[] poses = Enumerable.Range(1, sizes.Count - 1).Where(i => sizes[i] >= biggest * 0.15f)
-                .OrderByDescending(i => sizes[i]).Take(c_Frames).OrderBy(i => boxes[i].center.x).ToArray();
-            if (poses.Length < c_Frames)
+                .OrderByDescending(i => sizes[i]).Take(count).OrderBy(i => boxes[i].center.x).ToArray();
+            if (poses.Length < count)
                 return new List<(RectInt, Color[])>();
             // Every other blob joins the pose whose box is nearest.
             var owner = new int[sizes.Count];
@@ -422,15 +499,53 @@ namespace ZombiCar.EditorTools
                 }
                 pieces.Add((pixels.Count, edge, pixels));
             }
-            if (pieces.Count < 2)
-                return;
-            int biggest = pieces.Max(p => p.size);
-            foreach ((int size, bool edge, List<int> pixels) in pieces)
+            if (pieces.Count >= 2)
             {
-                if (!edge || size >= biggest * 0.04f)
+                int biggest = pieces.Max(p => p.size);
+                foreach ((int size, bool edge, List<int> pixels) in pieces)
+                {
+                    if (!edge || size >= biggest * 0.04f)
+                        continue;
+                    foreach (int i in pixels)
+                        px[i] = new Color(1f, 1f, 1f, 0f);
+                }
+            }
+            DropEdgeStrips(px, w, h);
+        }
+
+        // A neighbour's splash still joined to the pose by a faint glow: a narrow strip at the left or right edge,
+        // cut off from the body by nearly empty columns, is cleared (looked for within the outer 15 % of the width).
+        private static void DropEdgeStrips(Color[] px, int w, int h)
+        {
+            var count = new int[w];
+            for (int x = 0; x < w; x++)
+            for (int y = 0; y < h; y++)
+                if (px[y * w + x].a > 0.35f)
+                    count[x]++;
+            int reach = Mathf.Max(2, Mathf.RoundToInt(w * 0.15f));
+            int thin = Mathf.Max(2, h / 60);
+            void Clear(int from, int to)
+            {
+                for (int x = from; x < to; x++)
+                for (int y = 0; y < h; y++)
+                    px[y * w + x] = new Color(1f, 1f, 1f, 0f);
+            }
+            // Left: the innermost near-empty column within reach with something outside it.
+            for (int x = reach; x > 0; x--)
+            {
+                if (count[x] > thin)
                     continue;
-                foreach (int i in pixels)
-                    px[i] = new Color(1f, 1f, 1f, 0f);
+                if (Enumerable.Range(0, x).Any(c => count[c] > thin))
+                    Clear(0, x + 1);
+                break;
+            }
+            for (int x = w - 1 - reach; x < w - 1; x++)
+            {
+                if (count[x] > thin)
+                    continue;
+                if (Enumerable.Range(x + 1, w - x - 1).Any(c => count[c] > thin))
+                    Clear(x, w);
+                break;
             }
         }
 

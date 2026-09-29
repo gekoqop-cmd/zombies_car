@@ -247,6 +247,7 @@ MonoBehaviour:
   m_HitTime: 0.28
   m_DeathThud: 0.14
   m_RiseWobble: 7
+  m_StepShake: 0
 --- !u!1 &1902662510220448256
 GameObject:
   m_ObjectHideFlags: 0

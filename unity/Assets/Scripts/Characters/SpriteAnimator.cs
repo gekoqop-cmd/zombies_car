@@ -48,6 +48,8 @@ namespace ZombiCar.Characters
         [SerializeField, Min(0f)] private float m_DeathThud = 0.14f;
         [Tooltip("Rising from the ground: side-to-side wobble, degrees.")]
         [SerializeField, Min(0f)] private float m_RiseWobble = 7f;
+        [Tooltip("Screen shake on every foot fall near the camera (heavy bosses; 0 = none).")]
+        [SerializeField, Min(0f)] private float m_StepShake;
 
         private SpriteRenderer m_Renderer;
         private CharacterSprites.Clip m_Clip;
@@ -65,6 +67,7 @@ namespace ZombiCar.Characters
         private float m_HitSide = 1f;                // +1: pushed towards its back, -1: towards its front
         private float m_DeadSince = float.NegativeInfinity;
         private float m_Rising;                      // 0..1 while coming out of the ground
+        private int m_LastStep = -1;
 
         public CharacterSprites Sprites => m_Sprites;
         public CharacterAnim Anim => m_Anim;
@@ -166,10 +169,15 @@ namespace ZombiCar.Characters
             float bounce = 0f, sway = 0f;
             if (m_Clip != null && m_Anim == CharacterAnim.Move)
             {
-                // One bounce per painted frame: the body rises between two foot falls.
-                float phase = m_ClipTime * m_Clip.Fps * Mathf.PI;
+                // Two foot falls per walk cycle (a 2-frame walk: one per frame, a 4-frame walk: every second frame);
+                // the body rises between them.
+                float phase = StepPhase;
                 bounce = Mathf.Abs(Mathf.Sin(phase)) * m_StepBounce;
                 sway = Mathf.Sin(phase) * m_StepSway;
+                int step = Mathf.FloorToInt(phase / Mathf.PI);
+                if (step != m_LastStep && m_StepShake > 0f)
+                    CameraShake.AddAt(transform.position, m_StepShake);
+                m_LastStep = step;
             }
             float lean = 0f, forward = 0f, sx = 1f, sy = 1f;
             if (m_Procedural)
@@ -201,7 +209,7 @@ namespace ZombiCar.Characters
                     break;
                 case CharacterAnim.Move when m_Clip != null:
                 {
-                    float phase = m_ClipTime * m_Clip.Fps * Mathf.PI;
+                    float phase = StepPhase;
                     // Up between two foot falls (stretch), down when a foot lands (squash).
                     stretch = (Mathf.Abs(Mathf.Sin(phase)) - 0.5f) * 2f * m_StepSquash;
                     lean = m_WalkLean;
@@ -258,6 +266,9 @@ namespace ZombiCar.Characters
             sy = 1f + stretch;
             sx = 1f - stretch * 0.6f;
         }
+
+        // pi per foot fall: a walk cycle of N painted frames has two steps.
+        private float StepPhase => m_ClipTime * m_Clip.Fps * Mathf.PI / Mathf.Max(1f, m_Clip.Frames.Length * 0.5f);
 
         private static float Ease(float t)
         {
