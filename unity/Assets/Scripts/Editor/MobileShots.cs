@@ -47,7 +47,7 @@ namespace ZombiCar.EditorTools
         [MenuItem("Tools/Diagnostics/Mobile Screenshots")]
         public static void Run()
         {
-            foreach (string key in new[] { "move", "aim", "reload" })
+            foreach (string key in new[] { "move", "aim", "reload", "action", "weapons" })
             {
                 PlayerPrefs.DeleteKey($"mobile.controls.{key}.x");
                 PlayerPrefs.DeleteKey($"mobile.controls.{key}.y");
@@ -112,6 +112,21 @@ namespace ZombiCar.EditorTools
                 var provider = Object.FindAnyObjectByType<PlayerInputProvider>();
                 Debug.Log($"[MobileShots] player input: {provider.Input.GetType().Name}; layout {(MobileControlsLayout.Instance != null ? "on" : "OFF")}");
                 Shot("M01_HUD_Sticks");
+                // The controls keep apart at the phone's size (the rects still hold the layout of the shot).
+                Transform area = MobileControlsLayout.Instance.transform.Find("Area");
+                string[] names = { "ReloadButton", "WeaponSlots", "ActionButton" };
+                var rects = names.Select(n => area.Find(n) as RectTransform).ToArray();
+                Rect World(RectTransform rt)
+                {
+                    var c = new Vector3[4];
+                    rt.GetWorldCorners(c);
+                    return Rect.MinMaxRect(c[0].x, c[0].y, c[2].x, c[2].y);
+                }
+                for (int a = 0; a < rects.Length; a++)
+                    for (int b = a + 1; b < rects.Length; b++)
+                        if (World(rects[a]).Overlaps(World(rects[b])))
+                            Debug.LogError($"[MobileShots] {names[a]} overlaps {names[b]}");
+                Debug.Log("[MobileShots] touch buttons checked for overlaps");
             });
             // Walk up-right with the left stick.
             At(t += 0.2f, () => Press(Stick("MoveStick"), new Vector2(0.7f, 0.5f)));

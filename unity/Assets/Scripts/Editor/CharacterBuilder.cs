@@ -202,7 +202,7 @@ namespace ZombiCar.EditorTools
                 Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BossClips("Boss1") },
                 AgentRadius = 1f, ColliderRadius = 1f, ColliderHeight = 3.4f,
                 Health = 1600, Speed = 0.85f, SpeedVariation = 0.02f, Damage = 25, AttackInterval = 2.2f, AttackRange = 1f,
-                AttackAnimSpeed = 0.9f, Aggro = 4f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 150,
+                AttackAnimSpeed = 0.9f, Aggro = 7f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 150,
                 DisplayName = "МАТКА",
                 Boss = new BossSpec
                 {
@@ -223,12 +223,12 @@ namespace ZombiCar.EditorTools
             },
             new ZombieSpec
             {
-                // Ram: hunts the player. 1 charge (dazed after it), 2 acid rain (a dozen globs around the player,
+                // Ram: goes for the car, turns on the player who comes close. 1 charge (dazed after it), 2 acid rain (a dozen globs around the player,
                 // two dozen in the second phase), 3 second phase "quake": the ground slam.
                 Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = BossClips("Boss2") },
                 AgentRadius = 0.9f, ColliderRadius = 0.85f, ColliderHeight = 3.6f,
                 Health = 3200, Speed = 1.2f, SpeedVariation = 0.02f, Damage = 30, AttackInterval = 1.6f, AttackRange = 1f,
-                Preference = ZombieTarget.Player, Aggro = 30f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 300,
+                Aggro = 9f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 300,
                 DisplayName = "ТАРАН",
                 Boss = new BossSpec
                 {
@@ -255,7 +255,7 @@ namespace ZombiCar.EditorTools
                 Look = new Look { Name = "Boss3", Size = 2.3f, PixelScale = 2f, Shadow = new Vector2(2.5f, 1.2f), Clips = BossClips("Boss3") },
                 AgentRadius = 1.15f, ColliderRadius = 1.15f, ColliderHeight = 4f,
                 Health = 6500, Speed = 1.1f, SpeedVariation = 0.02f, Damage = 40, AttackInterval = 1.8f, AttackRange = 1.2f,
-                Preference = ZombieTarget.Player, AttackAnimSpeed = 0.9f, Aggro = 30f, Stagger = 0f, Knockback = 0f,
+                AttackAnimSpeed = 0.9f, Aggro = 8f, Stagger = 0f, Knockback = 0f,
                 Xp = 1000, Reward = 500,
                 DisplayName = "ЖНЕЦ",
                 Boss = new BossSpec
@@ -531,8 +531,6 @@ namespace ZombiCar.EditorTools
             var brain = root.AddComponent<BossBrain>();
             PrefabBuilder.Wire(brain, ("m_Config", abilities), ("m_GlobPrefab", glob), ("m_Aura", auraRenderer), ("m_Telegraph", telegraph),
                 ("m_ChargeLine", charge), ("m_Shockwave", shock));
-            BossHealthPlate plate = WorldPlateBuilder.BuildBossPlate(root, zombie, brain, height + 0.35f);
-            SetLayerRecursively(plate.transform.parent.gameObject, UiFactory.c_UiLayer);
         }
 
         /// <summary>The boss's acid glob: a billboarded blob, its shadow, the warning circle and the splash.</summary>

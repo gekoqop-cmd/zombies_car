@@ -9,7 +9,7 @@ namespace ZombiCar.UI
     /// <summary>
     /// The level-up cards the run has taken: the card's icon on a disc in its colour and how many times it was taken
     /// (gold once maxed out). Rows are clones of a hidden template, laid out by the parent's layout group; a newly
-    /// taken card pops.
+    /// taken card pops. The legendary card sits in turning gold rays (and is "MAX" from the start).
     /// </summary>
     public sealed class PerkTrayView : MonoBehaviour
     {
@@ -22,6 +22,8 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_Level;
         [SerializeField] private Color m_MaxedColor = new Color(1f, 0.8f, 0.3f, 1f);
         [SerializeField, Min(0.01f)] private float m_PopTime = 0.35f;
+        [Tooltip("The rays behind the legendary card's icon.")]
+        [SerializeField] private Sprite m_LegendaryRays;
 
         private sealed class Item
         {
@@ -29,12 +31,14 @@ namespace ZombiCar.UI
             public Image Disc;
             public Image Icon;
             public TMP_Text Level;
+            public RectTransform Rays;
             public int Stacks;
             public float Pop;
         }
 
         private readonly Dictionary<Perk, Item> m_Items = new Dictionary<Perk, Item>();
         private readonly List<Item> m_Popping = new List<Item>();
+        private readonly List<Item> m_Legendaries = new List<Item>();
         private string m_DiscPath;
         private string m_IconPath;
         private string m_LevelPath;
@@ -110,11 +114,26 @@ namespace ZombiCar.UI
             };
             item.Disc.color = perk.Color;
             item.Icon.sprite = perk.Icon;
+            if (perk.Legendary && m_LegendaryRays != null)
+            {
+                var rays = new GameObject("LegendaryRays", typeof(RectTransform), typeof(Image));
+                item.Rays = (RectTransform)rays.transform;
+                item.Rays.SetParent(root, false);
+                item.Rays.SetAsFirstSibling();
+                item.Rays.sizeDelta = root.sizeDelta * 1.9f;
+                var image = rays.GetComponent<Image>();
+                image.sprite = m_LegendaryRays;
+                image.color = m_MaxedColor;
+                image.raycastTarget = false;
+                m_Legendaries.Add(item);
+            }
             return item;
         }
 
         private void Update()
         {
+            foreach (Item item in m_Legendaries)
+                item.Rays.localRotation = Quaternion.Euler(0f, 0f, -Time.unscaledTime * 40f);
             for (int i = m_Popping.Count - 1; i >= 0; i--)
             {
                 Item item = m_Popping[i];

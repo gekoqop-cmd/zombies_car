@@ -59,6 +59,16 @@ namespace ZombiCar.EditorTools
             (Sound.SpitSplat, new[] { "Spit_Splat" }, 0.7f, 0.12f, 0.06f),
             (Sound.BossCharge, new[] { "Boss_Charge" }, 0.9f, 0.05f, 0.5f),
             (Sound.BossSlam, new[] { "Boss_Slam" }, 1f, 0.05f, 0.3f),
+            (Sound.UpgradeArmor, new[] { "Upg_Armor" }, 0.85f, 0f, 0.1f),
+            (Sound.UpgradeHull, new[] { "Upg_Hull" }, 0.85f, 0f, 0.1f),
+            (Sound.UpgradeSpikes, new[] { "Upg_Spikes" }, 0.85f, 0f, 0.1f),
+            (Sound.UpgradeShock, new[] { "Upg_Shock" }, 0.8f, 0f, 0.1f),
+            (Sound.UpgradeAmmoCase, new[] { "Upg_AmmoCase" }, 0.8f, 0f, 0.1f),
+            (Sound.SupplyMedkit, new[] { "Sup_Medkit" }, 0.85f, 0f, 0.1f),
+            (Sound.SupplyAmmoBox, new[] { "Sup_AmmoBox" }, 0.85f, 0f, 0.1f),
+            (Sound.SupplyMines, new[] { "Sup_Mines" }, 0.65f, 0f, 0.1f),
+            (Sound.SupplyRepair, new[] { "Sup_Repair" }, 0.85f, 0f, 0.1f),
+            (Sound.LegendaryDrop, new[] { "Legendary_Drop" }, 0.95f, 0f, 1f),
         };
 
         [MenuItem("Tools/Build Audio Mixer")]

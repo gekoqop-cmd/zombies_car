@@ -39,8 +39,9 @@ namespace ZombiCar.EditorTools
             var scaler = go.AddComponent<CanvasScaler>();
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = ReferenceResolution;
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 1f;   // match height: landscape phones and desktops keep the same UI height
+            // Expand: at 16:9 and wider the UI keeps its height (landscape phones, desktops); on narrower screens (a
+            // browser in fullscreen, 4:3 tablets) it keeps the 1920 width instead, so the top panels never overlap.
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
             go.AddComponent<GraphicRaycaster>();
             return canvas;
         }

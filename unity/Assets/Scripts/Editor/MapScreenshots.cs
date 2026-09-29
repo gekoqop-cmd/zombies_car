@@ -170,6 +170,11 @@ namespace ZombiCar.EditorTools
                 scaler.enabled = true;
             }
             Canvas.ForceUpdateCanvases();
+            if (ZombiCar.UI.MobileControlsLayout.Instance != null)
+            {
+                ZombiCar.UI.MobileControlsLayout.Instance.Refit();          // the touch controls follow this size too
+                Canvas.ForceUpdateCanvases();
+            }
             foreach (TMP_Text text in Object.FindObjectsByType<TMP_Text>(FindObjectsInactive.Exclude))
                 text.ForceMeshUpdate(true, true);
 

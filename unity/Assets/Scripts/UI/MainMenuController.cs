@@ -28,6 +28,9 @@ namespace ZombiCar.UI
         [Tooltip("\"ТАБЛИЦА ЛИДЕРОВ\": the Yandex Games best-time table.")]
         [SerializeField] private Button m_LeaderboardButton;
         [SerializeField] private LeaderboardPanel m_Leaderboard;
+        [Tooltip("\"СКИНЫ\": the characters and the skin collections.")]
+        [SerializeField] private Button m_SkinsButton;
+        [SerializeField] private SkinsPanel m_Skins;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.3f;
         [Tooltip("Calm menu track (cross-fades from the map's music when coming back).")]
         [SerializeField] private AudioClip m_Music;
@@ -38,6 +41,7 @@ namespace ZombiCar.UI
         public SettingsPanel Settings => m_Settings;
         public CasesScreen Cases => m_Cases;
         public LeaderboardPanel Leaderboard => m_Leaderboard;
+        public SkinsPanel Skins => m_Skins;
 
         private void Awake()
         {
@@ -49,6 +53,7 @@ namespace ZombiCar.UI
             if (m_CasesButton != null && m_Cases != null)
                 m_CasesButton.onClick.AddListener(m_Cases.Show);
             m_LeaderboardButton.onClick.AddListener(m_Leaderboard.Open);
+            m_SkinsButton.onClick.AddListener(m_Skins.Open);
             Apply(1f, true);
         }
 

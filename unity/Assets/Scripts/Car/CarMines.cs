@@ -9,7 +9,7 @@ namespace ZombiCar.Car
 {
     /// <summary>
     /// The workshop's mines (<see cref="StatEffect.PlaceMines"/>): bought between waves, they are laid in a ring around
-    /// the car (the corners first) and wait with a blinking light; a zombie stepping close sets one off — the comic
+    /// the car (the corners first) and wait there; a zombie stepping close sets one off — the comic
     /// explosion, heavy damage falling off to the edge of the blast and a push. Publishes how many lie there to
     /// <see cref="RunState.ArmedMines"/> (the workshop does not sell more while all are still armed).
     /// </summary>
@@ -18,10 +18,8 @@ namespace ZombiCar.Car
         private static readonly Collider[] s_Hits = new Collider[64];
 
         [SerializeField] private RunState m_Run;
-        [Tooltip("An inactive mine to copy (body + light).")]
+        [Tooltip("An inactive mine to copy.")]
         [SerializeField] private GameObject m_Template;
-        [Tooltip("The mine's light, a child of the template (blinks).")]
-        [SerializeField] private string m_LightName = "Light";
         [SerializeField, OptionalReference] private ComicExplosion m_Explosion;
         [Tooltip("Distance of the mines from the car's centre, metres.")]
         [SerializeField, Min(1f)] private float m_RingRadius = 3.6f;
@@ -33,13 +31,7 @@ namespace ZombiCar.Car
         [SerializeField, Range(0f, 1f)] private float m_EdgeDamage = 0.4f;
         [SerializeField, Min(0f)] private float m_Push = 1.6f;
 
-        private sealed class Mine
-        {
-            public GameObject Root;
-            public Transform Light;
-        }
-
-        private readonly List<Mine> m_Mines = new List<Mine>();
+        private readonly List<GameObject> m_Mines = new List<GameObject>();
         private readonly HashSet<IDamageable> m_Hit = new HashSet<IDamageable>();
         private int m_NextSlot;
 
@@ -65,10 +57,10 @@ namespace ZombiCar.Car
                 float angle = (slot < 4 ? 45f + slot * 90f : slot * 90f) * Mathf.Deg2Rad;
                 Vector3 at = transform.position + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * m_RingRadius;
                 at.y = transform.position.y;
-                GameObject go = Instantiate(m_Template, at, Quaternion.identity);
+                GameObject go = Instantiate(m_Template, at, Quaternion.Euler(0f, UnityEngine.Random.Range(0f, 360f), 0f));
                 go.name = $"Mine{m_Mines.Count + 1}";
                 go.SetActive(true);
-                m_Mines.Add(new Mine { Root = go, Light = go.transform.Find(m_LightName) });
+                m_Mines.Add(go);
             }
             m_Run.SetArmedMines(m_Mines.Count);
         }
@@ -77,10 +69,7 @@ namespace ZombiCar.Car
         {
             for (int i = m_Mines.Count - 1; i >= 0; i--)
             {
-                Mine mine = m_Mines[i];
-                if (mine.Light != null)
-                    mine.Light.localScale = Vector3.one * (Mathf.Repeat(Time.time + i * 0.23f, 1f) < 0.5f ? 1f : 0.4f);
-                if (ZombieNear(mine.Root.transform.position))
+                if (ZombieNear(m_Mines[i].transform.position))
                     Explode(i);
             }
         }
@@ -99,8 +88,8 @@ namespace ZombiCar.Car
 
         private void Explode(int index)
         {
-            Vector3 at = m_Mines[index].Root.transform.position;
-            Destroy(m_Mines[index].Root);
+            Vector3 at = m_Mines[index].transform.position;
+            Destroy(m_Mines[index]);
             m_Mines.RemoveAt(index);
             m_Run.SetArmedMines(m_Mines.Count);
             if (m_Explosion != null)
@@ -123,10 +112,10 @@ namespace ZombiCar.Car
 
         private void OnDestroy()
         {
-            foreach (Mine mine in m_Mines)
+            foreach (GameObject mine in m_Mines)
             {
-                if (mine.Root != null)
-                    Destroy(mine.Root);
+                if (mine != null)
+                    Destroy(mine);
             }
         }
     }

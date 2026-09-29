@@ -26,6 +26,12 @@ namespace ZombiCar.Progression
         [SerializeField, Min(0f)] private float m_Weight = 1f;
         [Tooltip("Every next time it is taken it gives this much more (0 = the same each time: an ability, not a number).")]
         [SerializeField] private float m_ValueStep;
+        [Tooltip("The run's legendary card: never drawn at random, offered for sure once (PerkPool.LegendaryFromLevel), " +
+                 "taken once and at its maximum at once; it may change a second stat too.")]
+        [SerializeField] private bool m_Legendary;
+        [SerializeField] private bool m_HasSecond;
+        [SerializeField] private StatEffect m_Effect2;
+        [SerializeField] private float m_Value2;
 
         public Perk(string id, string title, string description, Sprite icon, Color color, StatEffect effect, float value,
             int maxStacks, float weight, float valueStep = 0f)
@@ -64,6 +70,22 @@ namespace ZombiCar.Progression
         public float Value => m_Value;
         public int MaxStacks => m_MaxStacks;
         public float Weight => m_Weight;
+        public bool Legendary => m_Legendary;
+        public bool HasSecond => m_HasSecond;
+        public StatEffect Effect2 => m_Effect2;
+        public float Value2 => m_Value2;
+
+        /// <summary>Makes this the legendary card (one stack, never drawn at random), with a second stat (builders).</summary>
+        public Perk AsLegendary(StatEffect effect2, float value2)
+        {
+            m_Legendary = true;
+            m_HasSecond = true;
+            m_Effect2 = effect2;
+            m_Value2 = value2;
+            m_MaxStacks = 1;
+            m_Weight = 0f;
+            return this;
+        }
     }
 
     /// <summary>All level-up cards; <see cref="Draw"/> deals a hand of different ones the run can still take.</summary>
@@ -71,10 +93,31 @@ namespace ZombiCar.Progression
     public sealed class PerkPool : ScriptableObject
     {
         [SerializeField] private Perk[] m_Perks = Array.Empty<Perk>();
+        [Tooltip("From this player level on, every level-up hand holds the legendary card until the run takes it.")]
+        [SerializeField, Min(1)] private int m_LegendaryFromLevel = 5;
 
         private readonly List<Perk> m_Candidates = new List<Perk>();
 
         public IReadOnlyList<Perk> Perks => m_Perks;
+        public int LegendaryFromLevel => m_LegendaryFromLevel;
+
+        /// <summary>The legendary card (null when the pool has none).</summary>
+        public Perk Legendary => Array.Find(m_Perks, p => p != null && p.Legendary);
+
+        /// <summary>
+        /// The legendary card goes into <paramref name="hand"/> (in the middle) when the run has reached
+        /// <see cref="LegendaryFromLevel"/> and has not taken it yet: sure to come once in every run.
+        /// </summary>
+        public void OfferLegendary(RunState run, int playerLevel, List<Perk> hand)
+        {
+            Perk legendary = Legendary;
+            if (legendary == null || playerLevel < m_LegendaryFromLevel || run.StacksOf(legendary) > 0 || hand.Contains(legendary))
+                return;
+            if (hand.Count < 3)
+                hand.Add(legendary);
+            else
+                hand[hand.Count / 2] = legendary;
+        }
 
         /// <summary>
         /// Fills <paramref name="hand"/> with up to <paramref name="count"/> different perks, picked by weight among the

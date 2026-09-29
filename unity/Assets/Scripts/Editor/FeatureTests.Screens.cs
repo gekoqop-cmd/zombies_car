@@ -27,9 +27,13 @@ namespace ZombiCar.EditorTools
                 Find<LevelUpScreen>().enabled = false;
                 intro = Find<BossIntroView>();
                 bossBar = Find<WaveProgressView>().transform.Find("BossBar").GetComponent<CanvasGroup>();
+                // Narrow screens (Yandex fullscreen in a browser, a 4:3 tablet): the top row of the HUD must not overlap.
+                Check(ShotSized("12_HUD_Narrow", 1528, 1040), "HUD at 1528x1040 (browser fullscreen): the top panels do not overlap");
+                Check(ShotSized("12_HUD_4x3", 1440, 1080), "HUD at 4:3: the top panels do not overlap");
+                Check(ShotSized("12_HUD_Wide", 2400, 1080), "HUD at 20:9: the top panels do not overlap");
                 s_Director.SkipTo(10, 0.3f);
             });
-            for (float t = 1.5f; t < 8.5f; t += 0.5f)
+            for (float t = 1.5f; t < 21.5f; t += 0.5f)
                 At(t, () =>
                 {
                     s_PlayerHealth.Heal(1000);
@@ -40,17 +44,22 @@ namespace ZombiCar.EditorTools
                 boss = s_Director.Boss;
                 Check(boss != null && intro.IsOpen && GamePause.Has(GamePause.Reason.BossIntro) && Time.timeScale == 0f,
                     "the boss card comes up and the game waits");
+            });
+            At(15.4f, () =>
+            {
+                Check(intro.IsOpen && GamePause.Has(GamePause.Reason.BossIntro) && s_Waves.HasBoss,
+                    "13 s later the card still waits: the fight starts only on В БОЙ!");
                 Shot("12_Boss_Card");
                 intro.Close();
             });
-            At(2.6f, () => Check(!intro.IsOpen && !GamePause.IsPaused, "В БОЙ!: the fight begins"));
+            At(15.6f, () => Check(!intro.IsOpen && !GamePause.IsPaused, "В БОЙ!: the fight begins"));
             // The boss rises out of the ground first (game time, which the card paused): hit it once it is up.
-            At(4.4f, () =>
+            At(17.4f, () =>
             {
                 if (boss != null)
                     boss.TakeDamage(boss.MaxHealth / 2, Vector3.right);
             });
-            At(5.0f, () =>
+            At(18.0f, () =>
             {
                 Check(bossBar.gameObject.activeInHierarchy && bossBar.alpha > 0.95f, "the wave pill shows the boss's health");
                 Check(s_Waves.BossMaxHealth > 1 && s_Waves.BossHealth <= s_Waves.BossMaxHealth / 2 + 1,
@@ -59,32 +68,32 @@ namespace ZombiCar.EditorTools
                 if (boss != null)
                     boss.TakeDamage(1000000, Vector3.right);
             });
-            At(6.8f, () =>
+            At(19.8f, () =>
             {
                 Check(!s_Waves.HasBoss && (!bossBar.gameObject.activeInHierarchy || bossBar.alpha < 0.05f), "after the kill the waves are back");
                 s_Director.enabled = false;
                 s_Car.TakeDamage(100000, Vector3.right);
             });
-            At(9.0f, () =>
+            At(22.0f, () =>
             {
                 screen = Find<GameOverScreen>();
                 Check(screen.IsShown && screen.CanRevive, "defeat: ВОСКРЕСНУТЬ ЗА РЕКЛАМУ is offered");
                 Shot("12_Defeat");
                 screen.Revive();                                              // outside Yandex the reward comes at once
             });
-            At(9.6f, () =>
+            At(22.6f, () =>
             {
                 Check(s_Run.Outcome == RunOutcome.None && !screen.IsShown, "revived: the run goes on");
                 Check(s_Car.Health == s_Car.MaxHealth && s_PlayerHealth.IsAlive, "the car and the player are back up");
                 Check(s_Director.enabled && !GamePause.Has(GamePause.Reason.GameOver), "the waves and the game go on");
                 s_PlayerHealth.TakeDamage(100000, Vector3.right);
             });
-            At(11.6f, () =>
+            At(24.6f, () =>
             {
                 Check(s_Run.Outcome == RunOutcome.PlayerDied && screen.IsShown && !screen.CanRevive, "the revive is once per run");
                 Shot("12_Defeat_NoRevive");
             });
-            At(11.8f, Finish);
+            At(24.8f, Finish);
         }
 
         // ================================================================== 13. tutorial
@@ -112,6 +121,11 @@ namespace ZombiCar.EditorTools
                 Check(cards.Index == 1, "ДАЛЕЕ turns the card");
                 Shot("13_Tutorial_Card2");
                 cards.Next();
+            });
+            At(1.95f, () =>
+            {
+                Check(cards.Index == 2, "the weapon card");
+                Shot("13_Tutorial_Card3_Weapon");
                 cards.Next();
                 cards.Next();
                 cards.Next();

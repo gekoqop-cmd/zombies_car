@@ -40,6 +40,20 @@ namespace ZombiCar.Core
         SpitSplat,
         BossCharge,
         BossSlam,
+
+        // Workshop: every upgrade and supply sounds like what it does, then a rising "upgraded" sting.
+        UpgradeArmor,
+        UpgradeHull,
+        UpgradeSpikes,
+        UpgradeShock,
+        UpgradeAmmoCase,
+        SupplyMedkit,
+        SupplyAmmoBox,
+        SupplyMines,
+        SupplyRepair,
+
+        // Cases.
+        LegendaryDrop,
     }
 
     /// <summary>

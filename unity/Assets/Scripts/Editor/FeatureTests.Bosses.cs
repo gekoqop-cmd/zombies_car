@@ -43,7 +43,7 @@ namespace ZombiCar.EditorTools
                 Check(boss != null && boss.Config.IsBoss && boss.Config.DisplayName == "МАТКА", "wave 10: the brood mother comes out");
                 Check(s_Waves.BossName == "МАТКА" && Find<WaveBanner>().LastTitle == "БОСС!", "boss banner and HUD name");
                 Check(AudioManager.Instance.CurrentMusic != null && AudioManager.Instance.CurrentMusic.name == "Music_Boss", "boss music");
-                Check(boss != null && boss.GetComponentInChildren<BossHealthPlate>() != null, "health plate over the boss");
+                Check(boss != null && boss.GetComponentInChildren<Canvas>() == null, "no health plate over the boss (HUD bar only)");
                 Teleport(boss.transform.position + new Vector3(-5f, 0f, -3f));
             });
             At(3.4f, () => Shot("3_Boss1_Arrives"));

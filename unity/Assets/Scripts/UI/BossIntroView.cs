@@ -9,33 +9,60 @@ using ZombiCar.Waves;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// The card that comes before every boss fight (HUD): when a boss comes out the game waits, and a card shows its
-    /// portrait, "БОСС · ВОЛНА N", its name and how to beat it; "В БОЙ!" (or Enter / Space, or a few seconds) lets the
-    /// fight begin. Bosses are matched by their display name. Runs on unscaled time.
+    /// The screen before every boss fight (HUD): the game waits, "БОСС · ВОЛНА N" and the boss's name come down, then three
+    /// dark ability cards flip in one by one — a picture of the move (the boss's frame over its effect) and what it does.
+    /// The game waits until "В БОЙ!" is pressed (or Enter / Space): the fight never starts on its own. Bosses are
+    /// matched by their display name. Runs on unscaled time.
     /// </summary>
     public sealed class BossIntroView : MonoBehaviour
     {
         [Serializable]
+        public sealed class Ability
+        {
+            public string Title;
+            [TextArea] public string Text;
+            public Sprite Pose;
+            public Texture Fx;
+            public Color FxColor = Color.white;
+            public bool SecondPhase;
+        }
+
+        [Serializable]
         public sealed class Entry
         {
             public string Name;
-            public Sprite Portrait;
-            [TextArea] public string Tip;
             public Color Accent = new Color(0.86f, 0.18f, 0.16f, 1f);
+            public Ability[] Abilities = Array.Empty<Ability>();
+        }
+
+        [Serializable]
+        public sealed class Card
+        {
+            public RectTransform Root;
+            public CanvasGroup Group;
+            public Image Frame;
+            public Image PictureBack;
+            public RawImage Fx;
+            public Image Pose;
+            public TMP_Text Title;
+            public TMP_Text Text;
+            public GameObject PhaseBadge;
         }
 
         [SerializeField] private WaveState m_Waves;
         [SerializeField] private CanvasGroup m_Group;
-        [SerializeField] private RectTransform m_Card;
-        [SerializeField] private Image m_PortraitBack;
-        [SerializeField] private Image m_Portrait;
+        [SerializeField] private RectTransform m_Head;
         [SerializeField] private TMP_Text m_Header;
         [SerializeField] private TMP_Text m_Title;
-        [SerializeField] private TMP_Text m_Tip;
+        [SerializeField] private Card[] m_Cards = Array.Empty<Card>();
         [SerializeField] private Button m_FightButton;
         [SerializeField] private Entry[] m_Bosses = Array.Empty<Entry>();
-        [Tooltip("Real seconds before the fight starts by itself.")]
-        [SerializeField, Min(1f)] private float m_AutoClose = 8f;
+        [Tooltip("Real seconds before Enter / Space may start the fight (a key held from the fight is not taken as \"В БОЙ!\").")]
+        [SerializeField, Min(0f)] private float m_KeyDelay = 1f;
+
+        private const float c_CardDelay = 0.35f;
+        private const float c_CardStep = 0.18f;
+        private const float c_CardFlip = 0.4f;
 
         private bool m_Open;
         private float m_OpenedAt;
@@ -66,15 +93,32 @@ namespace ZombiCar.UI
             if (Suppressed)
                 return;
             Entry entry = Array.Find(m_Bosses, e => e.Name == name);
+            Color accent = entry != null ? entry.Accent : Color.red;
             m_Header.SetText($"БОСС  •  ВОЛНА {m_Waves.Wave}");
             m_Title.SetText(name);
-            m_Title.color = entry != null ? entry.Accent : Color.white;
-            m_Tip.SetText(entry != null ? entry.Tip : string.Empty);
-            m_Portrait.sprite = entry != null ? entry.Portrait : null;
-            m_Portrait.enabled = m_Portrait.sprite != null;
-            Color back = (entry != null ? entry.Accent : Color.red) * 0.4f;
-            back.a = 0.95f;
-            m_PortraitBack.color = back;
+            m_Title.color = accent;
+            for (int i = 0; i < m_Cards.Length; i++)
+            {
+                Card card = m_Cards[i];
+                Ability ability = entry != null && i < entry.Abilities.Length ? entry.Abilities[i] : null;
+                card.Root.gameObject.SetActive(ability != null);
+                if (ability == null)
+                    continue;
+                card.Frame.color = accent;
+                Color back = accent * 0.35f;
+                back.a = 1f;
+                card.PictureBack.color = back;
+                card.Pose.sprite = ability.Pose;
+                card.Pose.enabled = ability.Pose != null;
+                card.Fx.texture = ability.Fx;
+                card.Fx.color = ability.FxColor;
+                card.Fx.enabled = ability.Fx != null;
+                card.Title.SetText(ability.Title);
+                card.Title.color = accent;
+                card.Text.SetText(ability.Text);
+                card.PhaseBadge.SetActive(ability.SecondPhase);
+                card.Group.alpha = 0f;
+            }
             m_Open = true;
             m_OpenedAt = Time.unscaledTime;
             m_Group.blocksRaycasts = m_Group.interactable = true;
@@ -99,14 +143,28 @@ namespace ZombiCar.UI
             if (!m_Open)
                 return;
             float t = Time.unscaledTime - m_OpenedAt;
-            // Slides in from the right with a thump, the portrait breathes.
-            m_Card.anchoredPosition = new Vector2((1f - UiMotion.CubicOut(t / 0.35f)) * 500f, m_Card.anchoredPosition.y);
-            m_Portrait.rectTransform.localScale = Vector3.one * (1f + 0.03f * Mathf.Sin(t * 3f));
+            // The name drops from above with a thump.
+            m_Head.localScale = Vector3.one * Mathf.LerpUnclamped(1.6f, 1f, UiMotion.BackOut(Mathf.Clamp01(t / 0.3f)));
+            for (int i = 0; i < m_Cards.Length; i++)
+                AnimateCard(m_Cards[i], t - c_CardDelay - i * c_CardStep, i);
+
             Keyboard keys = Keyboard.current;
-            bool key = keys != null && t > 0.4f &&
-                       (keys.enterKey.wasPressedThisFrame || keys.spaceKey.wasPressedThisFrame || keys.escapeKey.wasPressedThisFrame);
-            if (key || t >= m_AutoClose)
+            // The boss waits for the player: only "В БОЙ!" (or Enter / Space) starts the fight, never a timer.
+            if (keys != null && t > m_KeyDelay && (keys.enterKey.wasPressedThisFrame || keys.spaceKey.wasPressedThisFrame))
                 Close();
+        }
+
+        /// <summary>Flips in around its vertical axis (a card turned face up), then the move plays: the effect spins, the boss sways.</summary>
+        private static void AnimateCard(Card card, float t, int index)
+        {
+            float k = Mathf.Clamp01(t / c_CardFlip);
+            card.Group.alpha = Mathf.Clamp01(k * 3f);
+            card.Root.localScale = new Vector3(Mathf.Max(0.001f, UiMotion.BackOut(k)), 1f, 1f);
+            card.Root.localRotation = Quaternion.Euler(0f, 0f, (1f - UiMotion.CubicOut(k)) * (index - 1) * 8f);
+            float live = Mathf.Max(0f, t);
+            card.Fx.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -live * 25f);
+            card.Fx.rectTransform.localScale = Vector3.one * (1f + 0.06f * Mathf.Sin(live * 4f + index));
+            card.Pose.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 2.5f * Mathf.Sin(live * 2.2f + index));
         }
     }
 }

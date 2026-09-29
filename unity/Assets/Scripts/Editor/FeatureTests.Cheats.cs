@@ -27,15 +27,21 @@ namespace ZombiCar.EditorTools
             CheatPanel panel = null;
             CarUpgradeCatalog catalog = null;
             float gameTimeBefore = 0f;
+            string pauseLog = string.Empty;
+            GamePause.Changed += () => pauseLog += $" [{Time.frameCount}:{GamePause.Reasons}]";
             float t = 1.0f;
 
             // Level-up cards come after the kills: take a card whenever they are up, so the game goes on.
+            float lastPick = float.NegativeInfinity;
             for (float x = 1.2f; x < 40f; x += 0.4f)
                 At(x, () =>
                 {
                     LevelUpScreen levelUp = Find<LevelUpScreen>();
                     if (levelUp != null && levelUp.IsOpen)
+                    {
                         levelUp.Pick(0);
+                        lastPick = Time.unscaledTime;
+                    }
                 });
 
             void Press(string label)
@@ -44,6 +50,7 @@ namespace ZombiCar.EditorTools
                     .FirstOrDefault(b => b.GetComponentInChildren<TMP_Text>().text == label);
                 Check(button != null, $"button '{label}' on the panel");
                 gameTimeBefore = Time.time;
+                pauseLog = $"from frame {Time.frameCount}:";
                 button?.onClick.Invoke();
             }
             void Pressed(string label, System.Func<bool> ok, string what)
@@ -52,10 +59,12 @@ namespace ZombiCar.EditorTools
                 At(t += 0.7f, () =>
                 {
                     // Pauses a cheat may bring on purpose: level-up cards, the tutorial's intro cards.
-                    bool expected = GamePause.Has(GamePause.Reason.LevelUp) || GamePause.Has(GamePause.Reason.Tutorial);
+                    // A card picked just now: the game was paused for the whole check window and only now runs again.
+                    bool expected = GamePause.Has(GamePause.Reason.LevelUp) || GamePause.Has(GamePause.Reason.Tutorial) ||
+                                    Time.unscaledTime - lastPick < 0.8f;
                     bool running = Time.timeScale > 0f || expected;
                     Check(running && Time.time > gameTimeBefore || expected,
-                        $"'{label}': the game runs on (timeScale {Time.timeScale}, pauses {GamePause.Reasons})");
+                        $"'{label}': the game runs on (timeScale {Time.timeScale}, pauses {GamePause.Reasons}; game time +{Time.time - gameTimeBefore:0.00} s, frame {Time.frameCount}, pause changes{pauseLog})");
                     Check(ok(), $"'{label}': {what}");
                 });
             }

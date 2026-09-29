@@ -263,14 +263,15 @@ namespace ZombiCar.EditorTools
             BuildCarMines(go);
         }
 
-        // Workshop supply "mines": the placer on the car with an inactive mine to copy (a flat steel disc with a
-        // blinking light on top; no colliders, the zombies walk onto it).
+        // Workshop supply "mines": the placer on the car with an inactive mine to copy (an anti-tank mine: olive
+        // body on a dark rim, the pressure plate and the fuse on top; no light, no colliders, the zombies walk onto it).
         private static void BuildCarMines(GameObject car)
         {
             var template = new GameObject("MineTemplate");
             template.transform.SetParent(car.transform, false);
             Mesh cylinder = Resources.GetBuiltinResource<Mesh>("Cylinder.fbx");
-            Material steel = MaterialLibrary.Get("M_CarSpike");
+            Material olive = MaterialLibrary.Get("M_Mine_Olive");
+            Material steel = MaterialLibrary.Get("M_Mine_Steel");
             void Part(string name, Mesh mesh, Material material, Vector3 position, Vector3 scale)
             {
                 GameObject part = MeshObject(name, mesh, material, false);
@@ -278,10 +279,11 @@ namespace ZombiCar.EditorTools
                 part.transform.localPosition = position;
                 part.transform.localScale = scale;
             }
-            Part("Body", cylinder, steel, new Vector3(0f, 0.04f, 0f), new Vector3(0.62f, 0.04f, 0.62f));
-            Part("Top", cylinder, steel, new Vector3(0f, 0.1f, 0f), new Vector3(0.3f, 0.03f, 0.3f));
-            Part("Light", Resources.GetBuiltinResource<Mesh>("Sphere.fbx"), MaterialLibrary.Get("M_Bullet"), new Vector3(0f, 0.15f, 0f),
-                Vector3.one * 0.13f);
+            Part("Rim", cylinder, steel, new Vector3(0f, 0.02f, 0f), new Vector3(0.42f, 0.02f, 0.42f));
+            Part("Body", cylinder, olive, new Vector3(0f, 0.07f, 0f), new Vector3(0.38f, 0.045f, 0.38f));
+            Part("Plate", cylinder, olive, new Vector3(0f, 0.125f, 0f), new Vector3(0.23f, 0.015f, 0.23f));
+            Part("Fuse", cylinder, steel, new Vector3(0f, 0.15f, 0f), new Vector3(0.07f, 0.02f, 0.07f));
+            Part("Handle", Resources.GetBuiltinResource<Mesh>("Cube.fbx"), steel, new Vector3(0.2f, 0.08f, 0f), new Vector3(0.04f, 0.03f, 0.08f));
             template.SetActive(false);
             Wire(car.AddComponent<CarMines>(), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
                 ("m_Template", template), ("m_Explosion", s_Explosion));

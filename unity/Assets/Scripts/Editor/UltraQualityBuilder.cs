@@ -245,6 +245,14 @@ namespace ZombiCar.EditorTools
             probe.clearFlags = ReflectionProbeClearFlags.SolidColor;
             probe.backgroundColor = s_ProbeSky;
             probe.shadowDistance = 60f;
+            // Without a GPU (batch -nographics) the bake writes a blown-out cubemap that turns every shiny surface white:
+            // keep the one baked last time instead.
+            var existing = AssetDatabase.LoadAssetAtPath<Texture>(c_ReflectionCubemap);
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null && existing != null)
+            {
+                probe.customBakedTexture = existing;
+                return;
+            }
             try
             {
                 if (Lightmapping.BakeReflectionProbe(probe, c_ReflectionCubemap))

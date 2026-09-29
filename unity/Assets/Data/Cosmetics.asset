@@ -254,7 +254,7 @@ MonoBehaviour:
   - m_Title: "\u041A\u0415\u0419\u0421 \u0422\u041E\u041F\u041E\u0420\u041E\u0412"
     m_Slot: 1
     m_Price: 120
-  - m_Title: "\u041A\u0415\u0419\u0421 \u041F\u0423\u041B\u042C"
+  - m_Title: "\u041A\u0415\u0419\u0421 \u042D\u0424\u0424\u0415\u041A\u0422\u041E\u0412 \u041F\u0423\u041B\u042C"
     m_Slot: 2
     m_Price: 100
   m_RarityChances:

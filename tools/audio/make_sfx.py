@@ -411,5 +411,174 @@ def main(names):
         write_ogg(SOUNDS[name](), os.path.join(OUT, name + ".ogg"))
 
 
+# ================================================================================================ workshop
+# Every upgrade and supply has its own sound: what it does (metal plates, a weld, spikes, a zap, cartridges, a kit, a
+# mine being armed, a wrench) and then the same short rising "upgraded" sting in its own key.
+def sting(root, at=0.0, brightness=1.0):
+    """Three quick rising notes (root, major third, fifth) on a bright pluck + bell: "you got better"."""
+    f = note(root)
+    notes = [(0.0, f), (0.07, f * 1.26), (0.14, f * 1.5), (0.14, f * 2.0)]
+    parts = [(at + dt, layer(pluck(fr, 0.6, brightness, 0.22), 0.35 * bell(fr * 2, 0.6, 0.2)), 0.55 if i < 3 else 0.25)
+             for i, (dt, fr) in enumerate(notes)]
+    return parts
+
+
+def layer(*xs):
+    """Sums sounds of different lengths (the shorter ones padded with silence)."""
+    out = np.zeros(max(len(x) for x in xs))
+    for x in xs:
+        out[:len(x)] += x
+    return out
+
+
+def metal_hit(seconds, freq, tau, rnd, bright=3000.0):
+    """A struck metal piece: a few inharmonic partials and a noise tick."""
+    t = times(seconds)
+    x = sum(np.sin(2 * np.pi * freq * k * t) * a for k, a in ((1.0, 1.0), (2.76, 0.6), (5.4, 0.35), (8.93, 0.2)))
+    x = x * np.exp(-t / tau)
+    return layer(x, highpass(noise(seconds, rnd), bright)[:len(t)] * np.exp(-t / 0.004)[:len(t)] * 0.8)
+
+
+@sound
+def Upg_Armor():
+    # Two heavy plates slam onto the body and are bolted down (two ratchet turns), then the sting.
+    rnd = np.random.RandomState(301)
+    parts = []
+    for i, at in enumerate((0.0, 0.16)):
+        parts += [(at, metal_hit(0.5, 190 + 30 * i, 0.12, rnd, 1500), 0.8), (at, kick(0.25, 160, 60, 0.01), 0.7)]
+    for j in range(6):
+        parts.append((0.36 + j * 0.035, highpass(noise(0.02, rnd), 2500) * decay(0.02, 0.003), 0.45))
+    parts += sting("C5", 0.6)
+    return finish(reverb(mix(1.4, parts), 0.15, 0.8), -4)
+
+
+@sound
+def Upg_Hull():
+    # A welding hiss with crackles, a deep hammer on the frame, then the sting.
+    rnd = np.random.RandomState(302)
+    t = times(0.45)
+    gate = (rnd.rand(len(t) // 300 + 1) > 0.3).repeat(300)[:len(t)].astype(float)
+    weld = bandpass(noise(0.45, rnd), 2500, 9000) * (0.5 + 0.5 * gate) * adsr(0.45, 0.02, 0.1, 0.8, 0.1)
+    parts = [(0.0, weld, 0.45), (0.46, metal_hit(0.6, 110, 0.2, rnd, 1200), 0.9), (0.46, kick(0.35, 120, 45, 0.01), 0.9)]
+    parts += sting("A4", 0.72)
+    return finish(reverb(mix(1.6, parts), 0.18, 1.0), -4)
+
+
+@sound
+def Upg_Spikes():
+    # Three steel spikes "shing" into place, each higher, then the sting.
+    rnd = np.random.RandomState(303)
+    parts = []
+    for i in range(3):
+        t = times(0.35)
+        shing = sweep(noise(0.35, rnd), glide(2500 + 600 * i, 7000, 0.35), "band") * np.exp(-t / 0.08)
+        parts += [(i * 0.11, shing, 0.6), (i * 0.11, metal_hit(0.3, 900 + 250 * i, 0.07, rnd), 0.35)]
+    parts += sting("D5", 0.45)
+    return finish(reverb(mix(1.3, parts), 0.14, 0.7), -4)
+
+
+@sound
+def Upg_Shock():
+    # A capacitor charges up (a rising whine), a crackling discharge, then the sting.
+    rnd = np.random.RandomState(304)
+    whine = saw(glide(180, 1400, 0.4), 0.4) * np.linspace(0.1, 1, n_of(0.4))
+    whine = lowpass(whine, 3000) * 0.4
+    t = times(0.3)
+    gate = (rnd.rand(len(t) // 250 + 1) > 0.4).repeat(250)[:len(t)].astype(float)
+    zap = layer(bandpass(noise(0.3, rnd), 1500, 8000) * gate, drive(saw(glide(120, 70, 0.3), 0.3) * 2, 3) * 0.4)[:len(t)] * np.exp(-t / 0.1)
+    parts = [(0.0, whine, 0.7), (0.4, zap, 0.9)] + sting("E5", 0.62)
+    return finish(reverb(mix(1.4, parts), 0.14, 0.7), -4)
+
+
+@sound
+def Upg_AmmoCase():
+    # A heavy ammo case lands, its latches snap open (two clicks), a rattle of rounds, then the sting.
+    rnd = np.random.RandomState(305)
+    parts = [(0.0, kick(0.3, 140, 60, 0.01), 0.8), (0.0, bandpass(noise(0.12, rnd), 300, 2000) * decay(0.12, 0.03), 0.6)]
+    for i, at in enumerate((0.16, 0.24)):
+        parts.append((at, layer(highpass(noise(0.03, rnd), 2000) * decay(0.03, 0.004), metal_hit(0.08, 2400 + 300 * i, 0.02, rnd) * 0.4), 0.8))
+    for j in range(7):
+        parts.append((0.3 + j * 0.03 + rnd.uniform(0, 0.02), metal_hit(0.08, rnd.uniform(2600, 3600), 0.025, rnd) * 0.5, 0.35))
+    parts += sting("G4", 0.6)
+    return finish(reverb(mix(1.4, parts), 0.14, 0.7), -4)
+
+
+@sound
+def Sup_Medkit():
+    # A zipper opens, a soft healing shimmer rises, then a gentle sting.
+    rnd = np.random.RandomState(306)
+    t = times(0.28)
+    teeth = (np.sin(2 * np.pi * np.cumsum(glide(60, 140, 0.28) / SR)) > 0.6).astype(float)
+    zipper = bandpass(noise(0.28, rnd), 1500, 6000) * (0.3 + 0.7 * teeth) * adsr(0.28, 0.01, 0.05, 0.9, 0.05)
+    shimmer = layer(*[bell(note(n), 0.9, 0.5) for n in ("C6", "E6", "G6", "C7")]) * 0.25
+    parts = [(0.0, zipper, 0.5), (0.3, shimmer, 0.5)] + sting("F5", 0.35, 0.7)
+    return finish(reverb(mix(1.5, parts), 0.25, 1.2), -5)
+
+
+@sound
+def Sup_AmmoBox():
+    # A magazine clicks in and the bolt is racked (chk-chk), then the sting.
+    rnd = np.random.RandomState(307)
+    click = mix(0.1, [(0, highpass(noise(0.03, rnd), 2200) * decay(0.03, 0.004), 0.9), (0.01, metal_hit(0.08, 1700, 0.025, rnd), 0.6)])
+    back = sweep(noise(0.1, rnd), glide(1200, 3200, 0.1), "band") * decay(0.1, 0.04)
+    fore = sweep(noise(0.08, rnd), glide(3000, 1300, 0.08), "band") * decay(0.08, 0.03)
+    parts = [(0.0, click, 1.0), (0.0, kick(0.12, 200, 100, 0.006), 0.5), (0.2, back, 0.8), (0.2, metal_hit(0.1, 1200, 0.03, rnd), 0.5),
+             (0.32, fore, 0.8), (0.34, metal_hit(0.12, 1500, 0.04, rnd), 0.6)]
+    parts += sting("B4", 0.5)
+    return finish(reverb(mix(1.3, parts), 0.12, 0.6), -4)
+
+
+@sound
+def Sup_Mines():
+    # Mines are set down on the ground (three dull thuds), each is armed with a click and a short beep, then the sting.
+    rnd = np.random.RandomState(308)
+    parts = []
+    for i in range(3):
+        at = i * 0.17
+        thud = layer(lowpass(noise(0.12, rnd), 500) * decay(0.12, 0.03), kick(0.15, 110, 55, 0.008) * 0.8)
+        beep = square(1760 if i < 2 else 2350, 0.07, 0.5) * adsr(0.07, 0.003, 0.02, 0.8, 0.02)
+        parts += [(at, thud, 0.8), (at + 0.06, highpass(noise(0.02, rnd), 2500) * decay(0.02, 0.003), 0.6),
+                  (at + 0.08, lowpass(beep, 5000), 0.25)]
+    parts += sting("D4", 0.62)
+    return finish(reverb(mix(1.4, parts), 0.12, 0.6), -4)
+
+
+@sound
+def Sup_Repair():
+    # A ratchet wrench turns (a run of clicks), a bolt tightens with a clank, then the sting.
+    rnd = np.random.RandomState(309)
+    parts = []
+    for j in range(9):
+        parts.append((j * 0.04, layer(highpass(noise(0.025, rnd), 1800) * decay(0.025, 0.004), metal_hit(0.05, 2100, 0.012, rnd) * 0.3), 0.55))
+    parts += [(0.4, metal_hit(0.4, 520, 0.09, rnd, 2000), 0.8), (0.4, kick(0.18, 180, 80, 0.008), 0.5)]
+    parts += sting("A5", 0.55)
+    return finish(reverb(mix(1.3, parts), 0.14, 0.7), -4)
+
+
+# ================================================================================================ cases
+@sound
+def Legendary_Drop():
+    # A legendary skin: a rising whoosh, a bright brass-and-bell fanfare (C major up to the octave), a held chord with a
+    # sparkle, and firework crackles all over it.
+    rnd = np.random.RandomState(401)
+    rise = sweep(noise(0.55, rnd), glide(400, 7000, 0.55), "band") * np.linspace(0, 1, n_of(0.55)) ** 2
+    parts = [(0.0, rise, 0.5)]
+    for i, n in enumerate(("C5", "E5", "G5")):
+        at = 0.5 + i * 0.1
+        parts += [(at, brass(note(n), 0.18, depth=0.0, bright=3200), 0.3), (at, bell(note(n) * 2, 0.6, 0.25), 0.3)]
+    held = 1.6
+    for n in ("C5", "E5", "G5", "C6"):
+        parts += [(0.82, brass(note(n), held, depth=0.005, bright=3400), 0.2), (0.82, bell(note(n) * 2, 1.6, 0.6), 0.2)]
+    parts += [(0.82, crash(1.8), 0.3), (0.82, tom(80, 0.6), 0.6)]
+    sparkle = highpass(noise(1.4, rnd), 6000) * decay(1.4, 0.45) * (0.5 + 0.5 * np.sin(np.linspace(0, 90, n_of(1.4))))
+    parts.append((0.85, sparkle, 0.18))
+    for k in range(14):
+        t = times(0.12)
+        pop = layer(highpass(noise(0.12, rnd), 2500) * np.exp(-t / rnd.uniform(0.01, 0.03)),
+                    kick(0.1, rnd.uniform(500, 900), 200, 0.004) * 0.3)
+        parts.append((0.9 + rnd.uniform(0, 1.5), pop, rnd.uniform(0.25, 0.5)))
+    return finish(reverb(mix(3.0, parts), 0.3, 1.5), -3)
+
+
 if __name__ == "__main__":
     main(sys.argv[1:])

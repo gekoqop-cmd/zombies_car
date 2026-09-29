@@ -85,6 +85,9 @@ namespace ZombiCar.Progression
         /// <summary>A defeat can still be undone once this run (the revive for an ad).</summary>
         public bool CanRevive => !m_Revived && (m_Outcome == RunOutcome.CarDestroyed || m_Outcome == RunOutcome.PlayerDied);
 
+        /// <summary>This run was revived once already (its end was counted before).</summary>
+        public bool WasRevived => m_Revived;
+
         /// <summary>The run was taken back from a defeat (the map puts the player and the car back up).</summary>
         public event Action Revived;
 
@@ -161,6 +164,8 @@ namespace ZombiCar.Progression
             int stacks = StacksOf(perk);
             Levels[key] = stacks + 1;
             Apply(perk.Effect, perk.ValueAt(stacks));
+            if (perk.HasSecond)
+                Apply(perk.Effect2, perk.Value2);
         }
 
         /// <summary>Buys the next level of a car upgrade if there is one and the scrap is enough.</summary>
@@ -176,10 +181,10 @@ namespace ZombiCar.Progression
         }
 
         // ---------------------------------------------------------------- level-up rerolls, mines
-        /// <summary>Hands of level-up cards dealt again this run (the price of the next one grows with it).</summary>
+        /// <summary>Hands of level-up cards dealt again this run.</summary>
         public int Rerolls => m_Rerolls;
 
-        /// <summary>Pays for one reroll of the level-up cards; false when the scrap is not enough.</summary>
+        /// <summary>Counts one reroll of the level-up cards, paying <paramref name="cost"/> scrap (0 for an ad); false when it is not enough.</summary>
         public bool TryReroll(int cost)
         {
             if (!TrySpend(cost))

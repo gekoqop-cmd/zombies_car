@@ -52,7 +52,12 @@ namespace ZombiCar.EditorTools
                 s_Progression.AddXp(40);
             });
             At(2.3f, () => Check(Playing("LevelUp"), "level-up fanfare"));
-            At(2.8f, () => Find<LevelUpScreen>().Pick(0));
+            At(2.8f, () =>
+            {
+                LevelUpScreen levelUp = Find<LevelUpScreen>();
+                Check(levelUp.IsOpen, "the level-up cards are dealt");
+                levelUp.Pick(0);
+            });
             At(3.05f, () => Check(Playing("Card_Pick"), "card pick sound"));
             At(3.2f, () =>
             {
@@ -66,7 +71,7 @@ namespace ZombiCar.EditorTools
             });
             At(3.6f, () =>
             {
-                Check(Playing("UI_Buy"), "purchase: cash register");
+                Check(Playing("Upg_Armor"), "purchase: the armour's own sound (plates, bolts, the sting)");
                 Find<WorkshopScreen>().Buy(3);                                   // 150: too expensive now
             });
             At(3.8f, () =>

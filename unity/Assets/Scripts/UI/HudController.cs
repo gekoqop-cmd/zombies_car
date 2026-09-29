@@ -8,7 +8,7 @@ using ZombiCar.Waves;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// HUD (UI_HUD scene): health, level, scrap and kills, wave + timer, ammo with the reload progress and the settings
+    /// HUD (UI_HUD scene): health, level, scrap, wave + timer, ammo with the reload progress and the settings
     /// button.
     /// Listens to the shared state assets, so it works over any map scene without direct references; every number
     /// on it comes from them (the scene builder fills the saved texts with <see cref="Refresh"/> too).
@@ -31,7 +31,6 @@ namespace ZombiCar.UI
 
         [Header("Run")]
         [SerializeField] private TMP_Text m_MoneyValue;
-        [SerializeField] private TMP_Text m_KillsValue;
         [Tooltip("Pops when scrap comes in.")]
         [SerializeField] private RectTransform m_MoneyPanel;
 
@@ -136,8 +135,6 @@ namespace ZombiCar.UI
                 m_ShownMoney = m_Run.Money;
                 m_MoneyValue.SetText(m_Run.Money.ToString());
             }
-            if (m_KillsValue != null)
-                m_KillsValue.SetText(m_Run.Kills.ToString());
         }
 
         private void RefreshAmmo()

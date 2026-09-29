@@ -21,7 +21,7 @@ MonoBehaviour:
   m_AttackRange: 1
   m_AttackAnimSpeed: 0.9
   m_Preference: 0
-  m_AggroRadius: 4
+  m_AggroRadius: 7
   m_StaggerTime: 0
   m_Knockback: 0
   m_Xp: 300

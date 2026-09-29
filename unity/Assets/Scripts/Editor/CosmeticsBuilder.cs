@@ -73,7 +73,7 @@ namespace ZombiCar.EditorTools
             {
                 new CaseDef("ОРУЖЕЙНЫЙ КЕЙС", gun, 150),
                 new CaseDef("КЕЙС ТОПОРОВ", axe, 120),
-                new CaseDef("КЕЙС ПУЛЬ", bullet, 100),
+                new CaseDef("КЕЙС ЭФФЕКТОВ ПУЛЬ", bullet, 100),
             };
             catalog.EditorSet(items, cases);
             EditorUtility.SetDirty(catalog);

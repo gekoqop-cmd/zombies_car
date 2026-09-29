@@ -129,6 +129,9 @@ namespace ZombiCar.EditorTools
 
             // Car spikes (workshop upgrade, PrefabBuilder.BuildCarSpikes): bright polished steel that reads on the dark car.
             list.Add(new Spec { Name = "M_CarSpike", Folder = "Car", Tint = new Color(0.82f, 0.84f, 0.88f), Smoothness = 0.7f });
+            // Workshop mines (PrefabBuilder.BuildCarMines): matte army olive with dark steel, nothing glows.
+            list.Add(new Spec { Name = "M_Mine_Olive", Folder = "Car", Tint = new Color(0.33f, 0.37f, 0.2f), Smoothness = 0.15f });
+            list.Add(new Spec { Name = "M_Mine_Steel", Folder = "Car", Tint = new Color(0.2f, 0.21f, 0.22f), Smoothness = 0.35f });
 
             // VFX (characters are 2D sprites: URP Sprite-Unlit-Default, see CharacterBuilder).
             list.Add(new Spec { Name = "M_Bullet", Folder = "VFX", Unlit = true, Tint = new Color(3.2f, 2.3f, 0.9f, 1f) });

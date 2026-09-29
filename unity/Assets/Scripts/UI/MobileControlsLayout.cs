@@ -9,9 +9,11 @@ namespace ZombiCar.UI
     /// <summary>
     /// The on-screen touch controls of the HUD (mobile only): a list of movable controls — the two sticks, the reload
     /// button, and any buttons added later — kept inside <see cref="m_Area"/>, the part of the screen below the top HUD
-    /// panels, so they never cover health, wave or ammo. Positions (a fraction of the area, so they survive rotation
-    /// and other aspect ratios) and the size are saved per player. In edit mode (from the settings) the game pauses and
-    /// the controls can be dragged; Done keeps the layout, Reset restores the defaults.
+    /// panels, so they never cover health, wave or ammo. The default places are the designed distances from the area's
+    /// corners, worked out again whenever the area changes size (a resize, a rotation), so the controls never slide
+    /// into each other; a control the player moved keeps its place as a fraction of the area. Moved places and the
+    /// size are saved per player. In edit mode (from the settings) the game pauses and the controls can be dragged;
+    /// Done keeps the layout, Reset restores the defaults.
     /// </summary>
     public sealed class MobileControlsLayout : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
@@ -35,7 +37,9 @@ namespace ZombiCar.UI
         [Tooltip("Tint of a control while it is being dragged.")]
         [SerializeField] private Color m_DragTint = new Color(1f, 0.75f, 0.35f, 1f);
 
-        private Vector2[] m_Default;
+        private Vector2[] m_Corner;           // the designed anchor corner of each control (area fractions)
+        private Vector2[] m_Offset;           // its centre from that corner, canvas units
+        private bool[] m_Custom;              // moved by the player: kept as a fraction, not recomputed
         private Vector2[] m_Position;
         private Vector2 m_AreaSize;
         private int m_Dragged = -1;
@@ -53,14 +57,19 @@ namespace ZombiCar.UI
                 return;
             }
             Instance = this;
-            m_Default = new Vector2[m_Controls.Length];
-            m_Position = new Vector2[m_Controls.Length];
+            int n = m_Controls.Length;
+            m_Corner = new Vector2[n];
+            m_Offset = new Vector2[n];
+            m_Custom = new bool[n];
+            m_Position = new Vector2[n];
             Canvas.ForceUpdateCanvases();
-            for (int i = 0; i < m_Controls.Length; i++)
+            for (int i = 0; i < n; i++)
             {
-                m_Default[i] = CurrentFraction(m_Controls[i].Rect);
-                m_Position[i] = Load(m_Controls[i].Id, m_Default[i]);
                 RectTransform rt = m_Controls[i].Rect;
+                m_Corner[i] = rt.anchorMin;
+                m_Offset[i] = rt.anchoredPosition + Vector2.Scale(new Vector2(0.5f, 0.5f) - rt.pivot, rt.rect.size);
+                m_Custom[i] = TryLoad(m_Controls[i].Id, out Vector2 saved);
+                m_Position[i] = m_Custom[i] ? saved : DefaultFraction(i);
                 rt.anchorMin = rt.anchorMax = m_Position[i];
                 rt.pivot = new Vector2(0.5f, 0.5f);
                 rt.anchoredPosition = Vector2.zero;
@@ -92,12 +101,22 @@ namespace ZombiCar.UI
                 Instance = null;
         }
 
-        private void LateUpdate()
+        private void LateUpdate() => Refit();
+
+        /// <summary>Follows a new size of the area now (every frame by itself; tools rendering at another size call it).</summary>
+        public void Refit()
         {
+            if (m_Position == null)
+                return;
             Vector2 size = m_Area.rect.size;
             if (size != m_AreaSize)
             {
                 m_AreaSize = size;
+                for (int i = 0; i < m_Controls.Length; i++)
+                {
+                    if (!m_Custom[i])
+                        m_Position[i] = DefaultFraction(i);
+                }
                 ClampAll();
             }
         }
@@ -131,14 +150,22 @@ namespace ZombiCar.UI
             if (m_EditOverlay != null)
                 m_EditOverlay.SetActive(false);
             for (int i = 0; i < m_Controls.Length; i++)
-                Save(m_Controls[i].Id, m_Position[i]);
+            {
+                if (m_Custom[i])
+                    Save(m_Controls[i].Id, m_Position[i]);
+                else
+                    Forget(m_Controls[i].Id);
+            }
             PlayerPrefs.Save();
         }
 
         public void ResetLayout()
         {
             for (int i = 0; i < m_Controls.Length; i++)
-                SetPosition(i, m_Default[i]);
+            {
+                m_Custom[i] = false;
+                SetPosition(i, DefaultFraction(i));
+            }
             SettingsService.SetControlsScale(1f);
         }
 
@@ -166,6 +193,7 @@ namespace ZombiCar.UI
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(m_Area, eventData.position, eventData.pressEventCamera, out Vector2 local))
                 return;
             Rect r = m_Area.rect;
+            m_Custom[m_Dragged] = true;
             SetPosition(m_Dragged, new Vector2((local.x - r.xMin) / r.width, (local.y - r.yMin) / r.height));
         }
 
@@ -203,12 +231,13 @@ namespace ZombiCar.UI
             return new Vector2(Mathf.Clamp(fraction.x, hx, 1f - hx), Mathf.Clamp(fraction.y, hy, 1f - hy));
         }
 
-        private Vector2 CurrentFraction(RectTransform rt)
+        // The designed place for the area's current size: the same distance from the same corner.
+        private Vector2 DefaultFraction(int i)
         {
-            Vector3 world = rt.TransformPoint(rt.rect.center);
-            Vector2 local = m_Area.InverseTransformPoint(world);
-            Rect r = m_Area.rect;
-            return new Vector2((local.x - r.xMin) / r.width, (local.y - r.yMin) / r.height);
+            Vector2 size = m_Area.rect.size;
+            if (size.x <= 1f || size.y <= 1f)
+                return m_Corner[i];
+            return m_Corner[i] + new Vector2(m_Offset[i].x / size.x, m_Offset[i].y / size.y);
         }
 
         private void Tint(int i, Color color)
@@ -217,12 +246,18 @@ namespace ZombiCar.UI
                 g.color = new Color(color.r, color.g, color.b, g.color.a);
         }
 
-        private static Vector2 Load(string id, Vector2 fallback)
+        private static bool TryLoad(string id, out Vector2 value)
         {
             string key = c_KeyPrefix + id;
-            return PlayerPrefs.HasKey(key + ".x")
-                ? new Vector2(PlayerPrefs.GetFloat(key + ".x"), PlayerPrefs.GetFloat(key + ".y"))
-                : fallback;
+            bool saved = PlayerPrefs.HasKey(key + ".x");
+            value = saved ? new Vector2(PlayerPrefs.GetFloat(key + ".x"), PlayerPrefs.GetFloat(key + ".y")) : Vector2.zero;
+            return saved;
+        }
+
+        private static void Forget(string id)
+        {
+            PlayerPrefs.DeleteKey(c_KeyPrefix + id + ".x");
+            PlayerPrefs.DeleteKey(c_KeyPrefix + id + ".y");
         }
 
         private static void Save(string id, Vector2 value)

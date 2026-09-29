@@ -193,35 +193,94 @@ namespace ZombiCar.EditorTools
                 Check(!cases.IsSpinning && cases.LastPrize != null && MetaProgress.Owns(cases.LastPrize),
                     $"the roulette stopped on {cases.LastPrize?.Title} ({cases.LastPrize?.Rarity}), now owned");
                 Shot("04_Roulette_Prize");
-                Click(cases, "OkButton");
+                // A legendary prize: the fireworks and the fanfare (put on the reveal by hand, the roll is random).
+                CosmeticItem legend = catalog.Items.First(i => i.Rarity == Rarity.Legendary && i.Slot == CosmeticSlot.Gun);
+                Click(Menu().Cases, "OkButton");
+                Menu().Cases.ShowPrize(legend);
+            });
+            At(t += 1.2f, () =>
+            {
+                Check(Object.FindAnyObjectByType<SkinRevealView>().FireworksPlaying, "a legendary skin sets off fireworks");
+                Shot("04b_Legendary_Fireworks");
+                Click(Menu().Cases, "OkButton");
             });
             At(t += 0.4f, () =>
             {
-                // The skins for the map: gold rifle, neon axe, fire bullets.
+                // The skins for the map: gold rifle, neon axe, fire bullets (new: counted on СКИНЫ).
                 foreach (string id in new[] { "gun_gold", "axe_neon", "bullet_fire" })
-                {
-                    CosmeticItem item = catalog.Find(id);
-                    MetaProgress.Grant(item);
-                    MetaProgress.Equip(item);
-                }
-                Menu().Cases.ShowCollection(CosmeticSlot.Gun);
+                    MetaProgress.Grant(catalog.Find(id));
+                Menu().Cases.Hide();
             });
             At(t += 0.5f, () =>
             {
-                Check(catalog.Equipped(CosmeticSlot.Gun).Id == "gun_gold", "the gold rifle is equipped");
-                Shot("05_Collection");
-                Menu().Cases.Hide();
+                Check(Badge(Menu(), "SkinsButton"), "new skins are counted on СКИНЫ");
+                Shot("05_Menu_NewSkins");
+                Click(Menu(), "SkinsButton");
             });
+            At(t += 0.6f, () =>
+            {
+                SkinsPanel skins = Menu().Skins;
+                Check(skins.IsOpen && skins.CurrentTab == SkinsPanel.CharactersTab, "СКИНЫ opens on the characters");
+                Shot("05d_Characters");
+                Click(skins, "Locked2");
+            });
+            At(t += 0.35f, () =>
+            {
+                SkinsPanel skins = Menu().Skins;
+                Check(skins.BubbleShown && skins.BubbleText == "В РАЗРАБОТКЕ :)", "a ? card says В РАЗРАБОТКЕ :)");
+                Shot("05e_Characters_InDevelopment");
+                Click(skins, "Tab1");
+            });
+            At(t += 0.4f, () =>
+            {
+                SkinsPanel skins = Menu().Skins;
+                Check(skins.CurrentTab == 1 && skins.Tiles.Count(tile => tile.gameObject.activeSelf) == 10, "ОРУЖИЕ: the 10 rifle skins");
+                ItemTile gold = skins.Tiles.First(tile => tile.Item != null && tile.Item.Id == "gun_gold");
+                gold.Button.onClick.Invoke();
+            });
+            At(t += 0.3f, () =>
+            {
+                Check(catalog.Equipped(CosmeticSlot.Gun).Id == "gun_gold", "a tap on the gold rifle puts it on");
+                Shot("05_Collection");
+                Click(Menu().Skins, "Tab2");
+            });
+            At(t += 0.4f, () =>
+            {
+                MetaProgress.Equip(catalog.Find("axe_neon"));
+                Click(Menu().Skins, "Tab3");
+            });
+            At(t += 0.4f, () =>
+            {
+                MetaProgress.Equip(catalog.Find("bullet_fire"));
+                Check(Menu().Skins.CurrentTab == 3, "ЭФФЕКТ ПУЛЬ");
+                Shot("05f_Collection_BulletEffects");
+                Menu().Skins.Close();
+            });
+            At(t += 0.4f, () => Check(!Badge(Menu(), "SkinsButton"), "every new skin seen: the count on СКИНЫ is gone"));
             At(t += 0.5f, () => Click(Menu(), "PlayButton"));
-            At(t += 0.8f, () => Click(Object.FindAnyObjectByType<MapSelectScreen>(FindObjectsInactive.Include).Current, "PlayButton"));
+            At(t += 0.8f, () =>
+            {
+                Shot("05b_Map_Select");
+                Click(Object.FindAnyObjectByType<MapSelectScreen>(FindObjectsInactive.Include).Current, "RecordsButton");
+            });
+            At(t += 0.8f, () =>
+            {
+                var records = Object.FindAnyObjectByType<MapRecordsPanel>();
+                Check(records != null && records.IsOpen, "РЕКОРДЫ opens the map's records");
+                Shot("05c_Map_Records");
+                records.Close();
+            });
+            At(t += 0.4f, () => Click(Object.FindAnyObjectByType<MapSelectScreen>(FindObjectsInactive.Include).Current, "PlayButton"));
 
             // Map01 with the skins.
             At(t += 3.5f, () =>
             {
                 InstallBot();
-                var hint = AssetDatabase.LoadAssetAtPath<TutorialState>(DataAssetsBuilder.c_TutorialState);
-                Check(hint.Visible && hint.Step == 1, $"first run: tutorial hint '{hint.Text}'");
+                // The first run opens the intro cards over a paused game; they are closed before the walk goes on.
+                var cards = Object.FindAnyObjectByType<TutorialCardsView>();
+                Check(cards != null && cards.IsOpen && GamePause.Has(GamePause.Reason.Tutorial), "first run: the tutorial cards open");
                 Shot("06_Map_Tutorial");
+                cards?.Close();
                 Teleport(new Vector3(-3f, 0f, -5f));
                 s_Bot.AimDirection = Vector3.right;
                 s_Bot.FireHeld = true;
@@ -276,6 +335,14 @@ namespace ZombiCar.EditorTools
                 SessionState.SetInt(c_StateKey, 2);
                 EditorApplication.ExitPlaymode();
             });
+        }
+
+        // The new-skins count on a button is showing.
+        private static bool Badge(Component root, string button)
+        {
+            Transform b = root.GetComponentsInChildren<Transform>(true).FirstOrDefault(tr => tr.name == button);
+            Transform badge = b != null ? b.Find("NewBadge") : null;
+            return badge != null && badge.gameObject.activeSelf;
         }
 
         private static void Click(Component root, string name)

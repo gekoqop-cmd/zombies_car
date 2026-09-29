@@ -9,8 +9,8 @@ namespace ZombiCar.EditorTools
 {
     /// <summary>
     /// The main menu's cases screen (<see cref="CasesScreen"/>): three cases side by side (fits a 4:3 screen, 1440 units
-    /// wide), the roulette overlay with its result and the collection grid. Tiles are instantiated at runtime from the
-    /// hidden templates built here.
+    /// wide) and the roulette overlay with its result (the collections are in the menu's "СКИНЫ"). Tiles are
+    /// instantiated at runtime from the hidden templates built here.
     /// </summary>
     public static partial class SceneBuilder
     {
@@ -48,14 +48,20 @@ namespace ZombiCar.EditorTools
             // ---- roulette
             RectTransform roulette = UiFactory.Stretch("Roulette", root);
             var rouletteGroup = roulette.gameObject.AddComponent<CanvasGroup>();
-            UiFactory.Image(roulette, null, new Color(0.02f, 0.02f, 0.03f, 0.97f), false, true);   // the cases fade out behind
-            RectTransform viewport = UiFactory.Rect("Viewport", roulette, center, center, new Vector2(0f, 150f), new Vector2(1340f, 270f));
+            UiFactory.Image(roulette, null, new Color(0.02f, 0.02f, 0.03f, 1f), false, true);   // nothing of the cases shows through
+            RectTransform wheel = UiFactory.Stretch("Wheel", roulette);
+            RectTransform viewport = UiFactory.Rect("Viewport", wheel, center, center, new Vector2(0f, 150f), new Vector2(1340f, 270f));
             UiFactory.Image(viewport, UiFactory.Sprite("UI_Panel"), new Color(0.06f, 0.07f, 0.09f, 0.95f), true);
             viewport.gameObject.AddComponent<RectMask2D>();
             RectTransform strip = UiFactory.Rect("Strip", viewport, center, center, Vector2.zero, new Vector2(10f, c_TileSize));
             ItemTile stripTemplate = BuildItemTile(strip, "TileTemplate", outline, false);
-            RectTransform marker = UiFactory.Rect("Marker", roulette, center, center, new Vector2(0f, 150f), new Vector2(8f, 300f));
+            RectTransform marker = UiFactory.Rect("Marker", wheel, center, center, new Vector2(0f, 150f), new Vector2(8f, 300f));
             UiFactory.Image(marker, null, new Color(1f, 0.8f, 0.25f, 1f), false);
+            Button skip = HudButton("SkipButton", roulette, center, new Vector2(0f, -60f), new Vector2(340f, 88f), "ПРОПУСТИТЬ", 36f,
+                new Color(0.55f, 0.57f, 0.62f, 1f), outline);
+            UiFireworks fireworks = BuildFireworks(roulette);                   // a legendary prize: behind the card
+            SkinRevealView reveal = BuildSkinReveal(roulette);
+            PrefabBuilder.Wire(reveal, ("m_Fireworks", fireworks));
 
             RectTransform result = UiFactory.Rect("Result", roulette, center, center, new Vector2(0f, -170f), new Vector2(1200f, 340f));
             TextMeshProUGUI rarity = OutlinedLabel("Rarity", result, top, top, Vector2.zero, new Vector2(1200f, 56f), "ЛЕГЕНДАРНОЕ", 40f,
@@ -68,33 +74,12 @@ namespace ZombiCar.EditorTools
                 s_PlayColor, outline);
             Button ok = HudButton("OkButton", result, bottom, new Vector2(190f, 0f), new Vector2(340f, 100f), "ОК", 44f, Color.white, outline);
 
-            // ---- collection
-            RectTransform collection = UiFactory.Stretch("Collection", root);
-            var collectionGroup = collection.gameObject.AddComponent<CanvasGroup>();
-            UiFactory.Image(collection, null, new Color(0f, 0f, 0f, 0.7f), false, true);
-            RectTransform window = UiFactory.Rect("Window", collection, center, center, Vector2.zero, new Vector2(1320f, 820f));
-            UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
-            TextMeshProUGUI collectionTitle = OutlinedLabel("Title", window, top, top, new Vector2(0f, -26f), new Vector2(1000f, 80f),
-                "ОРУЖИЕ", 60f, TextAlignmentOptions.Center, s_TitleColor, outline);
-            OutlinedLabel("Hint", window, top, top, new Vector2(0f, -100f), new Vector2(1000f, 40f), "НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ", 28f,
-                TextAlignmentOptions.Center, s_SubtitleColor, outline);
-            RectTransform grid = UiFactory.Rect("Grid", window, top, top, new Vector2(0f, -160f), new Vector2(1220f, 480f));
-            var layout = grid.gameObject.AddComponent<GridLayoutGroup>();
-            layout.cellSize = new Vector2(c_TileSize, c_TileSize);
-            layout.spacing = new Vector2(20f, 20f);
-            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            layout.constraintCount = 5;
-            layout.childAlignment = TextAnchor.UpperCenter;
-            ItemTile gridTemplate = BuildItemTile(grid, "TileTemplate", outline, true);
-            Button collectionClose = HudButton("DoneButton", window, bottom, new Vector2(0f, 30f), new Vector2(340f, 100f), "ГОТОВО", 44f,
-                s_PlayColor, outline);
-
             var screen = host.gameObject.AddComponent<CasesScreen>();
             PrefabBuilder.Wire(screen, ("m_Catalog", CosmeticsBuilder.Catalog), ("m_Root", group), ("m_Coins", coins),
-                ("m_CloseButton", close), ("m_Roulette", rouletteGroup), ("m_Strip", strip), ("m_StripTemplate", stripTemplate),
+                ("m_CloseButton", close), ("m_Roulette", rouletteGroup), ("m_Wheel", wheel.gameObject), ("m_SkipButton", skip),
+                ("m_Reveal", reveal), ("m_Strip", strip), ("m_StripTemplate", stripTemplate),
                 ("m_ResultPanel", result.gameObject), ("m_ResultRarity", rarity), ("m_ResultName", prizeName), ("m_ResultNote", note),
-                ("m_EquipButton", equip), ("m_OkButton", ok), ("m_Collection", collectionGroup), ("m_CollectionTitle", collectionTitle),
-                ("m_Grid", grid), ("m_GridTemplate", gridTemplate), ("m_CollectionClose", collectionClose));
+                ("m_EquipButton", equip), ("m_OkButton", ok));
             CharacterBuilder.SetProps(screen, ("m_SlotIcons", new Object[] { UiFactory.Sprite(icons[0]), UiFactory.Sprite(icons[1]),
                 UiFactory.Sprite(icons[2]) }), ("m_TileStep", c_TileStep));
             var so = new SerializedObject(screen);
@@ -109,8 +94,6 @@ namespace ZombiCar.EditorTools
                 c.FindPropertyRelative("OpenButton").objectReferenceValue = cards[i].OpenButton;
                 c.FindPropertyRelative("OpenLabel").objectReferenceValue = cards[i].OpenLabel;
                 c.FindPropertyRelative("AdButton").objectReferenceValue = cards[i].AdButton;
-                c.FindPropertyRelative("CollectionButton").objectReferenceValue = cards[i].CollectionButton;
-                c.FindPropertyRelative("CollectionLabel").objectReferenceValue = cards[i].CollectionLabel;
             }
             so.ApplyModifiedPropertiesWithoutUndo();
             return screen;
@@ -143,15 +126,46 @@ namespace ZombiCar.EditorTools
             chances.richText = true;
             refs.Chances = chances;
 
-            refs.OpenButton = HudButton("OpenButton", card, bottom, new Vector2(0f, 186f), new Vector2(380f, 90f), "ОТКРЫТЬ", 32f,
+            refs.OpenButton = HudButton("OpenButton", card, bottom, new Vector2(0f, 112f), new Vector2(380f, 96f), "ОТКРЫТЬ", 32f,
                 s_PlayColor, outline);
             refs.OpenLabel = refs.OpenButton.GetComponentInChildren<TMP_Text>();
             // Open for a rewarded ad: the shared gold ad button, icon only.
-            refs.AdButton = AdButton("AdButton", card, bottom, new Vector2(0f, 100f), new Vector2(380f, 78f), null, 0f, outline);
-            refs.CollectionButton = HudButton("CollectionButton", card, bottom, new Vector2(0f, 20f), new Vector2(380f, 72f), "КОЛЛЕКЦИЯ",
-                26f, Color.white, outline);
-            refs.CollectionLabel = refs.CollectionButton.GetComponentInChildren<TMP_Text>();
+            refs.AdButton = AdButton("AdButton", card, bottom, new Vector2(0f, 24f), new Vector2(380f, 78f), null, 0f, outline);
             return refs;
+        }
+
+        /// <summary>The prize after the roulette: rays and a glow behind a big skin plate that leans after the pointer, a shine over it.</summary>
+        private static SkinRevealView BuildSkinReveal(RectTransform parent)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform root = UiFactory.Rect("Reveal", parent, center, center, new Vector2(0f, 190f), new Vector2(700f, 500f));
+            RectTransform rays = UiFactory.Rect("Rays", root, center, center, Vector2.zero, new Vector2(640f, 640f));
+            Image raysImage = UiFactory.Image(rays, UiFactory.Sprite("UI_Rays"), Color.white, false);
+            RectTransform glow = UiFactory.Rect("Glow", root, center, center, Vector2.zero, new Vector2(560f, 560f));
+            RawImage glowImage = VfxImage(glow, "T_LightPool");
+            RectTransform card = UiFactory.Rect("Card", root, center, center, Vector2.zero, new Vector2(340f, 340f));
+            Image plate = UiFactory.Image(UiFactory.Stretch("Plate", card), UiFactory.Sprite("UI_Panel"), Color.gray, true, true);
+            RectTransform iconRt = UiFactory.Rect("Icon", card, center, center, Vector2.zero, new Vector2(250f, 250f));
+            Image icon = UiFactory.Image(iconRt, null, Color.white, false);
+            icon.preserveAspect = true;
+            RectTransform clip = UiFactory.Stretch("ShineClip", card);
+            clip.gameObject.AddComponent<RectMask2D>();
+            RectTransform shine = UiFactory.Rect("Shine", clip, center, center, Vector2.zero, new Vector2(150f, 700f));
+            shine.localRotation = Quaternion.Euler(0f, 0f, -22f);
+            RawImage shineImage = VfxImage(shine, "T_BulletGlow");
+            var view = root.gameObject.AddComponent<SkinRevealView>();
+            PrefabBuilder.Wire(view, ("m_Card", card), ("m_Plate", plate), ("m_Icon", icon), ("m_Shine", shine), ("m_ShineGraphic", shineImage),
+                ("m_Glow", glowImage), ("m_Rays", rays), ("m_RaysGraphic", raysImage));
+            root.gameObject.SetActive(false);
+            return view;
+        }
+
+        private static RawImage VfxImage(RectTransform rt, string texture)
+        {
+            var image = rt.gameObject.AddComponent<RawImage>();
+            image.texture = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/VFX/{texture}.png");
+            image.raycastTarget = false;
+            return image;
         }
 
         private static ItemTile BuildItemTile(RectTransform parent, string name, Material outline, bool clickable)

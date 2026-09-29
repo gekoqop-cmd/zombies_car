@@ -65,7 +65,12 @@ namespace ZombiCar.UI
         [SerializeField] private RectTransform[] m_BossMarks = System.Array.Empty<RectTransform>();
         [SerializeField] private int[] m_BossWaves = { 10, 20, 30 };
         [SerializeField] private TMP_Text m_ToBoss;
-        [SerializeField] private TMP_Text m_DefeatStats;
+        [Tooltip("Zombies, level, coins, the parts exchange: they pop in one after another.")]
+        [SerializeField] private CanvasGroup[] m_DefeatTiles = System.Array.Empty<CanvasGroup>();
+        [SerializeField] private TMP_Text m_DefeatKills;
+        [SerializeField] private TMP_Text m_DefeatLevel;
+        [SerializeField] private TMP_Text m_DefeatCoins;
+        [Tooltip("The parts exchange: \"59 → +11\" between the parts and the coin icons.")]
         [SerializeField] private TMP_Text m_DefeatScrap;
         [Tooltip("\"ВОСКРЕСНУТЬ\" with the shared ad icon (the left bottom slot).")]
         [SerializeField] private Button m_ReviveButton;
@@ -75,9 +80,15 @@ namespace ZombiCar.UI
         [SerializeField] private Button m_DoubleButton;
         [SerializeField] private TMP_Text m_DoubleLabel;
         [SerializeField] private GameObject m_DoubleIcon;
-        [Tooltip("Where the ×2 button sits (window's top centre): by the total on a victory, under the coins on a defeat.")]
+        [Tooltip("Where the ×2 button sits (window's top centre): by the total on a victory, right of the coin balance on a defeat.")]
         [SerializeField] private Vector2 m_DoubleVictoryPosition = new Vector2(380f, -636f);
-        [SerializeField] private Vector2 m_DoubleDefeatPosition = new Vector2(0f, -622f);
+        [SerializeField] private Vector2 m_DoubleDefeatPosition = new Vector2(140f, -726f);
+        [SerializeField] private Vector2 m_DoubleVictorySize = new Vector2(240f, 84f);
+        [SerializeField] private Vector2 m_DoubleDefeatSize = new Vector2(210f, 72f);
+        [Tooltip("On a defeat the ×2 sits where the \"+N\" rises on a victory: there it rises left of the balance instead.")]
+        [SerializeField] private Vector2 m_DefeatGainPosition = new Vector2(-370f, 176f);
+        [Tooltip("On a defeat the balance moves left of centre: balance and ×2 together are centred.")]
+        [SerializeField] private float m_DefeatBalanceX = -130f;
         [Tooltip("The player's coin balance (coin icon + number): counts up by what the run paid.")]
         [SerializeField] private TMP_Text m_Balance;
         [Tooltip("\"+N\" that rises from the balance as the coins come in.")]
@@ -95,11 +106,12 @@ namespace ZombiCar.UI
         [Header("Look")]
         [SerializeField] private Color m_DefeatColor = new Color(1f, 0.38f, 0.3f, 1f);
         [SerializeField] private Color m_VictoryColor = new Color(1f, 0.82f, 0.3f, 1f);
-        [Tooltip("Real seconds after a defeat before the screen appears (the end is seen first).")]
-        [SerializeField, Min(0f)] private float m_Delay = 1.2f;
+        [Tooltip("Real seconds after a defeat before the screen appears: almost at once, the death itself is not watched.")]
+        [SerializeField, Min(0f)] private float m_Delay = 0.15f;
         [Tooltip("Real seconds after a victory: the finale plays first.")]
         [SerializeField, Min(0f)] private float m_VictoryDelay = 3.8f;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.35f;
+        [SerializeField, Min(0.01f)] private float m_DefeatFadeTime = 0.12f;
         [Tooltip("Distance between the centres of the bottom buttons.")]
         [SerializeField, Min(0f)] private float m_ButtonStep = 390f;
 
@@ -118,6 +130,10 @@ namespace ZombiCar.UI
         private int m_TotalFrom;
         private float m_DoubledAt = float.NegativeInfinity;
         private Vector2 m_GainHome;
+        private Vector2 m_GainStart;
+        private Vector2 m_BalanceHome;
+        private TextAlignmentOptions m_GainAlignment;
+        private Vector2 m_DoubleSize;
 
         /// <summary>The ×2 button can be pressed (tests).</summary>
         public bool CanDouble => m_DoubleButton.gameObject.activeInHierarchy && m_DoubleButton.interactable;
@@ -144,6 +160,8 @@ namespace ZombiCar.UI
                 m_ReviveButton.onClick.AddListener(Revive);
             m_DoubleButton.onClick.AddListener(DoubleCoins);
             m_GainHome = m_BalanceGain.rectTransform.anchoredPosition;
+            m_GainAlignment = m_BalanceGain.alignment;
+            m_BalanceHome = ((RectTransform)m_Balance.transform.parent).anchoredPosition;
             m_CoinHome = new Vector2[m_FlyingCoins.Length];
             for (int i = 0; i < m_FlyingCoins.Length; i++)
                 m_CoinHome[i] = m_FlyingCoins[i].localPosition;
@@ -185,7 +203,7 @@ namespace ZombiCar.UI
             if (!m_Shown)
                 return;
             float t = Time.unscaledTime - m_EndTime - Delay;
-            m_Root.alpha = Mathf.Clamp01(t / m_FadeTime);
+            m_Root.alpha = Mathf.Clamp01(t / (m_Victory ? m_FadeTime : m_DefeatFadeTime));
             m_Window.localScale = Vector3.one * Mathf.Lerp(0.8f, 1f, UiMotion.BackOut(t / 0.4f, 1.6f));
             if (m_Victory)
                 AnimateVictory(t);
@@ -231,7 +249,12 @@ namespace ZombiCar.UI
             // Both: the ad slot (cases / revive) on the left, again in the middle, menu on the right.
             PlaceButton(m_RestartButton, 0f);
             PlaceButton(m_MenuButton, m_ButtonStep);
-            ((RectTransform)m_DoubleButton.transform).anchoredPosition = m_Victory ? m_DoubleVictoryPosition : m_DoubleDefeatPosition;
+            PlaceDoubleButton(m_Victory ? m_DoubleVictoryPosition : m_DoubleDefeatPosition,
+                m_Victory ? m_DoubleVictorySize : m_DoubleDefeatSize);
+            m_GainStart = m_Victory ? m_GainHome : m_DefeatGainPosition;
+            m_BalanceGain.alignment = m_Victory ? m_GainAlignment : TextAlignmentOptions.Center;
+            ((RectTransform)m_Balance.transform.parent).anchoredPosition =
+                m_Victory ? m_BalanceHome : new Vector2(m_DefeatBalanceX, m_BalanceHome.y);
             ShowDoubleButton();
             if (m_Victory)
                 SetupVictory();
@@ -294,12 +317,32 @@ namespace ZombiCar.UI
             });
         }
 
+        private void PlaceDoubleButton(Vector2 position, Vector2 size)
+        {
+            var rt = (RectTransform)m_DoubleButton.transform;
+            rt.anchoredPosition = position;
+            rt.sizeDelta = size;
+            m_DoubleSize = size;
+            float icon = size.y * 0.78f;
+            var iconRt = (RectTransform)m_DoubleIcon.transform;
+            iconRt.sizeDelta = new Vector2(icon, icon);
+            iconRt.anchoredPosition = new Vector2(12f + icon * 0.5f, 0f);
+        }
+
+        // Ready: the ad icon on the left, "×2" in the rest. Used: no icon, "ИСПОЛЬЗОВАНО" centred over the whole plate.
         private void ShowDoubleButton()
         {
             bool used = m_Run.CoinsDoubled;
             m_DoubleButton.interactable = !used && !m_Leaving;
-            m_DoubleLabel.SetText(used ? "ИСПОЛЬЗОВАНО" : "×2");
             m_DoubleIcon.SetActive(!used);
+            float icon = used ? 0f : m_DoubleSize.y * 0.78f;
+            RectTransform label = m_DoubleLabel.rectTransform;
+            label.anchoredPosition = new Vector2(used ? 12f : 20f + icon, 0f);
+            label.sizeDelta = new Vector2(m_DoubleSize.x - icon - (used ? 24f : 34f), m_DoubleSize.y);
+            m_DoubleLabel.alignment = TextAlignmentOptions.Center;
+            m_DoubleLabel.fontSizeMin = 14f;
+            m_DoubleLabel.fontSizeMax = m_DoubleSize.y * (used ? 0.36f : 0.6f);
+            m_DoubleLabel.SetText(used ? "ИСПОЛЬЗОВАНО" : "×2");
         }
 
         // The total after the ×2: counts from the first sum up to the doubled one.
@@ -325,7 +368,7 @@ namespace ZombiCar.UI
             if (!gain)
                 return;
             m_BalanceGain.SetText($"+{m_BalanceTo - m_BalanceFrom}");
-            m_BalanceGain.rectTransform.anchoredPosition = m_GainHome + Vector2.up * 60f * UiMotion.CubicOut(g);
+            m_BalanceGain.rectTransform.anchoredPosition = m_GainStart + Vector2.up * (m_Victory ? 60f : 30f) * UiMotion.CubicOut(g);
             Color c = m_BalanceGain.color;
             c.a = 1f - g * g;
             m_BalanceGain.color = c;
@@ -437,8 +480,10 @@ namespace ZombiCar.UI
             m_ToBoss.SetText(next < 0 ? "ВСЕ БОССЫ ПОВЕРЖЕНЫ!"
                 : left == 0 ? "ТЫ ДОБРАЛСЯ ДО БОССА!"
                 : $"ДО БОССА: {left} {WaveWord(left)}");
-            m_DefeatStats.SetText($"ЗОМБИ: {m_Kills}    УРОВЕНЬ: {m_Level}    МОНЕТЫ: +{m_Total}");
-            m_DefeatScrap.SetText($"ОСТАТОК ДЕТАЛЕЙ {m_Scrap} → +{m_ScrapCoins} МОНЕТ");
+            m_DefeatKills.SetText(m_Kills.ToString());
+            m_DefeatLevel.SetText(m_Level.ToString());
+            m_DefeatCoins.SetText($"+{m_Total}");
+            m_DefeatScrap.SetText($"{m_Scrap} → +{m_ScrapCoins}");
             if (m_ReviveButton != null)
             {
                 m_ReviveButton.gameObject.SetActive(m_Run.CanRevive);
@@ -456,11 +501,29 @@ namespace ZombiCar.UI
         {
             m_WaveFill.fillAmount = m_Reach * UiMotion.CubicOut((t - 0.3f) / 0.9f);
             if (m_DoubledAt > 0f)
-                m_DefeatStats.SetText($"ЗОМБИ: {m_Kills}    УРОВЕНЬ: {m_Level}    МОНЕТЫ: +{ShownTotal()}");
+                m_DefeatCoins.SetText($"+{ShownTotal()}");
+            // The tiles pop in one by one while the wave line fills.
+            for (int i = 0; i < m_DefeatTiles.Length; i++)
+            {
+                float k = Mathf.Clamp01((t - 0.35f - i * 0.12f) / 0.3f);
+                m_DefeatTiles[i].alpha = k;
+                m_DefeatTiles[i].transform.localScale = Vector3.one * Mathf.LerpUnclamped(0.6f, 1f, UiMotion.BackOut(k));
+            }
             if (m_ReviveButton != null && m_ReviveButton.gameObject.activeSelf)
                 m_ReviveButton.transform.localScale = Vector3.one * (1f + 0.04f * Mathf.Sin(Time.unscaledTime * 5f));
             if (CanDouble)
-                m_DoubleButton.transform.localScale = Vector3.one * (1f + 0.03f * Mathf.Sin(Time.unscaledTime * 4f + 1f));
+            {
+                // Breathes, and every two seconds gives a little shake to catch the eye.
+                float now = Time.unscaledTime;
+                float shake = Mathf.Repeat(now, 2f) < 0.35f ? Mathf.Sin(now * 60f) * 6f * (1f - Mathf.Repeat(now, 2f) / 0.35f) : 0f;
+                m_DoubleButton.transform.localScale = Vector3.one * (1f + 0.07f * Mathf.Sin(now * 4f + 1f));
+                m_DoubleButton.transform.localRotation = Quaternion.Euler(0f, 0f, shake);
+            }
+            else
+            {
+                m_DoubleButton.transform.localRotation = Quaternion.identity;
+                m_DoubleButton.transform.localScale = Vector3.one;
+            }
         }
 
         // ---------------------------------------------------------------- buttons

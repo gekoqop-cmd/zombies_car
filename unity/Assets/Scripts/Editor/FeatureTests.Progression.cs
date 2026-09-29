@@ -30,6 +30,7 @@ namespace ZombiCar.EditorTools
             Register("tutorial", Tutorial);
             Register("economy", Economy);
             Register("leaderboard", Leaderboard);
+            Register("legendary", Legendary);
         }
 
         // ================================================================== 1. workshop, levels, cards

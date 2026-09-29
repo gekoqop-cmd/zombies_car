@@ -6,7 +6,7 @@ namespace ZombiCar.UI
 {
     /// <summary>
     /// One card of the map selection: title, picture, a Day / Night switch (cross-fades the day and night pictures)
-    /// and Play, which loads the day or the night map. A locked card ("coming soon") has no maps, no Day / Night
+    /// and Play, which loads the day or the night map; "РЕКОРДЫ" under it opens the shown map's records. A locked card ("coming soon") has no maps, no Day / Night
     /// switch and a disabled Play (its references are [OptionalReference]).
     /// </summary>
     public sealed class MapCard : MonoBehaviour
@@ -21,6 +21,10 @@ namespace ZombiCar.UI
         [SerializeField] private Button m_PlayButton;
         [Tooltip("\"ПРОЙДЕНО\" stamp on the picture: the shown map (day or night) was beaten.")]
         [SerializeField, OptionalReference] private GameObject m_BeatenBadge;
+        [Tooltip("\"РЕКОРДЫ\" under the card: the records of the map shown (day or night).")]
+        [SerializeField, OptionalReference] private Button m_RecordsButton;
+        [SerializeField, OptionalReference] private MapRecordsPanel m_Records;
+        [SerializeField] private string m_Title = "ГОРОД";
         [SerializeField] private Color m_OnColor = new Color(0.93f, 0.47f, 0.13f, 1f);
         [SerializeField] private Color m_OffColor = new Color(0.12f, 0.13f, 0.16f, 0.95f);
         [SerializeField, Min(0.01f)] private float m_CrossFade = 0.25f;
@@ -41,7 +45,16 @@ namespace ZombiCar.UI
                 m_PlayButton.interactable = !IsLocked;
                 m_PlayButton.onClick.AddListener(Play);
             }
+            if (m_RecordsButton != null && m_Records != null)
+                m_RecordsButton.onClick.AddListener(ShowRecords);
             SetNight(false, true);
+        }
+
+        private void ShowRecords()
+        {
+            MapConfig shown = m_Night ? m_NightMap : m_DayMap;
+            if (shown != null)
+                m_Records.Open(shown, $"{m_Title}  •  {(m_Night ? "НОЧЬ" : "ДЕНЬ")}");
         }
 
         public void SetNight(bool night) => SetNight(night, false);

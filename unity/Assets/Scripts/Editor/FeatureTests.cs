@@ -135,6 +135,7 @@ namespace ZombiCar.EditorTools
         [MenuItem("Tools/Diagnostics/Feature Tests/13 Tutorial")] private static void MenuTutorial() => Run("tutorial");
         [MenuItem("Tools/Diagnostics/Feature Tests/14 Parts economy")] private static void MenuEconomy() => Run("economy");
         [MenuItem("Tools/Diagnostics/Feature Tests/15 Leaderboard")] private static void MenuLeaderboard() => Run("leaderboard");
+        [MenuItem("Tools/Diagnostics/Feature Tests/16 Legendary card")] private static void MenuLegendary() => Run("legendary");
 
         public static void Run(string scenario)
         {
@@ -187,6 +188,7 @@ namespace ZombiCar.EditorTools
             float t = Time.realtimeSinceStartup - s_StartTime;
             while (s_NextStep < s_Steps.Count && t >= s_Steps[s_NextStep].Time)
             {
+                float began = Time.realtimeSinceStartup;
                 try
                 {
                     s_Steps[s_NextStep++].Action();
@@ -195,6 +197,14 @@ namespace ZombiCar.EditorTools
                 {
                     s_Failures++;
                     Debug.LogError($"[FeatureTests] Step failed: {e}");
+                }
+                // A slow step (a screenshot takes most of a second in batch mode) pushes the rest of the schedule back,
+                // so the waits after it stay waits and two steps meant apart never run in the same frame.
+                float took = Time.realtimeSinceStartup - began;
+                if (took > 0.1f)
+                {
+                    s_StartTime += took;
+                    t -= took;
                 }
             }
         }
@@ -306,6 +316,51 @@ namespace ZombiCar.EditorTools
                 canvas.planeDistance = cam.nearClipPlane + 0.5f - canvas.sortingOrder * 0.001f;
                 canvas.sortingOrder += 1000;          // over the world-space plates, as an overlay canvas would be
             }
+        }
+
+        /// <summary>
+        /// A shot at another screen size (a narrow browser in fullscreen, a 4:3 tablet); true when the HUD's top row —
+        /// health, wave progress, ammo — has no two panels overlapping at that size.
+        /// </summary>
+        private static bool ShotSized(string name, int width, int height)
+        {
+            CanvasesOnCamera();
+            string folder = Path.GetFullPath(c_Folder);
+            Directory.CreateDirectory(folder);
+            string path = Path.Combine(folder, $"Feature_{name}.png");
+            MapScreenshots.Render(Camera.main, width, height, path);
+            Debug.Log($"[FeatureTests] {path}");
+            // The layout of this size is still in the rects (the next canvas update is next frame).
+            (float min, float max) Span(RectTransform rt)
+            {
+                var corners = new Vector3[4];
+                rt.GetWorldCorners(corners);
+                return (corners[0].x, corners[2].x);
+            }
+            var health = GameObject.Find("HealthPanel")?.GetComponent<RectTransform>();
+            var wave = Object.FindAnyObjectByType<WaveProgressView>()?.GetComponent<RectTransform>();
+            var ammo = GameObject.Find("AmmoPanel")?.GetComponent<RectTransform>();
+            if (health == null || wave == null || ammo == null)
+                return false;
+            return Span(health).max <= Span(wave).min && Span(wave).max <= Span(ammo).min;
+        }
+
+        /// <summary>A close camera on a point of the map, without the HUD (models laid on the ground: mines, spikes).</summary>
+        private static void CloseShot(string name, Vector3 at, float distance)
+        {
+            Camera main = Camera.main;
+            var go = new GameObject("FeatureCloseCamera");
+            var cam = go.AddComponent<Camera>();
+            cam.CopyFrom(main);
+            cam.cullingMask = main.cullingMask & ~(1 << UiFactory.c_UiLayer);
+            go.transform.rotation = main.transform.rotation;
+            go.transform.position = at - go.transform.forward * distance;
+            string folder = Path.GetFullPath(c_Folder);
+            Directory.CreateDirectory(folder);
+            string path = Path.Combine(folder, $"Feature_{name}.png");
+            MapScreenshots.Render(cam, 1280, 900, path);
+            Object.DestroyImmediate(go);
+            Debug.Log($"[FeatureTests] {path}");
         }
 
         private static void Shot(string name)

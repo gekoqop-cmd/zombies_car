@@ -39,6 +39,12 @@ namespace ZombiCar.EditorTools
             At(1.5f, () =>
             {
                 Check(workshop.IsOpen && catalog.Supplies.Length == 4, $"the workshop sells {catalog.Supplies.Length} supplies");
+                // Every upgrade and supply sounds different, and every one of those sounds has a clip.
+                var items = catalog.Upgrades.Concat(catalog.Supplies).ToArray();
+                var sounds = items.Select(WorkshopScreen.BoughtSound).ToArray();
+                var bank = AssetDatabase.LoadAssetAtPath<SoundBank>(AudioBuilder.c_SoundBank);
+                Check(sounds.Distinct().Count() == items.Length && !sounds.Contains(Sound.UiBuy) && sounds.All(s => bank.Get(s) != null),
+                    $"{items.Length} workshop items, {sounds.Distinct().Count()} own sounds with clips");
                 // Growing gains: every level gives more than the one before, the tile shows the next one.
                 CarUpgrade spikes = catalog.Upgrades.First(u => u.Id == "spikes");
                 Check(Enumerable.Range(0, 4).Select(spikes.ValueAt).SequenceEqual(new[] { 8f, 10f, 12f, 14f }) &&
@@ -71,6 +77,11 @@ namespace ZombiCar.EditorTools
                 Check(!workshop.BuySupply(1), "ammo box with a full gun: НЕ НУЖНО");
                 Check(ammo.CostAt(0) == 40, "ammo box costs 40");
                 Check(workshop.BuySupply(2) && s_Run.ArmedMines == 4, "mines (120): 4 around the car");
+                var mines = s_Car.GetComponent<CarMines>();
+                Check(mines != null && !Object.FindObjectsByType<Transform>(FindObjectsSortMode.None)
+                        .Any(tr => tr.name == "Light" && tr.parent != null && tr.parent.name.StartsWith("Mine")),
+                    "the mines are plain models: no light on them");
+                CloseShot("14_Mines", s_Car.transform.position, 11f);
                 Check(!workshop.BuySupply(2), "more mines while 4 are armed: НЕ НУЖНО");
 
                 // The repair: only for an ad (the editor's stand-in rewards at once), +200 up to the maximum, 3 a run.
@@ -104,13 +115,11 @@ namespace ZombiCar.EditorTools
             {
                 Check(levelUp.IsOpen, "level-up cards for the reroll");
                 money = s_Run.Money;
-                Check(levelUp.RerollCost == 50 && levelUp.Reroll() && s_Run.Money == money - 50, "ПЕРЕБРОСИТЬ • 50: a new hand");
+                int rerolls = s_Run.Rerolls;
+                // For a rewarded ad (the stand-in rewards at once): a new hand, no parts spent.
+                Check(levelUp.Reroll() && s_Run.Rerolls == rerolls + 1 && s_Run.Money == money, "ПЕРЕБРОСИТЬ for an ad: a new hand, parts kept");
             });
-            At(7.8f, () =>
-            {
-                Check(levelUp.RerollCost == 100 && levelUp.Reroll(), "the second reroll costs 100");
-                Check(levelUp.RerollCost == 150, "the third one would cost 150");
-            });
+            At(7.8f, () => Check(levelUp.Reroll() && s_Run.Money == money, "and again: every reroll is an ad, never parts"));
             At(8.2f, () => Shot("14_LevelUp_Reroll"));
             At(8.4f, () => levelUp.Pick(0));
             At(9.2f, () =>

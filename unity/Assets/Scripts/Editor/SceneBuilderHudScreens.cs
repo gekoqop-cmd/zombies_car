@@ -25,14 +25,9 @@ namespace ZombiCar.EditorTools
         private static RunState Run => DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState);
 
         // ------------------------------------------------------------------ counters
-        /// <summary>Scrap and kills under the health panel. Returns the scrap panel (it pops when scrap comes in).</summary>
-        private static RectTransform BuildRunCounters(RectTransform safe, Material outline, float top, out TextMeshProUGUI money,
-            out TextMeshProUGUI kills)
-        {
-            RectTransform moneyPanel = CounterPill("ScrapCounter", safe, new Vector2(24f, top), 200f, "UI_Icon_Scrap", outline, out money);
-            CounterPill("KillCounter", safe, new Vector2(24f + 200f + 12f, top), 170f, "UI_Icon_Skull", outline, out kills);
-            return moneyPanel;
-        }
+        /// <summary>Scrap under the health panel (the kills are counted up on the end screen only). Returns its panel: it pops when scrap comes in.</summary>
+        private static RectTransform BuildRunCounters(RectTransform safe, Material outline, float top, out TextMeshProUGUI money) =>
+            CounterPill("ScrapCounter", safe, new Vector2(24f, top), 200f, "UI_Icon_Scrap", outline, out money);
 
         private static RectTransform CounterPill(string name, RectTransform parent, Vector2 pos, float width, string icon, Material outline,
             out TextMeshProUGUI value)
@@ -324,7 +319,7 @@ namespace ZombiCar.EditorTools
 
             var tray = root.gameObject.AddComponent<PerkTrayView>();
             PrefabBuilder.Wire(tray, ("m_Run", Run), ("m_Pool", DataAssetsBuilder.Load<PerkPool>(DataAssetsBuilder.c_PerkPool)),
-                ("m_Template", item), ("m_Disc", disc), ("m_Icon", icon), ("m_Level", level));
+                ("m_Template", item), ("m_Disc", disc), ("m_Icon", icon), ("m_Level", level), ("m_LegendaryRays", UiFactory.Sprite("UI_Rays")));
         }
 
         // ------------------------------------------------------------------ tutorial hint
@@ -464,7 +459,7 @@ namespace ZombiCar.EditorTools
             new TutorialCard
             {
                 Title = "ОРУЖИЕ", Icon = "UI_Icon_Rifle", Icon2 = "UI_Icon_Axe", Caption = "АВТОМАТ · ТОПОР",
-                Text = "Автомат тратит патроны. Топор бьёт вблизи и бесплатно.\nПатроны пополняются у машины.",
+                Text = "Патроны на оружие заканчиваются — пополняй их у машины между волнами.\nТопор — он топор, и он с тобой всегда :)",
                 Accent = new Color(0.93f, 0.47f, 0.13f, 1f),
             },
             new TutorialCard
@@ -509,17 +504,17 @@ namespace ZombiCar.EditorTools
             for (int i = 0; i < c_CardCount; i++)
                 cards[i] = BuildPerkCard(root, i, outline);
 
-            // Reroll: bottom left, clear of the cards, the weapon column (bottom right) and the tutorial hint (centre).
+            // Reroll for a rewarded ad (the shared gold ad button): bottom left, clear of the cards, the weapon column
+            // (bottom right) and the tutorial hint (centre).
             var bottomLeft = new Vector2(0f, 0f);
-            Button reroll = HudButton("RerollButton", root, bottomLeft, new Vector2(30f, 36f), new Vector2(370f, 96f), "ПЕРЕБРОСИТЬ • 50",
-                34f, new Color(0.3f, 0.56f, 0.9f, 1f), outline);
+            Button reroll = AdButton("RerollButton", root, bottomLeft, new Vector2(30f, 36f), new Vector2(370f, 96f), "ПЕРЕБРОСИТЬ", 34f,
+                outline);
 
             var screen = host.gameObject.AddComponent<LevelUpScreen>();
             PrefabBuilder.Wire(screen, ("m_Run", Run), ("m_Pool", DataAssetsBuilder.Load<PerkPool>(DataAssetsBuilder.c_PerkPool)),
                 ("m_Config", DataAssetsBuilder.Load<ProgressionConfig>(DataAssetsBuilder.c_ProgressionConfig)),
                 ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
-                ("m_Root", group), ("m_Title", title), ("m_Subtitle", subtitle), ("m_RerollButton", reroll),
-                ("m_RerollLabel", reroll.GetComponentInChildren<TMP_Text>()), ("m_RerollPlate", reroll.targetGraphic));
+                ("m_Root", group), ("m_Title", title), ("m_Subtitle", subtitle), ("m_RerollButton", reroll));
             CharacterBuilder.SetProps(screen, ("m_Cards", cards));
             group.alpha = 0f;
             root.gameObject.SetActive(false);
@@ -540,8 +535,17 @@ namespace ZombiCar.EditorTools
             glowRt.offsetMin = new Vector2(-22f, -22f);
             glowRt.offsetMax = new Vector2(22f, 22f);
             Image glow = UiFactory.Image(glowRt, UiFactory.Sprite("UI_Panel"), new Color(1f, 0.7f, 0.2f, 0f), true);
+            // Legendary only: a gold halo round the plate, rays behind the icon, a shine over the card.
+            RectTransform haloRt = UiFactory.Stretch("LegendaryHalo", body);
+            haloRt.offsetMin = new Vector2(-10f, -10f);
+            haloRt.offsetMax = new Vector2(10f, 10f);
+            Image halo = UiFactory.Image(haloRt, UiFactory.Sprite("UI_Panel"), new Color(1f, 0.8f, 0.25f, 1f), true);
+            halo.gameObject.SetActive(false);
             Image plate = UiFactory.Image(UiFactory.Stretch("Plate", body), UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
 
+            RectTransform raysRt = UiFactory.Rect("LegendaryRays", body, top, center, new Vector2(0f, -131f), new Vector2(380f, 380f));
+            Image rays = UiFactory.Image(raysRt, UiFactory.Sprite("UI_Rays"), new Color(1f, 0.8f, 0.25f, 1f), false);
+            rays.gameObject.SetActive(false);
             RectTransform disc = UiFactory.Rect("IconDisc", body, top, top, new Vector2(0f, -36f), new Vector2(190f, 190f));
             Image discImage = UiFactory.Image(disc, UiFactory.Sprite("UI_StickKnob"), Color.white, false);
             RectTransform iconRt = UiFactory.Rect("Icon", disc, center, center, Vector2.zero, new Vector2(150f, 150f));
@@ -561,12 +565,27 @@ namespace ZombiCar.EditorTools
             description.fontSizeMax = 31f;
             TextMeshProUGUI level = OutlinedLabel("Level", body, bottom, bottom, new Vector2(0f, 34f), new Vector2(s_CardSize.x - 40f, 46f),
                 "НОВОЕ", 28f, TextAlignmentOptions.Center, UiFactory.AccentColor, outline);
+            level.enableAutoSizing = true;                           // the legendary card's line is long
+            level.fontSizeMin = 16f;
+            level.fontSizeMax = 28f;
 
             var topLeft = new Vector2(0f, 1f);
             RectTransform keyRt = UiFactory.Rect("Key", body, topLeft, topLeft, new Vector2(22f, -22f), new Vector2(60f, 60f));
             UiFactory.Image(keyRt, UiFactory.Sprite("UI_Button"), new Color(1f, 0.93f, 0.8f, 1f), true);
             TextMeshProUGUI key = UiFactory.Label("Number", keyRt, center, center, Vector2.zero, new Vector2(60f, 60f), "1", 38f,
                 TextAlignmentOptions.Center, new Color(0.18f, 0.12f, 0.08f, 1f));
+
+            RectTransform shineClip = UiFactory.Stretch("LegendaryShine", body);
+            shineClip.offsetMin = new Vector2(8f, 8f);
+            shineClip.offsetMax = new Vector2(-8f, -8f);
+            shineClip.gameObject.AddComponent<RectMask2D>();
+            RectTransform shine = UiFactory.Rect("Shine", shineClip, center, center, Vector2.zero, new Vector2(140f, 900f));
+            shine.localRotation = Quaternion.Euler(0f, 0f, -20f);
+            var shineImage = shine.gameObject.AddComponent<RawImage>();
+            shineImage.texture = AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/VFX/T_BulletGlow.png");
+            shineImage.color = new Color(1f, 0.95f, 0.75f, 0.55f);
+            shineImage.raycastTarget = false;
+            shineClip.gameObject.SetActive(false);
 
             var button = card.gameObject.AddComponent<Button>();
             button.targetGraphic = plate;
@@ -579,7 +598,8 @@ namespace ZombiCar.EditorTools
             var view = card.gameObject.AddComponent<PerkCardView>();
             PrefabBuilder.Wire(view, ("m_Button", button), ("m_Body", body), ("m_Group", group), ("m_IconDisc", discImage),
                 ("m_Icon", icon), ("m_Title", title), ("m_Description", description), ("m_Level", level), ("m_KeyHint", key),
-                ("m_Glow", glow));
+                ("m_Glow", glow), ("m_LegendaryHalo", halo), ("m_LegendaryRays", rays), ("m_LegendaryShineClip", shineClip.gameObject),
+                ("m_LegendaryShine", shine));
             return view;
         }
 
@@ -676,16 +696,22 @@ namespace ZombiCar.EditorTools
             }
             TextMeshProUGUI toBoss = OutlinedLabel("ToBoss", defeat, top, top, new Vector2(0f, -432f), new Vector2(1060f, 62f),
                 "ДО БОССА: 3 ВОЛНЫ", 46f, TextAlignmentOptions.Center, s_TitleColor, outline);
-            TextMeshProUGUI defeatStats = OutlinedLabel("Stats", defeat, top, top, new Vector2(0f, -506f), new Vector2(1060f, 50f),
-                "ЗОМБИ: 0    УРОВЕНЬ: 1    МОНЕТЫ: +0", 34f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
-            TextMeshProUGUI defeatScrap = OutlinedLabel("Scrap", defeat, top, top, new Vector2(0f, -560f), new Vector2(1060f, 46f),
-                "ОСТАТОК ДЕТАЛЕЙ 0 → +0 МОНЕТ", 32f, TextAlignmentOptions.Center, s_Gold, outline);
+            // The run in three picture tiles (zombies killed, level, coins earned) and the parts exchanged for coins.
+            var defeatTiles = new CanvasGroup[4];
+            defeatTiles[0] = DefeatTile(defeat, -1, "UI_Icon_Skull", "УБИТО ЗОМБИ", Color.white, outline, out TextMeshProUGUI defeatKills);
+            defeatTiles[1] = DefeatTile(defeat, 0, "UI_Icon_Xp", "УРОВЕНЬ", new Color(0.55f, 0.85f, 1f, 1f), outline,
+                out TextMeshProUGUI defeatLevel);
+            defeatTiles[2] = DefeatTile(defeat, 1, "UI_Icon_Coin", "МОНЕТЫ", s_Gold, outline, out TextMeshProUGUI defeatCoins);
+            defeatTiles[3] = ScrapExchange(defeat, outline, out TextMeshProUGUI defeatScrap);
             // Revive for a rewarded ad: the shared gold ad button in the left bottom slot (the victory's cases slot).
             Button revive = AdButton("ReviveButton", defeat, bottom, new Vector2(-c_EndButtonStep, 40f), new Vector2(360f, 116f),
                 "ВОСКРЕСНУТЬ", 40f, outline);
 
             // ---- ×2 coins for an ad (by the total / under the coins, placed by the screen) and the coin balance
             Button twice = AdButton("DoubleButton", window, top, new Vector2(380f, -636f), new Vector2(240f, 84f), "×2", 44f, outline);
+            // A bright solid gold plate, not the dark ad plate: the one button that should beg to be pressed.
+            ((Image)twice.targetGraphic).sprite = UiFactory.Sprite("UI_Button");
+            ((Image)twice.targetGraphic).color = new Color(1f, 0.72f, 0.12f, 1f);
             TMP_Text twiceLabel = twice.transform.Find("Label").GetComponent<TMP_Text>();
             GameObject twiceIcon = twice.transform.Find("AdIcon").gameObject;
             TextMeshProUGUI balance = CoinCounter("Balance", window, bottom, bottom, new Vector2(0f, 172f), 56f, 240f, "0", 44f, outline);
@@ -706,10 +732,11 @@ namespace ZombiCar.EditorTools
                 ("m_VictoryPanel", victory.gameObject), ("m_Medal", medal), ("m_TimeValue", time), ("m_KillsValue", kills),
                 ("m_BossesValue", bosses), ("m_LevelValue", level), ("m_CasesButton", cases), ("m_LeaderboardButton", leaderboard),
                 ("m_DefeatPanel", defeat.gameObject), ("m_Reached", reached), ("m_WaveFill", waveFill), ("m_ToBoss", toBoss),
-                ("m_DefeatStats", defeatStats), ("m_ReviveButton", revive), ("m_ScrapLabel", scrapLabel), ("m_DefeatScrap", defeatScrap),
+                ("m_DefeatKills", defeatKills), ("m_DefeatLevel", defeatLevel), ("m_DefeatCoins", defeatCoins), ("m_ReviveButton", revive), ("m_ScrapLabel", scrapLabel), ("m_DefeatScrap", defeatScrap),
                 ("m_DoubleButton", twice), ("m_DoubleLabel", twiceLabel), ("m_DoubleIcon", twiceIcon), ("m_Balance", balance),
                 ("m_BalanceGain", gain));
             CharacterBuilder.SetProps(screen, ("m_StatLines", statLines.Cast<Object>().ToArray()),
+                ("m_DefeatTiles", defeatTiles.Cast<Object>().ToArray()),
                 ("m_CoinLines", coinLines.Cast<Object>().ToArray()), ("m_CoinValues", coinValues.Cast<Object>().ToArray()),
                 ("m_FlyingCoins", flying.Cast<Object>().ToArray()), ("m_BossMarks", marks.Cast<Object>().ToArray()));
             var so = new SerializedObject(screen);
@@ -750,6 +777,56 @@ namespace ZombiCar.EditorTools
         }
 
         /// <summary>One of the victory's 2x2 run lines: icon, label and value on a dark plate.</summary>
+        /// <summary>A defeat tile: the picture on the left, the number big, what it counts under it.</summary>
+        private static CanvasGroup DefeatTile(RectTransform parent, int column, string icon, string caption, Color valueColor, Material outline,
+            out TextMeshProUGUI value)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var midLeft = new Vector2(0f, 0.5f);
+            var topLeft = new Vector2(0f, 1f);
+            var bottomLeft = new Vector2(0f, 0f);
+            RectTransform tile = UiFactory.Rect($"Tile{column + 2}", parent, top, top, new Vector2(column * 330f, -508f), new Vector2(310f, 96f));
+            var group = tile.gameObject.AddComponent<CanvasGroup>();
+            UiFactory.Image(tile, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.65f), true);
+            RectTransform iconRt = UiFactory.Rect("Icon", tile, midLeft, midLeft, new Vector2(14f, 0f), new Vector2(70f, 70f));
+            UiFactory.Image(iconRt, UiFactory.Sprite(icon), Color.white, false).preserveAspect = true;
+            value = OutlinedLabel("Value", tile, topLeft, topLeft, new Vector2(98f, -6f), new Vector2(200f, 54f), "0", 46f,
+                TextAlignmentOptions.Left, valueColor, outline);
+            value.enableAutoSizing = true;
+            value.fontSizeMin = 24f;
+            value.fontSizeMax = 46f;
+            TextMeshProUGUI label = OutlinedLabel("Caption", tile, bottomLeft, bottomLeft, new Vector2(98f, 8f), new Vector2(200f, 30f), caption,
+                22f, TextAlignmentOptions.Left, s_SubtitleColor, outline);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 14f;
+            label.fontSizeMax = 22f;
+            return group;
+        }
+
+        /// <summary>The parts left exchanged: "ДЕТАЛИ", the parts icon, "59 → +11", the coin icon, on one pill.</summary>
+        private static CanvasGroup ScrapExchange(RectTransform parent, Material outline, out TextMeshProUGUI value)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var midLeft = new Vector2(0f, 0.5f);
+            var midRight = new Vector2(1f, 0.5f);
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform pill = UiFactory.Rect("ScrapExchange", parent, top, top, new Vector2(0f, -616f), new Vector2(560f, 58f));
+            var group = pill.gameObject.AddComponent<CanvasGroup>();
+            UiFactory.Image(pill, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.65f), true);
+            OutlinedLabel("Caption", pill, midLeft, midLeft, new Vector2(18f, 0f), new Vector2(150f, 58f), "ДЕТАЛИ", 24f,
+                TextAlignmentOptions.Left, s_SubtitleColor, outline);
+            RectTransform scrap = UiFactory.Rect("ScrapIcon", pill, midLeft, center, new Vector2(170f, 0f), new Vector2(46f, 46f));
+            UiFactory.Image(scrap, UiFactory.Sprite("UI_Icon_Scrap"), Color.white, false).preserveAspect = true;
+            value = OutlinedLabel("Scrap", pill, midLeft, midLeft, new Vector2(200f, 0f), new Vector2(290f, 58f), "0 → +0", 34f,
+                TextAlignmentOptions.Center, s_Gold, outline);
+            value.enableAutoSizing = true;
+            value.fontSizeMin = 20f;
+            value.fontSizeMax = 34f;
+            RectTransform coin = UiFactory.Rect("CoinIcon", pill, midRight, center, new Vector2(-40f, 0f), new Vector2(46f, 46f));
+            UiFactory.Image(coin, UiFactory.Sprite("UI_Icon_Coin"), Color.white, false).preserveAspect = true;
+            return group;
+        }
+
         private static CanvasGroup EndStat(RectTransform parent, int index, string icon, string label, Material outline, out TextMeshProUGUI value)
         {
             var top = new Vector2(0.5f, 1f);
@@ -804,87 +881,201 @@ namespace ZombiCar.EditorTools
             return coin;
         }
 
-        // ------------------------------------------------------------------ boss intro card
-        private struct BossIntro
+        // ------------------------------------------------------------------ boss intro
+        private struct BossMove
         {
-            public string Name, Sheet, Tip;
-            public Color Accent;
+            public string Title, Text, Fx;
+            public int Pose;
+            public Color FxColor;
+            public bool SecondPhase;
         }
 
+        private struct BossIntro
+        {
+            public string Name, Sheet;
+            public Color Accent;
+            public BossMove[] Moves;
+        }
+
+        private static readonly Color s_AcidFx = new Color(0.55f, 1f, 0.3f, 0.9f);
+        private static readonly Color s_PurpleFx = new Color(0.8f, 0.55f, 1f, 0.9f);
+        private static readonly Color s_FireFx = new Color(1f, 0.55f, 0.15f, 0.95f);
+
+        // Poses: 0 idle, 6 wind-up, 7 blow (the painted sheets' frame order).
         private static readonly BossIntro[] s_BossIntros =
         {
             new BossIntro
             {
                 Name = "МАТКА", Sheet = "Boss1", Accent = new Color(0.55f, 0.95f, 0.35f, 1f),
-                Tip = "Зовёт выводок и плюётся кислотой, идёт к машине.\nСначала руби мелочь, не стой в зелёных лужах,\nстреляй в Матку, пока она призывает.",
+                Moves = new[]
+                {
+                    new BossMove { Title = "ВЫВОДОК", Pose = 6, Fx = "FX_Aura", FxColor = s_AcidFx,
+                        Text = "Зовёт зомби вокруг себя.\nСначала руби мелочь." },
+                    new BossMove { Title = "КИСЛОТА", Pose = 7, Fx = "FX_AcidSplat", FxColor = s_AcidFx,
+                        Text = "Плюётся кислотой, остаются лужи.\nНе стой в зелёном." },
+                    new BossMove { Title = "РОЙ", Pose = 0, Fx = "FX_ComicBurst", FxColor = s_AcidFx, SecondPhase = true,
+                        Text = "Со злости зовёт чаще,\nвместе с гончими." },
+                },
             },
             new BossIntro
             {
                 Name = "ТАРАН", Sheet = "Boss2", Accent = new Color(0.8f, 0.5f, 1f, 1f),
-                Tip = "Перед рывком рисует линию — отходи в сторону.\nПосле рывка он оглушён и получает больше урона: бей!\nКислотный дождь — уходи из кругов.",
+                Moves = new[]
+                {
+                    new BossMove { Title = "РЫВОК", Pose = 7, Fx = "FX_ChargeLine", FxColor = s_PurpleFx,
+                        Text = "Рисует линию и несётся по ней.\nОтойди — потом он оглушён, бей!" },
+                    new BossMove { Title = "КИСЛОТНЫЙ ДОЖДЬ", Pose = 6, Fx = "FX_AcidBall", FxColor = s_AcidFx,
+                        Text = "Капли падают вокруг тебя.\nУходи из кругов." },
+                    new BossMove { Title = "ЗЕМЛЕТРЯСЕНИЕ", Pose = 7, Fx = "FX_ShockRing", FxColor = s_PurpleFx, SecondPhase = true,
+                        Text = "Бьёт о землю — волна вокруг.\nДержи дистанцию." },
+                },
             },
             new BossIntro
             {
                 Name = "ЖНЕЦ", Sheet = "Boss3", Accent = new Color(1f, 0.55f, 0.2f, 1f),
-                Tip = "Коса бьёт дугой перед ним — держи дистанцию.\nОгненные трещины: уходи с линий, пока они горят.\nВо второй фазе прыгает к тебе — беги от метки!",
+                Moves = new[]
+                {
+                    new BossMove { Title = "КОСА", Pose = 7, Fx = "FX_Slash", FxColor = s_FireFx,
+                        Text = "Бьёт дугой перед собой\nи отбрасывает. Не стой рядом." },
+                    new BossMove { Title = "ОГНЕННЫЕ ТРЕЩИНЫ", Pose = 6, Fx = "FX_Scorch", FxColor = s_FireFx,
+                        Text = "Земля горит по линиям.\nУходи с линий, пока горят." },
+                    new BossMove { Title = "ЖАТВА", Pose = 0, Fx = "FX_TargetRing", FxColor = s_FireFx, SecondPhase = true,
+                        Text = "Ставит метку и прыгает к тебе.\nБеги от метки!" },
+                },
             },
         };
 
-        /// <summary>The card before every boss fight: portrait on the boss's colour, header, name, how to beat it, "В БОЙ!".</summary>
+        private const int c_BossMoveCount = 3;
+        private static readonly Vector2 s_BossCardSize = new Vector2(440f, 560f);
+        private const float c_BossCardSpacing = 480f;
+        private static readonly Color s_BossCardPlate = new Color(0.07f, 0.05f, 0.06f, 0.97f);
+
+        /// <summary>
+        /// The screen before every boss fight: header, the boss's name, how it picks targets, three dark ability cards
+        /// (a framed picture of the move over its effect, the move's name in the boss's colour, what it does, a "2 ФАЗА"
+        /// badge for the enraged moves) and "В БОЙ!". Deliberately unlike the light perk cards with their round icons.
+        /// </summary>
         private static void BuildBossIntro(RectTransform parent, Material outline)
         {
             RectTransform root = UiFactory.Stretch("BossIntro", parent);
-            UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.6f), false, true);
+            UiFactory.Image(root, null, new Color(0.03f, 0f, 0f, 0.94f), false, true);
             var group = root.gameObject.AddComponent<CanvasGroup>();
             group.alpha = 0f;
             group.blocksRaycasts = group.interactable = false;
-            var center = new Vector2(0.5f, 0.5f);
-            var topLeft = new Vector2(0f, 1f);
-            var midLeft = new Vector2(0f, 0.5f);
-            var bottomRight = new Vector2(1f, 0f);
-            RectTransform card = UiFactory.Rect("Card", root, center, center, Vector2.zero, new Vector2(1320f, 600f));
-            UiFactory.Image(card, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
-            RectTransform back = UiFactory.Rect("PortraitBack", card, midLeft, midLeft, new Vector2(34f, 0f), new Vector2(430f, 530f));
-            Image backImage = UiFactory.Image(back, UiFactory.Sprite("UI_Panel"), new Color(0.35f, 0.08f, 0.06f, 0.95f), true);
-            back.gameObject.AddComponent<RectMask2D>();
-            RectTransform portrait = UiFactory.Rect("Portrait", back, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f),
-                new Vector2(420f, 510f));
-            Image portraitImage = UiFactory.Image(portrait, null, Color.white, false);
-            portraitImage.preserveAspect = true;
-            const float textX = 500f;
-            TextMeshProUGUI header = OutlinedLabel("Header", card, topLeft, topLeft, new Vector2(textX, -40f), new Vector2(780f, 50f),
-                "БОСС  •  ВОЛНА 10", 36f, TextAlignmentOptions.Left, s_SubtitleColor, outline);
-            TextMeshProUGUI name = OutlinedLabel("Name", card, topLeft, topLeft, new Vector2(textX, -92f), new Vector2(780f, 120f), "МАТКА",
-                110f, TextAlignmentOptions.Left, Color.white, outline);
-            TextMeshProUGUI tip = OutlinedLabel("Tip", card, topLeft, topLeft, new Vector2(textX, -226f), new Vector2(780f, 210f),
-                "Как бороться", 36f, TextAlignmentOptions.TopLeft, Color.white, outline);
-            tip.enableAutoSizing = true;
-            tip.fontSizeMin = 22f;
-            tip.fontSizeMax = 36f;
-            tip.fontStyle = FontStyles.Normal;
-            Button fight = HudButton("FightButton", card, bottomRight, new Vector2(-40f, 36f), new Vector2(380f, 112f), "В БОЙ!", 54f,
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+
+            RectTransform head = UiFactory.Rect("Head", root, top, top, new Vector2(0f, -30f), new Vector2(1400f, 230f));
+            TextMeshProUGUI header = OutlinedLabel("Header", head, top, top, new Vector2(0f, -8f), new Vector2(1400f, 50f),
+                "БОСС  •  ВОЛНА 10", 36f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            TextMeshProUGUI name = OutlinedLabel("Name", head, top, top, new Vector2(0f, -56f), new Vector2(1400f, 116f), "МАТКА",
+                110f, TextAlignmentOptions.Center, Color.white, outline);
+            OutlinedLabel("Targets", head, top, top, new Vector2(0f, -176f), new Vector2(1400f, 44f),
+                "Идёт к машине. Подойдёшь близко — переключится на тебя!", 30f, TextAlignmentOptions.Center, s_TitleColor, outline);
+
+            var cards = new BossIntroView.Card[c_BossMoveCount];
+            for (int i = 0; i < c_BossMoveCount; i++)
+                cards[i] = BuildBossMoveCard(root, i, outline);
+
+            Button fight = HudButton("FightButton", root, bottom, new Vector2(0f, 30f), new Vector2(400f, 104f), "В БОЙ!", 54f,
                 s_PlayColor, outline);
+            ((RectTransform)fight.transform).pivot = bottom;
 
             var view = root.gameObject.AddComponent<BossIntroView>();
             PrefabBuilder.Wire(view, ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)), ("m_Group", group),
-                ("m_Card", card), ("m_PortraitBack", backImage), ("m_Portrait", portraitImage), ("m_Header", header), ("m_Title", name),
-                ("m_Tip", tip), ("m_FightButton", fight));
+                ("m_Head", head), ("m_Header", header), ("m_Title", name), ("m_FightButton", fight));
             var so = new SerializedObject(view);
+            SerializedProperty cardList = so.FindProperty("m_Cards");
+            cardList.arraySize = cards.Length;
+            for (int i = 0; i < cards.Length; i++)
+            {
+                SerializedProperty c = cardList.GetArrayElementAtIndex(i);
+                c.FindPropertyRelative("Root").objectReferenceValue = cards[i].Root;
+                c.FindPropertyRelative("Group").objectReferenceValue = cards[i].Group;
+                c.FindPropertyRelative("Frame").objectReferenceValue = cards[i].Frame;
+                c.FindPropertyRelative("PictureBack").objectReferenceValue = cards[i].PictureBack;
+                c.FindPropertyRelative("Fx").objectReferenceValue = cards[i].Fx;
+                c.FindPropertyRelative("Pose").objectReferenceValue = cards[i].Pose;
+                c.FindPropertyRelative("Title").objectReferenceValue = cards[i].Title;
+                c.FindPropertyRelative("Text").objectReferenceValue = cards[i].Text;
+                c.FindPropertyRelative("PhaseBadge").objectReferenceValue = cards[i].PhaseBadge;
+            }
             SerializedProperty list = so.FindProperty("m_Bosses");
             list.arraySize = s_BossIntros.Length;
             for (int i = 0; i < s_BossIntros.Length; i++)
             {
                 BossIntro b = s_BossIntros[i];
-                var sheet = AssetDatabase.LoadAssetAtPath<ZombiCar.Characters.CharacterSprites>(
-                    $"{EditorPaths.c_DataCharacters}/{b.Sheet}_Sprites.asset");
-                Sprite[] frames = sheet != null ? sheet.Get(ZombiCar.Characters.CharacterAnim.Idle)?.Frames : null;
                 SerializedProperty e = list.GetArrayElementAtIndex(i);
                 e.FindPropertyRelative("Name").stringValue = b.Name;
-                e.FindPropertyRelative("Portrait").objectReferenceValue = frames != null && frames.Length > 0 ? frames[0] : null;
-                e.FindPropertyRelative("Tip").stringValue = b.Tip;
                 e.FindPropertyRelative("Accent").colorValue = b.Accent;
+                SerializedProperty moves = e.FindPropertyRelative("Abilities");
+                moves.arraySize = b.Moves.Length;
+                for (int m = 0; m < b.Moves.Length; m++)
+                {
+                    BossMove move = b.Moves[m];
+                    SerializedProperty a = moves.GetArrayElementAtIndex(m);
+                    a.FindPropertyRelative("Title").stringValue = move.Title;
+                    a.FindPropertyRelative("Text").stringValue = move.Text;
+                    a.FindPropertyRelative("Pose").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(
+                        $"{EditorPaths.c_CharacterTextures}/{b.Sheet}/{b.Sheet}_{move.Pose}.png");
+                    a.FindPropertyRelative("Fx").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/VFX/{move.Fx}.png");
+                    a.FindPropertyRelative("FxColor").colorValue = move.FxColor;
+                    a.FindPropertyRelative("SecondPhase").boolValue = move.SecondPhase;
+                }
             }
             so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>One ability card: accent frame, dark plate, the picture window (effect behind the boss's pose), name, text.</summary>
+        private static BossIntroView.Card BuildBossMoveCard(RectTransform parent, int index, Material outline)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+            var topRight = new Vector2(1f, 1f);
+            float x = (index - (c_BossMoveCount - 1) * 0.5f) * c_BossCardSpacing;
+            RectTransform card = UiFactory.Rect($"Move{index + 1}", parent, center, center, new Vector2(x, -40f), s_BossCardSize);
+            var group = card.gameObject.AddComponent<CanvasGroup>();
+            Image frame = UiFactory.Image(UiFactory.Stretch("Frame", card), UiFactory.Sprite("UI_Panel"), Color.red, true);
+            RectTransform plateRt = UiFactory.Stretch("Plate", card);
+            plateRt.offsetMin = new Vector2(8f, 8f);
+            plateRt.offsetMax = new Vector2(-8f, -8f);
+            UiFactory.Image(plateRt, UiFactory.Sprite("UI_Panel"), s_BossCardPlate, true);
+
+            RectTransform picture = UiFactory.Rect("Picture", plateRt, top, top, new Vector2(0f, -14f), new Vector2(396f, 290f));
+            Image pictureBack = UiFactory.Image(picture, UiFactory.Sprite("UI_Panel"), Color.gray, true);
+            picture.gameObject.AddComponent<RectMask2D>();
+            RectTransform fxRt = UiFactory.Rect("Fx", picture, center, center, new Vector2(0f, -20f), new Vector2(380f, 380f));
+            var fx = fxRt.gameObject.AddComponent<RawImage>();
+            fx.raycastTarget = false;
+            RectTransform poseRt = UiFactory.Rect("Pose", picture, bottom, bottom, new Vector2(0f, -6f), new Vector2(300f, 290f));
+            Image pose = UiFactory.Image(poseRt, null, Color.white, false);
+            pose.preserveAspect = true;
+
+            TextMeshProUGUI title = OutlinedLabel("Title", plateRt, top, top, new Vector2(0f, -318f), new Vector2(400f, 62f), "НАЗВАНИЕ",
+                42f, TextAlignmentOptions.Center, Color.white, outline);
+            title.enableAutoSizing = true;
+            title.fontSizeMin = 26f;
+            title.fontSizeMax = 42f;
+            TextMeshProUGUI text = OutlinedLabel("Text", plateRt, top, top, new Vector2(0f, -390f), new Vector2(396f, 140f), "Описание",
+                30f, TextAlignmentOptions.Top, Color.white, outline);
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.fontStyle = FontStyles.Normal;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 20f;
+            text.fontSizeMax = 30f;
+
+            RectTransform badge = UiFactory.Rect("PhaseBadge", card, topRight, topRight, new Vector2(10f, 14f), new Vector2(170f, 52f));
+            badge.localRotation = Quaternion.Euler(0f, 0f, -8f);
+            UiFactory.Image(badge, UiFactory.Sprite("UI_Button"), new Color(0.85f, 0.12f, 0.1f, 1f), true);
+            OutlinedLabel("Label", badge, center, center, Vector2.zero, new Vector2(170f, 52f), "2 ФАЗА", 30f, TextAlignmentOptions.Center,
+                Color.white, outline);
+
+            return new BossIntroView.Card
+            {
+                Root = card, Group = group, Frame = frame, PictureBack = pictureBack, Fx = fx, Pose = pose, Title = title, Text = text,
+                PhaseBadge = badge.gameObject,
+            };
         }
 
         // ------------------------------------------------------------------ leaderboard
@@ -981,10 +1172,8 @@ namespace ZombiCar.EditorTools
         private static void BuildVictoryFinale(RectTransform parent, Material outline)
         {
             RectTransform host = UiFactory.Stretch("VictoryFinale", parent);
-            RectTransform sky = UiFactory.Stretch("Fireworks", host);
+            UiFireworks fireworks = BuildFireworks(host);
             var center = new Vector2(0.5f, 0.5f);
-            RectTransform spark = UiFactory.Rect("Spark", sky, center, center, Vector2.zero, new Vector2(16f, 16f));
-            Image sparkImage = UiFactory.Image(spark, UiFactory.Sprite("UI_StickKnob"), Color.white, false);
             RectTransform textRoot = UiFactory.Stretch("Text", host);
             var group = textRoot.gameObject.AddComponent<CanvasGroup>();
             group.blocksRaycasts = group.interactable = false;
@@ -996,7 +1185,19 @@ namespace ZombiCar.EditorTools
             TextMeshProUGUI subtitle = OutlinedLabel("Subtitle", textRoot, center, center, new Vector2(0f, -40f), new Vector2(1500f, 64f),
                 "30 ВОЛН  •  3 БОССА", 46f, TextAlignmentOptions.Center, Color.white, outline);
             PrefabBuilder.Wire(host.gameObject.AddComponent<VictoryFinaleView>(), ("m_Run", Run), ("m_Group", group),
-                ("m_Text", big.rectTransform), ("m_Subtitle", subtitle), ("m_Sky", sky), ("m_SparkTemplate", sparkImage));
+                ("m_Text", big.rectTransform), ("m_Subtitle", subtitle), ("m_Fireworks", fireworks));
+        }
+
+        /// <summary>A fireworks layer over the whole of <paramref name="parent"/> (victory finale, a legendary skin).</summary>
+        private static UiFireworks BuildFireworks(RectTransform parent)
+        {
+            RectTransform sky = UiFactory.Stretch("Fireworks", parent);
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform spark = UiFactory.Rect("Spark", sky, center, center, Vector2.zero, new Vector2(22f, 22f));
+            Image sparkImage = UiFactory.Image(spark, UiFactory.Sprite("UI_Spark"), Color.white, false);
+            var fireworks = sky.gameObject.AddComponent<UiFireworks>();
+            PrefabBuilder.Wire(fireworks, ("m_Sky", sky), ("m_SparkTemplate", sparkImage));
+            return fireworks;
         }
 
         // ------------------------------------------------------------------ workshop

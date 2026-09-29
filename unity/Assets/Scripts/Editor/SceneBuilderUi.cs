@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -66,8 +67,12 @@ namespace ZombiCar.EditorTools
                 "ИГРАТЬ", 52f, s_PlayColor, outline);
             Button settingsButton = HudButton("SettingsButton", main, topRight, new Vector2(columnX, y - buttonHeight - 24f),
                 new Vector2(buttonWidth, buttonHeight), "НАСТРОЙКИ", 46f, Color.white, outline);
-            Button casesButton = HudButton("CasesButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 2f),
-                new Vector2(buttonWidth, buttonHeight), "КЕЙСЫ", 46f, new Color(1f, 0.82f, 0.35f, 1f), outline);
+            // Cases and skins share one row: two half buttons.
+            const float halfWidth = (buttonWidth - 16f) * 0.5f;
+            Button casesButton = HudButton("CasesButton", main, topRight, new Vector2(columnX - halfWidth - 16f, y - (buttonHeight + 24f) * 2f),
+                new Vector2(halfWidth, buttonHeight), "КЕЙСЫ", 40f, new Color(1f, 0.82f, 0.35f, 1f), outline);
+            Button skinsButton = HudButton("SkinsButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 2f),
+                new Vector2(halfWidth, buttonHeight), "СКИНЫ", 40f, new Color(0.72f, 0.5f, 1f, 1f), outline);
             Button leadersButton = HudButton("LeaderboardButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 3f),
                 new Vector2(buttonWidth, buttonHeight), "ТАБЛИЦА ЛИДЕРОВ", 34f, new Color(0.3f, 0.56f, 0.9f, 1f), outline);
             // The coins for the cases: the gold coin and the number, centred under the column.
@@ -79,26 +84,29 @@ namespace ZombiCar.EditorTools
             RectTransform mapScreen = UiFactory.Stretch("MapScreen", safe);
             var mapGroup = mapScreen.gameObject.AddComponent<CanvasGroup>();
             mapGroup.alpha = 0f;
-            Button back = BuildMapSelection(mapScreen, outline);
+            MapRecordsPanel records = BuildMapRecordsPanel(safe, outline);          // over the map screen
+            Button back = BuildMapSelection(mapScreen, outline, records);
             mapScreen.gameObject.SetActive(false);
 
             CasesScreen cases = BuildCasesScreen(safe, outline);
             SettingsPanel settings = BuildSettingsPopup(canvas.transform, outline, false);
             BuildTutorialCards(safe, outline);                         // replayed from the settings
             LeaderboardPanel leaders = BuildLeaderboardPanel(safe, outline);
+            SkinsPanel skins = BuildSkinsPanel(safe, outline, skinsButton);
 
             var menu = canvas.gameObject.AddComponent<MainMenuController>();
             PrefabBuilder.Wire(menu, ("m_PlayButton", play), ("m_SettingsButton", settingsButton), ("m_BackButton", back),
                 ("m_MainScreen", mainGroup), ("m_MapScreen", mapGroup), ("m_Dim", dim), ("m_Settings", settings),
                 ("m_Music", AudioBuilder.Music("Music_Menu")), ("m_CasesButton", casesButton), ("m_Cases", cases),
-                ("m_CoinsLabel", coins), ("m_LeaderboardButton", leadersButton), ("m_Leaderboard", leaders));
+                ("m_CoinsLabel", coins), ("m_LeaderboardButton", leadersButton), ("m_Leaderboard", leaders),
+                ("m_SkinsButton", skinsButton), ("m_Skins", skins));
             SaveUiPrefab(canvas.gameObject, "MainMenu");
             UiFactory.EventSystem();
             AudioBuilder.AddAudio();
             EditorSceneManager.SaveScene(scene, c_MenuScene);
         }
 
-        private static Button BuildMapSelection(RectTransform screen, Material outline)
+        private static Button BuildMapSelection(RectTransform screen, Material outline, MapRecordsPanel records)
         {
             var center = new Vector2(0.5f, 0.5f);
             var top = new Vector2(0.5f, 1f);
@@ -109,8 +117,9 @@ namespace ZombiCar.EditorTools
 
             RectTransform strip = UiFactory.Rect("Cards", screen, center, center, new Vector2(0f, -10f), new Vector2(10f, 10f));
             MapCard city = BuildMapCard(strip, 0, "ГОРОД", outline,
-                DataAssetsBuilder.Load<MapConfig>(DataAssetsBuilder.c_MapConfig), DataAssetsBuilder.Load<MapConfig>(DataAssetsBuilder.c_NightMapConfig));
-            MapCard farm = BuildMapCard(strip, 1, "ФЕРМА", outline, null, null);
+                DataAssetsBuilder.Load<MapConfig>(DataAssetsBuilder.c_MapConfig), DataAssetsBuilder.Load<MapConfig>(DataAssetsBuilder.c_NightMapConfig),
+                records);
+            MapCard farm = BuildMapCard(strip, 1, "ФЕРМА", outline, null, null, null);
 
             Button prev = ArrowButton("PrevButton", screen, new Vector2(-600f, -10f), true);
             Button next = ArrowButton("NextButton", screen, new Vector2(600f, -10f), false);
@@ -132,7 +141,8 @@ namespace ZombiCar.EditorTools
             return back;
         }
 
-        private static MapCard BuildMapCard(RectTransform strip, int index, string title, Material outline, MapConfig day, MapConfig night)
+        private static MapCard BuildMapCard(RectTransform strip, int index, string title, Material outline, MapConfig day, MapConfig night,
+            MapRecordsPanel records)
         {
             var center = new Vector2(0.5f, 0.5f);
             var top = new Vector2(0.5f, 1f);
@@ -193,12 +203,281 @@ namespace ZombiCar.EditorTools
             play.interactable = !locked;
             if (locked)
                 play.gameObject.AddComponent<CanvasGroup>().alpha = 0.4f;   // clearly unavailable
+            // "РЕКОРДЫ" hangs under the card (moves with it when the cards slide).
+            Button recordsButton = null;
+            if (!locked)
+            {
+                recordsButton = HudButton("RecordsButton", card, bottom, new Vector2(0f, -92f), new Vector2(400f, 76f), "РЕКОРДЫ", 34f,
+                    new Color(1f, 0.78f, 0.28f, 1f), outline);
+                var recordsRt = (RectTransform)recordsButton.transform;
+                recordsRt.pivot = bottom;
+                RectTransform trophy = UiFactory.Rect("Trophy", recordsRt, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(22f, 0f),
+                    new Vector2(58f, 58f));
+                UiFactory.Image(trophy, UiFactory.Sprite("UI_Icon_Trophy"), Color.white, false).preserveAspect = true;
+            }
             var mapCard = card.gameObject.AddComponent<MapCard>();
             PrefabBuilder.Wire(mapCard, ("m_DayMap", day), ("m_NightMap", night), ("m_NightPicture", nightGroup),
                 ("m_DayButton", dayButton), ("m_NightButton", nightButton), ("m_DayButtonPlate", dayPlate),
                 ("m_NightButtonPlate", nightPlate), ("m_PlayButton", play),
-                ("m_BeatenBadge", badge != null ? badge.gameObject : null));
+                ("m_BeatenBadge", badge != null ? badge.gameObject : null), ("m_RecordsButton", recordsButton), ("m_Records", records));
+            var cardSo = new SerializedObject(mapCard);
+            cardSo.FindProperty("m_Title").stringValue = title;
+            cardSo.ApplyModifiedPropertiesWithoutUndo();
             return mapCard;
+        }
+
+        // ------------------------------------------------------------------ map records
+        private static readonly Vector2 s_RecordTile = new Vector2(330f, 140f);
+
+        /// <summary>
+        /// "РЕКОРДЫ" window (hidden): the map and time of day, six picture tiles in two rows (best time, victories, best
+        /// wave / most zombies, most bosses, runs) and "ЗАКРЫТЬ"; a click beside the window closes it too.
+        /// </summary>
+        private static MapRecordsPanel BuildMapRecordsPanel(RectTransform parent, Material outline)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+            RectTransform root = UiFactory.Stretch("MapRecords", parent);
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            Image dim = UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.7f), false, true);
+            var backdrop = root.gameObject.AddComponent<Button>();
+            backdrop.targetGraphic = dim;
+            backdrop.transition = Selectable.Transition.None;
+            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, new Vector2(1140f, 660f));
+            UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
+            RectTransform trophy = UiFactory.Rect("Trophy", window, top, center, new Vector2(-250f, -70f), new Vector2(84f, 84f));
+            UiFactory.Image(trophy, UiFactory.Sprite("UI_Icon_Trophy"), Color.white, false).preserveAspect = true;
+            OutlinedLabel("Title", window, top, top, new Vector2(40f, -28f), new Vector2(460f, 84f), "РЕКОРДЫ", 64f,
+                TextAlignmentOptions.Center, new Color(1f, 0.8f, 0.3f, 1f), outline);
+            TextMeshProUGUI subtitle = OutlinedLabel("Subtitle", window, top, top, new Vector2(0f, -112f), new Vector2(900f, 44f),
+                "ГОРОД  •  ДЕНЬ", 32f, TextAlignmentOptions.Center, new Color(0.82f, 0.8f, 0.76f, 1f), outline);
+
+            (string icon, string caption, Color color)[] specs =
+            {
+                ("UI_Icon_Stopwatch", "ЛУЧШЕЕ ВРЕМЯ", new Color(1f, 0.85f, 0.4f, 1f)),
+                ("UI_Icon_Trophy", "ПОБЕД", new Color(1f, 0.85f, 0.4f, 1f)),
+                ("UI_Icon_Flag", "ЛУЧШАЯ ВОЛНА", Color.white),
+                ("UI_Icon_Skull", "ЗОМБИ ЗА ЗАБЕГ", Color.white),
+                ("UI_Icon_Boss", "БОССОВ ЗА ЗАБЕГ", new Color(1f, 0.55f, 0.45f, 1f)),
+                ("UI_Icon_Reload", "ЗАБЕГОВ", new Color(0.6f, 0.9f, 1f, 1f)),
+            };
+            var tiles = new RectTransform[specs.Length];
+            var values = new TextMeshProUGUI[specs.Length];
+            for (int i = 0; i < specs.Length; i++)
+            {
+                float x = (i % 3 - 1) * (s_RecordTile.x + 24f);
+                float y = -250f - (i / 3) * (s_RecordTile.y + 22f);
+                tiles[i] = RecordTile(window, new Vector2(x, y), specs[i].icon, specs[i].caption, specs[i].color, outline, out values[i]);
+            }
+            Button close = HudButton("CloseButton", window, bottom, new Vector2(0f, 30f), new Vector2(340f, 92f), "ЗАКРЫТЬ", 40f,
+                s_PlayColor, outline);
+            ((RectTransform)close.transform).pivot = bottom;
+
+            var panel = root.gameObject.AddComponent<MapRecordsPanel>();
+            PrefabBuilder.Wire(panel, ("m_Group", group), ("m_Window", window), ("m_Subtitle", subtitle), ("m_Time", values[0]),
+                ("m_Wins", values[1]), ("m_Wave", values[2]), ("m_Kills", values[3]), ("m_Bosses", values[4]), ("m_Runs", values[5]),
+                ("m_CloseButton", close), ("m_Backdrop", backdrop),
+                ("m_Waves", DataAssetsBuilder.Load<ZombiCar.Waves.WaveConfig>(DataAssetsBuilder.c_WaveConfig)));
+            CharacterBuilder.SetProps(panel, ("m_Tiles", tiles.Cast<Object>().ToArray()));
+            group.alpha = 0f;
+            group.blocksRaycasts = group.interactable = false;
+            return panel;
+        }
+
+        private static RectTransform RecordTile(RectTransform parent, Vector2 pos, string icon, string caption, Color valueColor,
+            Material outline, out TextMeshProUGUI value)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var midLeft = new Vector2(0f, 0.5f);
+            var topLeft = new Vector2(0f, 1f);
+            var bottomLeft = new Vector2(0f, 0f);
+            RectTransform tile = UiFactory.Rect(caption, parent, top, new Vector2(0.5f, 0.5f), pos, s_RecordTile);
+            UiFactory.Image(tile, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.7f), true);
+            RectTransform iconRt = UiFactory.Rect("Icon", tile, midLeft, midLeft, new Vector2(16f, 6f), new Vector2(96f, 96f));
+            UiFactory.Image(iconRt, UiFactory.Sprite(icon), Color.white, false).preserveAspect = true;
+            value = OutlinedLabel("Value", tile, topLeft, topLeft, new Vector2(124f, -14f), new Vector2(196f, 70f), "0", 58f,
+                TextAlignmentOptions.Left, valueColor, outline);
+            value.enableAutoSizing = true;
+            value.fontSizeMin = 28f;
+            value.fontSizeMax = 58f;
+            value.richText = true;
+            TextMeshProUGUI label = OutlinedLabel("Caption", tile, bottomLeft, bottomLeft, new Vector2(124f, 14f), new Vector2(196f, 40f),
+                caption, 22f, TextAlignmentOptions.Left, new Color(0.82f, 0.8f, 0.76f, 1f), outline);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 14f;
+            label.fontSizeMax = 22f;
+            return tile;
+        }
+
+        // ------------------------------------------------------------------ skins ("СКИНЫ")
+        private const int c_CharacterCards = 5;
+        private static readonly Vector2 s_CharacterCard = new Vector2(220f, 330f);
+        private static readonly string[] s_SkinTabs = { "ПЕРСОНАЖИ", "ОРУЖИЕ", "ТОПОР", "ЭФФЕКТ ПУЛЬ" };
+        private static readonly Color s_TabOff = new Color(0.14f, 0.15f, 0.19f, 0.95f);
+
+        /// <summary>
+        /// "СКИНЫ" window (hidden): four tabs (ПЕРСОНАЖИ, ОРУЖИЕ, ТОПОР, ЭФФЕКТ ПУЛЬ) with a count of new skins on the
+        /// collection ones; the characters page (the hero's card with the breathing portrait, four dark "?" cards and the
+        /// "В РАЗРАБОТКЕ :)" bubble) and the collection page (a hint and a 5-column grid of skin tiles); "ЗАКРЫТЬ" or a
+        /// click beside the window closes it. The count of all new skins also goes on the menu's СКИНЫ button.
+        /// </summary>
+        private static SkinsPanel BuildSkinsPanel(RectTransform parent, Material outline, Button menuButton)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+            RectTransform root = UiFactory.Stretch("SkinsPanel", parent);
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            Image dim = UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.7f), false, true);
+            var backdrop = root.gameObject.AddComponent<Button>();
+            backdrop.targetGraphic = dim;
+            backdrop.transition = Selectable.Transition.None;
+            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, new Vector2(1340f, 850f));
+            UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
+            OutlinedLabel("Title", window, top, top, new Vector2(0f, -20f), new Vector2(900f, 80f), "СКИНЫ", 62f,
+                TextAlignmentOptions.Center, new Color(0.8f, 0.65f, 1f, 1f), outline);
+
+            // Tabs.
+            var tabs = new Button[s_SkinTabs.Length];
+            var plates = new Image[s_SkinTabs.Length];
+            var badges = new GameObject[s_SkinTabs.Length];
+            var counts = new TMP_Text[s_SkinTabs.Length];
+            for (int i = 0; i < s_SkinTabs.Length; i++)
+            {
+                float x = (i - (s_SkinTabs.Length - 1) * 0.5f) * 306f;
+                RectTransform tab = UiFactory.Rect($"Tab{i}", window, top, top, new Vector2(x, -108f), new Vector2(290f, 70f));
+                plates[i] = UiFactory.Image(tab, UiFactory.Sprite("UI_Button"), s_TabOff, true, true);
+                TextMeshProUGUI tabLabel = OutlinedLabel("Label", tab, center, center, Vector2.zero, new Vector2(260f, 66f), s_SkinTabs[i], 30f,
+                    TextAlignmentOptions.Center, Color.white, outline);
+                tabLabel.enableAutoSizing = true;
+                tabLabel.fontSizeMin = 20f;
+                tabLabel.fontSizeMax = 30f;
+                tabs[i] = tab.gameObject.AddComponent<Button>();
+                tabs[i].targetGraphic = plates[i];
+                (badges[i], counts[i]) = CountBadge(tab, outline);
+            }
+
+            // Characters page.
+            RectTransform characters = UiFactory.Stretch("CharactersPage", window);
+            Button hero = null;
+            var locked = new Button[c_CharacterCards - 1];
+            for (int i = 0; i < c_CharacterCards; i++)
+            {
+                float x = (i - (c_CharacterCards - 1) * 0.5f) * (s_CharacterCard.x + 28f);
+                RectTransform card = UiFactory.Rect(i == 0 ? "Hero" : $"Locked{i}", characters, top, top, new Vector2(x, -250f), s_CharacterCard);
+                Button button = i == 0 ? HeroCard(card, outline) : LockedCard(card, outline);
+                if (i == 0)
+                    hero = button;
+                else
+                    locked[i - 1] = button;
+            }
+
+            // Collection page.
+            RectTransform collection = UiFactory.Stretch("CollectionPage", window);
+            OutlinedLabel("Hint", collection, top, top, new Vector2(0f, -196f), new Vector2(1000f, 40f), "НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ", 28f,
+                TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            RectTransform grid = UiFactory.Rect("Grid", collection, top, top, new Vector2(0f, -248f), new Vector2(1220f, 460f));
+            var layout = grid.gameObject.AddComponent<GridLayoutGroup>();
+            layout.cellSize = new Vector2(c_TileSize, c_TileSize);
+            layout.spacing = new Vector2(20f, 16f);
+            layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            layout.constraintCount = 5;
+            layout.childAlignment = TextAnchor.UpperCenter;
+            ItemTile template = BuildItemTile(grid, "TileTemplate", outline, true);
+            collection.gameObject.SetActive(false);
+
+            // The bubble: placed over the tapped "?" card by the panel.
+            RectTransform bubble = UiFactory.Rect("Bubble", window, center, bottom, Vector2.zero, new Vector2(380f, 74f));
+            var bubbleGroup = bubble.gameObject.AddComponent<CanvasGroup>();
+            bubbleGroup.blocksRaycasts = bubbleGroup.interactable = false;
+            UiFactory.Image(bubble, UiFactory.Sprite("UI_Button"), new Color(1f, 0.6f, 0.15f, 1f), true);
+            TextMeshProUGUI bubbleText = OutlinedLabel("Text", bubble, center, center, Vector2.zero, new Vector2(360f, 70f), "В РАЗРАБОТКЕ :)",
+                34f, TextAlignmentOptions.Center, Color.white, outline);
+
+            Button close = HudButton("CloseButton", window, bottom, new Vector2(0f, 26f), new Vector2(340f, 92f), "ЗАКРЫТЬ", 40f,
+                s_PlayColor, outline);
+            ((RectTransform)close.transform).pivot = bottom;
+
+            (GameObject menuBadge, TMP_Text menuCount) = CountBadge((RectTransform)menuButton.transform, outline);
+
+            var panel = root.gameObject.AddComponent<SkinsPanel>();
+            PrefabBuilder.Wire(panel, ("m_Catalog", CosmeticsBuilder.Catalog), ("m_Group", group), ("m_Window", window),
+                ("m_CloseButton", close), ("m_Backdrop", backdrop), ("m_MenuBadge", menuBadge), ("m_MenuBadgeCount", menuCount),
+                ("m_CharactersPage", characters.gameObject), ("m_HeroCard", hero), ("m_Bubble", bubbleGroup), ("m_BubbleText", bubbleText),
+                ("m_CollectionPage", collection.gameObject), ("m_Grid", grid), ("m_TileTemplate", template));
+            CharacterBuilder.SetProps(panel, ("m_LockedCards", locked.Cast<Object>().ToArray()), ("m_Tabs", tabs.Cast<Object>().ToArray()),
+                ("m_TabPlates", plates.Cast<Object>().ToArray()), ("m_TabBadges", badges.Cast<Object>().ToArray()),
+                ("m_TabBadgeCounts", counts.Cast<Object>().ToArray()),
+                ("m_SlotIcons", new Object[] { UiFactory.Sprite("UI_Icon_Rifle"), UiFactory.Sprite("UI_Icon_Axe"), UiFactory.Sprite("UI_AmmoIcon") }));
+            group.alpha = 0f;
+            group.blocksRaycasts = group.interactable = false;
+            return panel;
+        }
+
+        // A small orange disc with a number in the top right corner of a button (new skins).
+        private static (GameObject, TMP_Text) CountBadge(RectTransform parent, Material outline)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            var topRight = new Vector2(1f, 1f);
+            RectTransform badge = UiFactory.Rect("NewBadge", parent, topRight, center, new Vector2(-10f, -8f), new Vector2(46f, 46f));
+            UiFactory.Image(badge, UiFactory.Sprite("UI_StickKnob"), new Color(1f, 0.45f, 0.1f, 1f), false);
+            TextMeshProUGUI count = OutlinedLabel("Count", badge, center, center, Vector2.zero, new Vector2(46f, 46f), "1", 28f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            badge.gameObject.SetActive(false);
+            return (badge.gameObject, count);
+        }
+
+        // The hero: the HUD's breathing portrait in the metal frame, his name and "ВЫБРАН".
+        private static Button HeroCard(RectTransform card, Material outline)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+            Image plate = UiFactory.Image(card, UiFactory.Sprite("UI_Panel"), new Color(0.93f, 0.47f, 0.13f, 1f), true, true);
+            RectTransform inner = UiFactory.Stretch("Inner", card);
+            inner.offsetMin = new Vector2(6f, 6f);
+            inner.offsetMax = new Vector2(-6f, -6f);
+            UiFactory.Image(inner, UiFactory.Sprite("UI_Panel"), new Color(0.08f, 0.09f, 0.12f, 1f), true);
+            const float w = 196f, h = w * 472f / 533f;                     // the metal frame's aspect
+            RectTransform portrait = UiFactory.Rect("Portrait", card, top, top, new Vector2(0f, -14f), new Vector2(w, h));
+            Image back = UiFactory.Image(portrait, UiFactory.Sprite("UI_HpPortraitBack"), Color.white, false);
+            back.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+            Sprite[] frames = Enumerable.Range(0, 64).Select(i => UiFactory.Sprite($"UI_PortraitIdle_{i:00}")).TakeWhile(s => s != null).ToArray();
+            Image face = UiFactory.Image(UiFactory.Stretch("Face", portrait), frames.FirstOrDefault(), Color.white, false);
+            CharacterBuilder.SetProps(face.gameObject.AddComponent<UiFrameAnimation>(), ("m_Frames", frames.Cast<Object>().ToArray()), ("m_Fps", 8f));
+            UiFactory.Image(UiFactory.Stretch("Frame", portrait), UiFactory.Sprite("UI_HpFrameMetal"), Color.white, false);
+            OutlinedLabel("Name", card, top, top, new Vector2(0f, -200f), new Vector2(206f, 44f), "ВЫЖИВШИЙ", 32f,
+                TextAlignmentOptions.Center, Color.white, outline).enableAutoSizing = true;
+            RectTransform badge = UiFactory.Rect("Selected", card, bottom, bottom, new Vector2(0f, 18f), new Vector2(170f, 52f));
+            UiFactory.Image(badge, UiFactory.Sprite("UI_Button"), new Color(0.3f, 0.75f, 0.3f, 1f), true);
+            OutlinedLabel("Label", badge, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(170f, 52f), "ВЫБРАН",
+                30f, TextAlignmentOptions.Center, Color.white, outline);
+            var button = card.gameObject.AddComponent<Button>();
+            button.targetGraphic = plate;
+            card.gameObject.AddComponent<UIButtonFx>();
+            return button;
+        }
+
+        // A character still to come: a dark card with a big "?".
+        private static Button LockedCard(RectTransform card, Material outline)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            var bottom = new Vector2(0.5f, 0f);
+            Image plate = UiFactory.Image(card, UiFactory.Sprite("UI_Panel"), new Color(0.2f, 0.21f, 0.25f, 1f), true, true);
+            RectTransform inner = UiFactory.Stretch("Inner", card);
+            inner.offsetMin = new Vector2(6f, 6f);
+            inner.offsetMax = new Vector2(-6f, -6f);
+            UiFactory.Image(inner, UiFactory.Sprite("UI_Panel"), new Color(0.06f, 0.06f, 0.08f, 1f), true);
+            OutlinedLabel("Question", card, center, center, new Vector2(0f, 30f), new Vector2(200f, 200f), "?", 170f,
+                TextAlignmentOptions.Center, new Color(0.55f, 0.56f, 0.62f, 1f), outline);
+            OutlinedLabel("Name", card, bottom, bottom, new Vector2(0f, 22f), new Vector2(200f, 44f), "???", 32f,
+                TextAlignmentOptions.Center, new Color(0.55f, 0.56f, 0.62f, 1f), outline);
+            var button = card.gameObject.AddComponent<Button>();
+            button.targetGraphic = plate;
+            ColorBlock colors = button.colors;
+            colors.highlightedColor = new Color(1.2f, 1.2f, 1.2f, 1f);
+            button.colors = colors;
+            return button;
         }
 
         private static (Button, Image) ToggleButton(string name, RectTransform parent, Vector2 pos, string icon, string label, Material outline)
@@ -467,8 +746,16 @@ namespace ZombiCar.EditorTools
             RectTransform hp = UiFactory.Rect("HealthPanel", safe, topLeft, topLeft, new Vector2(margin, -margin),
                 new Vector2(hpHeight * 2006f / 565f, hpHeight));
             Part(hp, "Panel", "UI_HpPanel", 560, 85, 2080, 625, s_HpRef);
-            Part(hp, "Portrait", "UI_HpPortrait", 55, 35, 690, 645, s_HpRef);
-            Part(hp, "PortraitFrame", "UI_HpFrame", 55, 35, 690, 645, s_HpRef);
+            // The portrait breathes: the idle take's head and shoulders (UI_PortraitIdle_*, tools/characters/player_mp4/
+            // portrait_idle.py) looped in the metal frame's opening (ram/rrr.png; the slot keeps the frame's 1.13 aspect).
+            Image portraitBack = Part(hp, "Portrait", "UI_HpPortraitBack", 55, 59, 690, 621, s_HpRef);
+            portraitBack.gameObject.AddComponent<Mask>().showMaskGraphic = true;
+            Sprite[] portraitFrames = Enumerable.Range(0, 64).Select(i => UiFactory.Sprite($"UI_PortraitIdle_{i:00}"))
+                .TakeWhile(s => s != null).ToArray();
+            Image face = UiFactory.Image(UiFactory.Stretch("Face", portraitBack.rectTransform), portraitFrames.FirstOrDefault(), Color.white, false);
+            CharacterBuilder.SetProps(face.gameObject.AddComponent<UiFrameAnimation>(), ("m_Frames", portraitFrames.Cast<Object>().ToArray()),
+                ("m_Fps", 8f));
+            Part(hp, "PortraitFrame", "UI_HpFrameMetal", 55, 59, 690, 621, s_HpRef);
             TextMeshProUGUI healthLabel = PartLabel(hp, "HealthLabel", 730, 150, 1320, 265, s_HpRef, "ЗДОРОВЬЕ", 34f, TextAlignmentOptions.Left, outline);
             RectTransform healthTrack = PartRect(hp, "HealthBar", 706, 277, 2022, 420, s_HpRef);
             UiFactory.Image(healthTrack, UiFactory.Sprite("UI_BarTrack"), Color.white, true);
@@ -523,8 +810,7 @@ namespace ZombiCar.EditorTools
             gearRt.gameObject.AddComponent<UIButtonFx>();
 
             // Scrap and kills under the health panel; the interaction prompt at the bottom.
-            RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue,
-                out TextMeshProUGUI killsValue);
+            RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue);
             BuildPerkTray(safe, outline, margin + hpHeight + 12f + 58f + 14f);
             BuildInteractionPrompt(safe, outline);
             WaveBanner banner = BuildWaveBanner(safe, outline);
@@ -547,7 +833,7 @@ namespace ZombiCar.EditorTools
                 ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
                 ("m_WaveState", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_AmmoState", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)),
-                ("m_Run", Run), ("m_MoneyValue", moneyValue), ("m_KillsValue", killsValue), ("m_MoneyPanel", moneyPanel),
+                ("m_Run", Run), ("m_MoneyValue", moneyValue), ("m_MoneyPanel", moneyPanel),
                 ("m_HealthFill", healthFill), ("m_HealthValue", healthValue), ("m_LevelFill", levelFill), ("m_LevelLabel", levelLabel),
                 ("m_WaveLabel", waveLabel), ("m_WaveTimer", waveTimer), ("m_AmmoValue", ammoValue), ("m_AmmoPanel", ammo),
                 ("m_ReloadHint", reload.gameObject),

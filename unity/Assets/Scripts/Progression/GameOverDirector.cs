@@ -84,6 +84,9 @@ namespace ZombiCar.Progression
             if (m_Director != null)
                 m_Director.enabled = false;
             AudioManager.PlayMusic(null);
+            if (m_Run.Map != null)
+                MetaProgress.RecordRun(m_Run.Map.name, m_Run.Wave, m_Run.Kills, m_Run.BossKills, outcome == RunOutcome.Victory,
+                    !m_Run.WasRevived);
             if (outcome == RunOutcome.Victory)
             {
                 // Only a victory goes to the "best time" leaderboard (a defeat sends nothing).
@@ -100,7 +103,8 @@ namespace ZombiCar.Progression
             else
             {
                 CameraShake.Add(outcome == RunOutcome.Victory ? 0.2f : 0.5f);
-                StartCoroutine(Freeze(m_FreezeDelay));
+                // A defeat pauses almost at once: the defeat screen is already up, nothing should go on behind it.
+                StartCoroutine(Freeze(outcome == RunOutcome.Victory ? m_FreezeDelay : Mathf.Min(m_FreezeDelay, 0.25f)));
             }
         }
 

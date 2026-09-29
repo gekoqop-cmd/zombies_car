@@ -17,6 +17,7 @@ namespace ZombiCar.EditorTools
         private static readonly Color s_Survival = new Color(0.86f, 0.27f, 0.25f);
         private static readonly Color s_Axe = new Color(0.72f, 0.47f, 0.27f);
         private static readonly Color s_Run = new Color(0.93f, 0.76f, 0.24f);
+        private static readonly Color s_Legendary = new Color(1f, 0.78f, 0.2f);
 
         private static Sprite Icon(string name) => UiFactory.Sprite("UI_Icon_" + name);
 
@@ -63,6 +64,11 @@ namespace ZombiCar.EditorTools
             new Perk("scrap", "БАРАХОЛЬЩИК", "Металлолома +{1}%", Icon("ScrapGain"), s_Run, StatEffect.MoneyGain, 0.2f, 3, 0.9f, 0.05f),
             new Perk("xp", "СМЕКАЛКА", "Опыта +{1}%", Icon("Xp"), s_Run, StatEffect.XpGain, 0.15f, 3, 0.9f, 0.05f),
             new Perk("boom", "ПИРОТЕХНИК", "Взрывы бочек: радиус +25%,\nурон +50%", Icon("Bomb"), s_Run, StatEffect.ExplosionPower, 1f, 3, 0.8f),
+
+            // The legendary card: sure to be offered once in a run (from level 5), taken once, at its maximum at once.
+            // Strong but not a win button: about two good gun cards in one.
+            new Perk("legend_gold", "ЗОЛОТАЯ ЛИХОРАДКА", "Урон оружия +35%\nи скорострельность +25%", Icon("Damage"), s_Legendary,
+                StatEffect.WeaponDamage, 0.35f, 1, 0f).AsLegendary(StatEffect.FireRate, 0.25f),
         };
 
         // Car upgrades. Every level gives more than the one before (value + step × level; the tile shows the next

@@ -82,6 +82,55 @@ namespace ZombiCar.Core
             return record;
         }
 
+        /// <summary>A map's bests over all its runs (the map records window).</summary>
+        public readonly struct MapRecords
+        {
+            public readonly int Runs, Wins, BestWave, BestKills, BestBosses;
+            public readonly float BestTime;
+
+            public MapRecords(int runs, int wins, int bestWave, int bestKills, int bestBosses, float bestTime)
+            {
+                Runs = runs;
+                Wins = wins;
+                BestWave = bestWave;
+                BestKills = bestKills;
+                BestBosses = bestBosses;
+                BestTime = bestTime;
+            }
+        }
+
+        private const string c_RecordKey = "meta.record.";
+
+        private static int GetRecord(string map, string what) => PlayerPrefs.GetInt($"{c_RecordKey}{what}.{map}", 0);
+
+        private static void KeepMax(string map, string what, int value)
+        {
+            if (value > GetRecord(map, what))
+                PlayerPrefs.SetInt($"{c_RecordKey}{what}.{map}", value);
+        }
+
+        public static MapRecords Records(string map) => new MapRecords(GetRecord(map, "runs"), GetRecord(map, "wins"),
+            GetRecord(map, "wave"), GetRecord(map, "kills"), GetRecord(map, "bosses"), BestTime(map));
+
+        /// <summary>
+        /// Counts a finished run on <paramref name="map"/> and keeps its bests (wave reached, zombies, bosses). A revived
+        /// run that ends again is counted again only in its bests (<paramref name="firstEnd"/> false).
+        /// </summary>
+        public static void RecordRun(string map, int wave, int kills, int bosses, bool victory, bool firstEnd)
+        {
+            if (string.IsNullOrEmpty(map))
+                return;
+            if (firstEnd)
+                PlayerPrefs.SetInt($"{c_RecordKey}runs.{map}", GetRecord(map, "runs") + 1);
+            if (victory)
+                PlayerPrefs.SetInt($"{c_RecordKey}wins.{map}", GetRecord(map, "wins") + 1);
+            KeepMax(map, "wave", wave);
+            KeepMax(map, "kills", kills);
+            KeepMax(map, "bosses", bosses);
+            PlayerPrefs.Save();
+            Changed?.Invoke();
+        }
+
         /// <summary>The menu opens the cases screen when it loads (the victory screen's "К КЕЙСАМ"); not saved.</summary>
         public static bool OpenCasesOnMenu { get; set; }
 

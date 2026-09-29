@@ -11,8 +11,9 @@ namespace ZombiCar.UI
     /// <summary>
     /// Roguelike level-up choice (HUD scene): whenever the run has a level-up waiting (<see cref="RunState"/>), the
     /// game pauses and three random cards from the <see cref="PerkPool"/> fly in; a click (or 1 / 2 / 3 on the
-    /// keyboard) takes one. "ПЕРЕБРОСИТЬ" deals a new hand for scrap (50, then +50 per reroll of the run). Several
-    /// level-ups in a row deal a new hand each; the game goes on after the last one.
+    /// keyboard) takes one. From <see cref="PerkPool.LegendaryFromLevel"/> on, the run's legendary card is in every hand
+    /// until it is taken (<see cref="PerkPool.OfferLegendary"/>). "ПЕРЕБРОСИТЬ" deals a new hand for a rewarded ad.
+    /// Several level-ups in a row deal a new hand each; the game goes on after the last one.
     /// Never shown once the run is over.
     /// </summary>
     public sealed class LevelUpScreen : MonoBehaviour
@@ -27,15 +28,8 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_Subtitle;
         [SerializeField] private PerkCardView[] m_Cards = System.Array.Empty<PerkCardView>();
         [Header("Reroll")]
-        [Tooltip("\"ПЕРЕБРОСИТЬ • 50\": deals a new hand for scrap.")]
+        [Tooltip("\"ПЕРЕБРОСИТЬ\" with the ad icon: deals a new hand for a rewarded ad.")]
         [SerializeField] private UnityEngine.UI.Button m_RerollButton;
-        [SerializeField] private TMP_Text m_RerollLabel;
-        [SerializeField] private UnityEngine.UI.Image m_RerollPlate;
-        [Tooltip("The first reroll of a run costs this; every next one this much more (50 → 100 → 150 ...).")]
-        [SerializeField, Min(0)] private int m_RerollBase = 50;
-        [SerializeField, Min(0)] private int m_RerollStep = 50;
-        [SerializeField] private Color m_RerollColor = new Color(0.3f, 0.56f, 0.9f, 1f);
-        [SerializeField] private Color m_RerollDisabled = new Color(0.33f, 0.33f, 0.36f, 1f);
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.2f;
         [SerializeField, Min(0.01f)] private float m_CardTime = 0.35f;
         [SerializeField, Min(0f)] private float m_CardStagger = 0.09f;
@@ -46,6 +40,7 @@ namespace ZombiCar.UI
         private float m_DealTime;
         private int m_Picked = -1;
         private float m_PickStart;
+        private bool m_WaitingForAd;
 
         /// <summary>The cards are on screen (tests).</summary>
         public bool IsOpen => m_Open;
@@ -98,6 +93,7 @@ namespace ZombiCar.UI
         private void Deal()
         {
             m_Pool.Draw(m_Run, Mathf.Min(m_Config.CardsPerLevelUp, m_Cards.Length), m_Hand);
+            m_Pool.OfferLegendary(m_Run, m_Stats != null ? m_Stats.Level : 1, m_Hand);
             if (m_Hand.Count == 0)
             {
                 while (m_Run.PendingLevelUps > 0)            // every perk is maxed out: nothing to offer
@@ -130,32 +126,39 @@ namespace ZombiCar.UI
             Dealt?.Invoke();
         }
 
-        /// <summary>Scrap the next reroll costs (it grows with every reroll of the run).</summary>
-        public int RerollCost => m_RerollBase + m_RerollStep * m_Run.Rerolls;
-
-        /// <summary>Pays for a new hand of cards (button, tests); false when the scrap is not enough.</summary>
+        /// <summary>
+        /// A new hand of cards for a rewarded ad (button, tests): dealt when the platform confirms the reward (a closed or
+        /// failed video changes nothing); false when a new hand cannot be asked for now.
+        /// </summary>
         public bool Reroll()
         {
-            if (!m_Open || m_Picked >= 0 || !m_Run.TryReroll(RerollCost))
+            if (!m_Open || m_Picked >= 0 || m_WaitingForAd)
             {
                 AudioManager.PlaySfx(Sound.UiDenied);
                 return false;
             }
-            Debug.Log($"[LevelUpScreen] Rerolled (#{m_Run.Rerolls}), scrap left {m_Run.Money}.");
-            Deal();
+            m_WaitingForAd = true;
+            RefreshReroll();
+            YandexSdk.ShowRewardedAd(rewarded =>
+            {
+                m_WaitingForAd = false;
+                if (this == null)
+                    return;
+                if (rewarded && m_Open && m_Picked < 0 && m_Run.TryReroll(0))
+                {
+                    Debug.Log($"[LevelUpScreen] Rerolled for an ad (#{m_Run.Rerolls}).");
+                    Deal();
+                }
+                else
+                    RefreshReroll();
+            });
             return true;
         }
 
         private void RefreshReroll()
         {
-            if (m_RerollButton == null)
-                return;
-            int cost = RerollCost;
-            bool can = m_Open && m_Picked < 0 && m_Run.Money >= cost;
-            m_RerollButton.interactable = can;
-            if (m_RerollPlate != null)
-                m_RerollPlate.color = can ? m_RerollColor : m_RerollDisabled;
-            m_RerollLabel.SetText($"ПЕРЕБРОСИТЬ • {cost}");
+            if (m_RerollButton != null)
+                m_RerollButton.interactable = m_Open && m_Picked < 0 && !m_WaitingForAd;
         }
 
         /// <summary>Takes the card at <paramref name="index"/> (clicks, number keys, tests).</summary>
@@ -168,7 +171,7 @@ namespace ZombiCar.UI
             m_Picked = index;
             m_PickStart = Time.unscaledTime;
             RefreshReroll();
-            AudioManager.PlaySfx(Sound.CardPick);
+            AudioManager.PlaySfx(m_Hand[index].Legendary ? Sound.LegendaryDrop : Sound.CardPick);
             Picked?.Invoke(m_Hand[index]);
         }
 

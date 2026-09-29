@@ -144,7 +144,7 @@ namespace ZombiCar.UI
             {
                 if (!rewarded || this == null || m_Run.LevelOf(supply) >= supply.AdUsesPerRun || !m_Run.GrantUpgrade(supply))
                     return;
-                AudioManager.PlaySfx(Sound.UiBuy);
+                AudioManager.PlaySfx(BoughtSound(supply));
                 Debug.Log($"[WorkshopScreen] {supply.Id} for an ad (#{m_Run.LevelOf(supply)} of {supply.AdUsesPerRun}).");
                 if (row != null)
                     row.Punch();
@@ -162,7 +162,7 @@ namespace ZombiCar.UI
                 Refused?.Invoke();
                 return false;
             }
-            AudioManager.PlaySfx(Sound.UiBuy);
+            AudioManager.PlaySfx(BoughtSound(upgrade));
             Debug.Log($"[WorkshopScreen] Bought {upgrade.Id} (#{m_Run.LevelOf(upgrade)}), scrap left {m_Run.Money}.");
             if (row != null)
                 row.Punch();
@@ -170,6 +170,21 @@ namespace ZombiCar.UI
             Bought?.Invoke(upgrade);
             return true;
         }
+
+        /// <summary>Each upgrade and supply has its own sound (what it does, then the "upgraded" sting).</summary>
+        public static Sound BoughtSound(CarUpgrade upgrade) => upgrade.Effect switch
+        {
+            StatEffect.CarArmor => Sound.UpgradeArmor,
+            StatEffect.CarMaxHealth => Sound.UpgradeHull,
+            StatEffect.CarSpikes => Sound.UpgradeSpikes,
+            StatEffect.CarShock => Sound.UpgradeShock,
+            StatEffect.MaxReserve => Sound.UpgradeAmmoCase,
+            StatEffect.HealPlayerFull => Sound.SupplyMedkit,
+            StatEffect.RefillAmmo => Sound.SupplyAmmoBox,
+            StatEffect.PlaceMines => Sound.SupplyMines,
+            StatEffect.RepairCar => Sound.SupplyRepair,
+            _ => Sound.UiBuy,
+        };
 
         /// <summary>Whether a supply would do anything now ("НЕ НУЖНО" otherwise).</summary>
         public bool IsUseful(CarUpgrade supply)
