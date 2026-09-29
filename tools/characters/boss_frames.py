@@ -98,6 +98,10 @@ BOSSES = {
 
 def main():
     for boss, (base, rules) in BOSSES.items():
+        # A boss with its own painted sheet (referens/bosses/boss<N>_sheet.png) is made by BossSheetImporter in Unity.
+        if os.path.exists(os.path.join(ROOT, "referens", "bosses", boss.lower() + "_sheet.png")):
+            print(boss, "has a painted sheet: skipped")
+            continue
         folder = os.path.join(CHARS, boss)
         os.makedirs(folder, exist_ok=True)
         for i in range(FRAMES):

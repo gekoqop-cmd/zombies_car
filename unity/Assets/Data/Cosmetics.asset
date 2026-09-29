@@ -1,0 +1,265 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b1e0cd23148548478fcb75828721a9e, type: 3}
+  m_Name: Cosmetics
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Core.CosmeticCatalog
+  m_Items:
+  - m_Id: gun_default
+    m_Title: "\u0421\u0422\u0410\u041D\u0414\u0410\u0420\u0422"
+    m_Slot: 0
+    m_Rarity: 0
+    m_Color: {r: 1, g: 1, b: 1, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 1
+  - m_Id: gun_olive
+    m_Title: "\u041E\u041B\u0418\u0412\u0410"
+    m_Slot: 0
+    m_Rarity: 0
+    m_Color: {r: 0.62, g: 0.7, b: 0.42, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_sand
+    m_Title: "\u041F\u0415\u0421\u041E\u041A"
+    m_Slot: 0
+    m_Rarity: 0
+    m_Color: {r: 0.95, g: 0.82, b: 0.58, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_graphite
+    m_Title: "\u0413\u0420\u0410\u0424\u0418\u0422"
+    m_Slot: 0
+    m_Rarity: 0
+    m_Color: {r: 0.5, g: 0.53, b: 0.6, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_ice
+    m_Title: "\u041B\u0401\u0414"
+    m_Slot: 0
+    m_Rarity: 1
+    m_Color: {r: 0.6, g: 0.88, b: 1, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_blood
+    m_Title: "\u041A\u0420\u041E\u0412\u042C"
+    m_Slot: 0
+    m_Rarity: 1
+    m_Color: {r: 0.95, g: 0.25, b: 0.22, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_toxic
+    m_Title: "\u042F\u0414"
+    m_Slot: 0
+    m_Rarity: 1
+    m_Color: {r: 0.5, g: 1, b: 0.35, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_neon
+    m_Title: "\u041D\u0415\u041E\u041D"
+    m_Slot: 0
+    m_Rarity: 2
+    m_Color: {r: 1, g: 0.35, b: 0.95, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_cobalt
+    m_Title: "\u041A\u041E\u0411\u0410\u041B\u042C\u0422"
+    m_Slot: 0
+    m_Rarity: 2
+    m_Color: {r: 0.3, g: 0.5, b: 1, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: gun_gold
+    m_Title: "\u0417\u041E\u041B\u041E\u0422\u041E"
+    m_Slot: 0
+    m_Rarity: 3
+    m_Color: {r: 1, g: 0.8, b: 0.3, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: axe_default
+    m_Title: "\u0421\u0422\u0410\u041D\u0414\u0410\u0420\u0422"
+    m_Slot: 1
+    m_Rarity: 0
+    m_Color: {r: 1, g: 1, b: 1, a: 1}
+    m_Color2: {r: 1, g: 0.97, b: 0.86, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 1
+  - m_Id: axe_rust
+    m_Title: "\u0420\u0416\u0410\u0412\u0427\u0418\u041D\u0410"
+    m_Slot: 1
+    m_Rarity: 0
+    m_Color: {r: 0.95, g: 0.62, b: 0.4, a: 1}
+    m_Color2: {r: 1, g: 0.75, b: 0.5, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: axe_steel
+    m_Title: "\u0421\u0422\u0410\u041B\u042C"
+    m_Slot: 1
+    m_Rarity: 0
+    m_Color: {r: 0.82, g: 0.88, b: 0.95, a: 1}
+    m_Color2: {r: 0.85, g: 0.92, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: axe_ice
+    m_Title: "\u041B\u0401\u0414"
+    m_Slot: 1
+    m_Rarity: 1
+    m_Color: {r: 0.6, g: 0.9, b: 1, a: 1}
+    m_Color2: {r: 0.55, g: 0.9, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: axe_blood
+    m_Title: "\u041A\u0420\u041E\u0412\u042C"
+    m_Slot: 1
+    m_Rarity: 1
+    m_Color: {r: 1, g: 0.35, b: 0.3, a: 1}
+    m_Color2: {r: 1, g: 0.25, b: 0.2, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: axe_toxic
+    m_Title: "\u042F\u0414"
+    m_Slot: 1
+    m_Rarity: 2
+    m_Color: {r: 0.55, g: 1, b: 0.4, a: 1}
+    m_Color2: {r: 0.5, g: 1, b: 0.3, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: axe_neon
+    m_Title: "\u041D\u0415\u041E\u041D"
+    m_Slot: 1
+    m_Rarity: 2
+    m_Color: {r: 1, g: 0.45, b: 1, a: 1}
+    m_Color2: {r: 0.95, g: 0.4, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: axe_gold
+    m_Title: "\u0417\u041E\u041B\u041E\u0422\u041E"
+    m_Slot: 1
+    m_Rarity: 3
+    m_Color: {r: 1, g: 0.82, b: 0.35, a: 1}
+    m_Color2: {r: 1, g: 0.85, b: 0.3, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: bullet_default
+    m_Title: "\u041E\u0411\u042B\u0427\u041D\u042B\u0415"
+    m_Slot: 2
+    m_Rarity: 0
+    m_Color: {r: 1, g: 0.72, b: 0.28, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 1
+  - m_Id: bullet_white
+    m_Title: "\u0411\u0415\u041B\u042B\u0415"
+    m_Slot: 2
+    m_Rarity: 0
+    m_Color: {r: 1, g: 1, b: 1, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: bullet_green
+    m_Title: "\u0417\u0415\u041B\u0401\u041D\u042B\u0415"
+    m_Slot: 2
+    m_Rarity: 0
+    m_Color: {r: 0.45, g: 1, b: 0.4, a: 1}
+    m_Color2: {r: 1, g: 1, b: 1, a: 1}
+    m_Size: 1
+    m_Trail: 0
+    m_Default: 0
+  - m_Id: bullet_plasma
+    m_Title: "\u041F\u041B\u0410\u0417\u041C\u0410"
+    m_Slot: 2
+    m_Rarity: 1
+    m_Color: {r: 0.35, g: 0.7, b: 1, a: 1}
+    m_Color2: {r: 0.3, g: 0.65, b: 1, a: 1}
+    m_Size: 1.1
+    m_Trail: 1
+    m_Default: 0
+  - m_Id: bullet_fire
+    m_Title: "\u041E\u0413\u041D\u0415\u041D\u041D\u042B\u0415"
+    m_Slot: 2
+    m_Rarity: 1
+    m_Color: {r: 1, g: 0.42, b: 0.1, a: 1}
+    m_Color2: {r: 1, g: 0.35, b: 0.05, a: 1}
+    m_Size: 1.1
+    m_Trail: 1
+    m_Default: 0
+  - m_Id: bullet_toxic
+    m_Title: "\u042F\u0414\u041E\u0412\u0418\u0422\u042B\u0415"
+    m_Slot: 2
+    m_Rarity: 2
+    m_Color: {r: 0.5, g: 1, b: 0.2, a: 1}
+    m_Color2: {r: 0.35, g: 1, b: 0.15, a: 1}
+    m_Size: 1.25
+    m_Trail: 1
+    m_Default: 0
+  - m_Id: bullet_void
+    m_Title: "\u0424\u0418\u041E\u041B\u0415\u0422\u041E\u0412\u042B\u0415"
+    m_Slot: 2
+    m_Rarity: 2
+    m_Color: {r: 0.8, g: 0.3, b: 1, a: 1}
+    m_Color2: {r: 0.7, g: 0.2, b: 1, a: 1}
+    m_Size: 1.25
+    m_Trail: 1
+    m_Default: 0
+  - m_Id: bullet_gold
+    m_Title: "\u0417\u041E\u041B\u041E\u0422\u042B\u0415"
+    m_Slot: 2
+    m_Rarity: 3
+    m_Color: {r: 1, g: 0.85, b: 0.3, a: 1}
+    m_Color2: {r: 1, g: 0.7, b: 0.2, a: 1}
+    m_Size: 1.4
+    m_Trail: 1
+    m_Default: 0
+  m_Cases:
+  - m_Title: "\u041E\u0420\u0423\u0416\u0415\u0419\u041D\u042B\u0419 \u041A\u0415\u0419\u0421"
+    m_Slot: 0
+    m_Price: 150
+  - m_Title: "\u041A\u0415\u0419\u0421 \u0422\u041E\u041F\u041E\u0420\u041E\u0412"
+    m_Slot: 1
+    m_Price: 120
+  - m_Title: "\u041A\u0415\u0419\u0421 \u041F\u0423\u041B\u042C"
+    m_Slot: 2
+    m_Price: 100
+  m_RarityChances:
+  - 55
+  - 30
+  - 12
+  - 3
+  m_DuplicateRefund: 0.4

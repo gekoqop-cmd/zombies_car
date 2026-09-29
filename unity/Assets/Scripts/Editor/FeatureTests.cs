@@ -129,6 +129,8 @@ namespace ZombiCar.EditorTools
         [MenuItem("Tools/Diagnostics/Feature Tests/7 Ammo refill")] private static void MenuRefill() => Run("refill");
         [MenuItem("Tools/Diagnostics/Feature Tests/8 Car plate")] private static void MenuCarPlate() => Run("carplate");
         [MenuItem("Tools/Diagnostics/Feature Tests/9 Shot hit box")] private static void MenuHitbox() => Run("hitbox");
+        [MenuItem("Tools/Diagnostics/Feature Tests/10 Cheats")] private static void MenuCheats() => Run("cheats");
+        [MenuItem("Tools/Diagnostics/Feature Tests/11 Zombie motion")] private static void MenuMotion() => Run("motion");
 
         public static void Run(string scenario)
         {

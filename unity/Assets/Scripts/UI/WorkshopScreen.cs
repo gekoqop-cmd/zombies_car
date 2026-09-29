@@ -31,6 +31,8 @@ namespace ZombiCar.UI
         private float m_OpenTime;
 
         public bool IsOpen => m_Open;
+        public CarUpgradeCatalog Catalog => m_Catalog;
+        public RunState Run => m_Run;
 
         /// <summary>A purchase went through / was refused (sounds).</summary>
         public event System.Action<CarUpgrade> Bought;

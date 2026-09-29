@@ -77,7 +77,17 @@ namespace ZombiCar.Player
         [SerializeField] private AudioClip m_ReloadSound;
         [SerializeField, Range(0f, 1f)] private float m_ReloadVolume = 0.8f;
         [SerializeField] private AudioClip[] m_StepSounds = System.Array.Empty<AudioClip>();
-        [SerializeField, Range(0f, 1f)] private float m_StepVolume = 0.35f;
+        [SerializeField, Range(0f, 1f)] private float m_StepVolume = 0.16f;
+
+        [Header("Rifle in hand (tools: PlayerGunMask)")]
+        [Tooltip("Every body frame (all clips), with the rifle.")]
+        [SerializeField] private Sprite[] m_Frames = System.Array.Empty<Sprite>();
+        [Tooltip("The same frames without the rifle: shown while the axe is in hand, and under a skinned rifle.")]
+        [SerializeField] private Sprite[] m_NoGunFrames = System.Array.Empty<Sprite>();
+        [Tooltip("The rifle alone in lifted greys, tinted by the equipped rifle skin.")]
+        [SerializeField] private Sprite[] m_GunFrames = System.Array.Empty<Sprite>();
+        [SerializeField] private SpriteRenderer m_GunOverlay;
+        [SerializeField] private CosmeticCatalog m_Cosmetics;
 
         private IPlayerInput m_Input;
         private int m_Facing = 1;
@@ -94,9 +104,28 @@ namespace ZombiCar.Player
         private float m_RefillEnd = float.NegativeInfinity;
         private float m_RefillTime = 1f;
         private bool m_Down;
+        private readonly System.Collections.Generic.Dictionary<Sprite, int> m_FrameIndex =
+            new System.Collections.Generic.Dictionary<Sprite, int>();
+        private CosmeticItem m_GunSkin;
 
         private void Awake()
         {
+            int frames = Mathf.Min(m_Frames.Length, m_NoGunFrames.Length, m_GunFrames.Length);
+            for (int i = 0; i < frames; i++)
+            {
+                if (m_Frames[i] != null)
+                    m_FrameIndex[m_Frames[i]] = i;
+                if (m_NoGunFrames[i] != null)
+                    m_FrameIndex[m_NoGunFrames[i]] = i;          // the swapped sprite is still there next frame
+            }
+            if (m_GunOverlay != null)
+                m_GunOverlay.enabled = false;
+            if (m_Cosmetics != null)
+            {
+                m_GunSkin = m_Cosmetics.Equipped(CosmeticSlot.Gun);
+                if (m_GunSkin != null && m_GunSkin.IsDefault)
+                    m_GunSkin = null;
+            }
             if (m_MuzzleFlash != null)
             {
                 m_FlashBaseScale = m_MuzzleFlash.transform.localScale;
@@ -234,6 +263,8 @@ namespace ZombiCar.Player
                 b.localRotation = Quaternion.Euler(0f, 0f, 82f * m_Facing * fall);
                 b.localPosition = new Vector3(-m_Facing * 0.35f * fall, 0f, 0f);
                 m_Body.color = Color.Lerp(m_Tint, new Color(0.72f, 0.62f, 0.6f, 1f), fall) * SceneTint.Characters;
+                if (m_GunOverlay != null && m_GunOverlay.enabled)
+                    m_GunOverlay.color = m_GunSkin != null ? m_GunSkin.Color * m_Body.color : m_Body.color;
                 return;
             }
             Vector3 velocity = m_Controller != null ? m_Controller.velocity : Vector3.zero;
@@ -265,6 +296,29 @@ namespace ZombiCar.Player
             m_Body.color = (Time.time < m_HurtUntil ? s_HurtColor * m_Tint : m_Tint) * SceneTint.Characters;
 
             UpdateMuzzleEffects();
+            UpdateRifle();
+        }
+
+        /// <summary>
+        /// The rifle on the sprite (after the Animator picked the frame): gone while the axe is in hand (one weapon at a
+        /// time), recoloured by the equipped rifle skin otherwise.
+        /// </summary>
+        private void UpdateRifle()
+        {
+            if (!m_FrameIndex.TryGetValue(m_Body.sprite, out int i))
+                return;
+            bool axe = m_Melee != null && m_Melee.InHand;
+            bool skinned = m_GunSkin != null && !axe;
+            m_Body.sprite = axe || skinned ? m_NoGunFrames[i] : m_Frames[i];
+            if (m_GunOverlay == null)
+                return;
+            m_GunOverlay.enabled = skinned;
+            if (!skinned)
+                return;
+            m_GunOverlay.sprite = m_GunFrames[i];
+            Color c = m_GunSkin.Color * m_Body.color;
+            c.a = m_Body.color.a;
+            m_GunOverlay.color = c;
         }
 
         private void UpdateMuzzleEffects()

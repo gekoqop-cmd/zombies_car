@@ -428,3 +428,14 @@ MonoBehaviour:
   m_Tint: {r: 1, g: 0.93, b: 0.85, a: 1}
   m_StepBounce: 0.05
   m_StepSway: 4
+  m_Procedural: 1
+  m_Breath: 0.03
+  m_BreathRate: 0.55
+  m_StepSquash: 0.06
+  m_WalkLean: 5
+  m_AttackLean: 12
+  m_AttackLunge: 0.18
+  m_HitLean: 14
+  m_HitTime: 0.28
+  m_DeathThud: 0.14
+  m_RiseWobble: 7

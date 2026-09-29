@@ -38,6 +38,12 @@ namespace ZombiCar.Player
         public float Range => m_Config.Range * (m_Run != null ? m_Run.Modifiers.Multiplier(StatEffect.AxeRange) : 1f);
         public int Damage => Mathf.RoundToInt(m_Config.Damage * (m_Run != null ? m_Run.Modifiers.Multiplier(StatEffect.AxeDamage) : 1f));
 
+        /// <summary>The axe is out: in hand as the weapon, or still finishing a swing after switching back.</summary>
+        public bool InHand => Active || SwingTime < m_Config.Windup + c_SwingShownTime;
+
+        // Strike + recovery of the swing animation (AxeView): the axe stays visible that long.
+        private const float c_SwingShownTime = 0.37f;
+
         /// <summary>Seconds since the current swing started (large when not swinging).</summary>
         public float SwingTime => Time.time - m_SwingStart;
 

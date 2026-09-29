@@ -180,6 +180,30 @@ namespace ZombiCar.EditorTools
                 ("m_ProgressFill", fill));
         }
 
+        // ------------------------------------------------------------------ tutorial hint
+        /// <summary>First-run hints: a pill above the interaction prompt, "ОБУЧЕНИЕ n/5" over the hint.</summary>
+        private static void BuildTutorialHint(RectTransform safe, Material outline)
+        {
+            var bottom = new Vector2(0.5f, 0f);
+            var top = new Vector2(0.5f, 1f);
+            RectTransform root = UiFactory.Rect("TutorialHint", safe, bottom, bottom, new Vector2(0f, 250f), new Vector2(1100f, 110f));
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = group.interactable = false;
+            RectTransform body = UiFactory.Stretch("Body", root);
+            UiFactory.Image(body, UiFactory.Sprite("UI_Panel"), s_PillColor, true);
+            TextMeshProUGUI step = OutlinedLabel("Step", body, top, top, new Vector2(0f, -8f), new Vector2(1040f, 34f), "ОБУЧЕНИЕ 1/5", 24f,
+                TextAlignmentOptions.Center, s_TitleColor, outline);
+            TextMeshProUGUI text = OutlinedLabel("Text", body, top, top, new Vector2(0f, -40f), new Vector2(1040f, 62f), "WASD — ДВИЖЕНИЕ", 36f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 22f;
+            text.fontSizeMax = 38f;
+            PrefabBuilder.Wire(root.gameObject.AddComponent<TutorialView>(),
+                ("m_State", DataAssetsBuilder.Load<TutorialState>(DataAssetsBuilder.c_TutorialState)), ("m_Group", group), ("m_Body", body),
+                ("m_Step", step), ("m_Text", text));
+        }
+
         // ------------------------------------------------------------------ level-up cards
         private const int c_CardCount = 3;
         private static readonly Vector2 s_CardSize = new Vector2(430f, 560f);
@@ -299,6 +323,11 @@ namespace ZombiCar.EditorTools
             TextMeshProUGUI level = StatRow(window, 1, "UI_Icon_Xp", "УРОВЕНЬ", outline, Color.white);
             TextMeshProUGUI kills = StatRow(window, 2, "UI_Icon_Skull", "УБИТО ЗОМБИ", outline, Color.white);
             TextMeshProUGUI wave = StatRow(window, 3, "UI_Icon_Boss", "ВОЛНА", outline, Color.white);
+            TextMeshProUGUI coins = OutlinedLabel("Coins", window, top, top, new Vector2(0f, -640f), new Vector2(980f, 52f),
+                "+0 МОНЕТ", 36f, TextAlignmentOptions.Center, new Color(1f, 0.82f, 0.35f, 1f), outline);
+            coins.enableAutoSizing = true;
+            coins.fontSizeMin = 24f;
+            coins.fontSizeMax = 36f;
 
             Button restart = HudButton("RestartButton", window, bottom, new Vector2(-220f, 40f), new Vector2(380f, 116f), "ЗАНОВО", 50f,
                 s_PlayColor, outline);
@@ -308,7 +337,7 @@ namespace ZombiCar.EditorTools
             var screen = host.gameObject.AddComponent<GameOverScreen>();
             PrefabBuilder.Wire(screen, ("m_Run", Run), ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
                 ("m_Root", group), ("m_Window", window), ("m_Title", title), ("m_Reason", reason), ("m_Money", money), ("m_Level", level),
-                ("m_Kills", kills), ("m_Wave", wave), ("m_RestartButton", restart), ("m_MenuButton", menu));
+                ("m_Kills", kills), ("m_Wave", wave), ("m_Coins", coins), ("m_RestartButton", restart), ("m_MenuButton", menu));
             group.alpha = 0f;
             root.gameObject.SetActive(false);
             return screen;

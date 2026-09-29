@@ -127,6 +127,9 @@ namespace ZombiCar.EditorTools
             foreach (var (name, color) in trees)
                 list.Add(new Spec { Name = name, Folder = "Nature", Tint = color, Smoothness = 0f });
 
+            // Car spikes (workshop upgrade, PrefabBuilder.BuildCarSpikes): bright polished steel that reads on the dark car.
+            list.Add(new Spec { Name = "M_CarSpike", Folder = "Car", Tint = new Color(0.82f, 0.84f, 0.88f), Smoothness = 0.7f });
+
             // VFX (characters are 2D sprites: URP Sprite-Unlit-Default, see CharacterBuilder).
             list.Add(new Spec { Name = "M_Bullet", Folder = "VFX", Unlit = true, Tint = new Color(3.2f, 2.3f, 0.9f, 1f) });
             return list.ToArray();

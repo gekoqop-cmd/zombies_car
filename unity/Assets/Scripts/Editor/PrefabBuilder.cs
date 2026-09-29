@@ -259,6 +259,125 @@ namespace ZombiCar.EditorTools
                 ("m_State", DataAssetsBuilder.Load<CarState>(DataAssetsBuilder.c_CarState)));
             BuildCarDamageView(go, health);
             BuildCarShockField(go, health);
+            BuildCarSpikes(go, health);
+        }
+
+        // Workshop upgrade "spikes": steel cones on the body, one set per level (CarUpgrades: 4 levels, 8 damage each).
+        private const float c_SpikeLength = 0.34f;
+        private const float c_SpikeRadius = 0.075f;
+        private const float c_SpikeHeight = 0.62f;                  // bumper line, metres above the ground
+        private const float c_SpikeRowHeight = 0.95f;               // the fourth set: a second row higher up
+        private const int c_SpikeDamagePerLevel = 8;
+
+        private static void BuildCarSpikes(GameObject car, CarHealth health)
+        {
+            Mesh cone = SaveMesh(SpikeMesh(c_SpikeRadius, c_SpikeLength, 10), "SM_CarSpike");
+            Material steel = MaterialLibrary.Get("M_CarSpike");
+
+            // Body extents (world = car local while building: the prefab sits at the origin, unturned) without the roof
+            // cargo; the front is where the front bumper is.
+            Bounds body = car.GetComponentsInChildren<Renderer>(true)
+                .Where(r => !r.name.StartsWith("Cargo") && !r.name.StartsWith("DMG") && !(r is ParticleSystemRenderer) && r.enabled)
+                .Select(r => r.bounds).Aggregate((a, b) => { a.Encapsulate(b); return a; });
+            Transform bumper = FindDeep(car.transform, "Bumper_Front");
+            float front = bumper != null && bumper.TryGetComponent(out Renderer br) && br.bounds.center.z < body.center.z ? -1f : 1f;
+            float zFront = front > 0f ? body.max.z : body.min.z;
+            float zBack = front > 0f ? body.min.z : body.max.z;
+            float halfWidth = body.extents.x;
+            const float inset = 0.06f;                                   // bases sunk a little into the body
+
+            var root = new GameObject("Spikes").transform;
+            root.SetParent(car.transform, false);
+            Vector3 lossy = car.transform.lossyScale;
+            root.localScale = new Vector3(1f / lossy.x, 1f / lossy.y, 1f / lossy.z);
+
+            var tiers = new List<GameObject>();
+            Transform Tier(string name)
+            {
+                var t = new GameObject(name).transform;
+                t.SetParent(root, false);
+                tiers.Add(t.gameObject);
+                return t;
+            }
+            void Spike(Transform tier, Vector3 at, Vector3 outward)
+            {
+                GameObject s = MeshObject($"Spike{tier.childCount + 1}", cone, steel, true);
+                s.layer = car.layer;
+                s.transform.SetParent(tier, false);
+                s.transform.position = at;
+                s.transform.rotation = Quaternion.FromToRotation(Vector3.up, outward.normalized);
+                s.transform.localScale = Vector3.one;
+            }
+
+            float bumperHalf = halfWidth * 0.72f;
+            Transform frontTier = Tier("Tier1_Front");
+            for (int i = 0; i < 5; i++)
+                Spike(frontTier, new Vector3(Mathf.Lerp(-bumperHalf, bumperHalf, i / 4f), c_SpikeHeight, zFront - front * inset),
+                    new Vector3(0f, 0f, front));
+            Transform backTier = Tier("Tier2_Back");
+            for (int i = 0; i < 5; i++)
+                Spike(backTier, new Vector3(Mathf.Lerp(-bumperHalf, bumperHalf, i / 4f), c_SpikeHeight, zBack + front * inset),
+                    new Vector3(0f, 0f, -front));
+            Transform sideTier = Tier("Tier3_Sides");
+            float sideFrom = body.min.z + body.size.z * 0.18f, sideTo = body.max.z - body.size.z * 0.18f;
+            foreach (float side in new[] { -1f, 1f })
+                for (int i = 0; i < 5; i++)
+                    Spike(sideTier, new Vector3(side * (halfWidth - inset), c_SpikeHeight - 0.08f, Mathf.Lerp(sideFrom, sideTo, i / 4f)),
+                        new Vector3(side, 0f, 0f));
+            Transform rowTier = Tier("Tier4_Row");
+            for (int i = 0; i < 4; i++)
+            {
+                float x = Mathf.Lerp(-bumperHalf * 0.85f, bumperHalf * 0.85f, i / 3f);
+                Spike(rowTier, new Vector3(x, c_SpikeRowHeight, zFront - front * (inset + 0.05f)), new Vector3(0f, 0.25f, front));
+                Spike(rowTier, new Vector3(x, c_SpikeRowHeight, zBack + front * (inset + 0.05f)), new Vector3(0f, 0.25f, -front));
+            }
+
+            var view = car.AddComponent<CarSpikesView>();
+            Wire(view, ("m_Car", health), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)));
+            CharacterBuilder.SetProps(view, ("m_Tiers", tiers.Cast<Object>().ToArray()), ("m_DamagePerLevel", c_SpikeDamagePerLevel));
+            foreach (GameObject t in tiers)
+                t.SetActive(false);
+            Debug.Log($"[PrefabBuilder] Car spikes: {tiers.Count} sets, body {body.size:F2}, front {(front > 0f ? "+z" : "-z")}.");
+        }
+
+        /// <summary>A cone along +Y from a flat base at the origin to the tip (flat-shaded sides, a base cap).</summary>
+        private static Mesh SpikeMesh(float radius, float length, int sides)
+        {
+            var vertices = new List<Vector3>();
+            var normals = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<int>();
+            var tip = new Vector3(0f, length, 0f);
+            for (int i = 0; i < sides; i++)
+            {
+                float a0 = i * Mathf.PI * 2f / sides, a1 = (i + 1) * Mathf.PI * 2f / sides;
+                var p0 = new Vector3(Mathf.Cos(a0) * radius, 0f, Mathf.Sin(a0) * radius);
+                var p1 = new Vector3(Mathf.Cos(a1) * radius, 0f, Mathf.Sin(a1) * radius);
+                Vector3 n = Vector3.Cross(tip - p0, p1 - p0).normalized;
+                if (Vector3.Dot(n, (p0 + p1) * 0.5f) < 0f)
+                    n = -n;
+                int v = vertices.Count;
+                vertices.AddRange(new[] { p0, tip, p1 });
+                normals.AddRange(new[] { n, n, n });
+                uvs.AddRange(new[] { new Vector2(0f, 0f), new Vector2(0.5f, 1f), new Vector2(1f, 0f) });
+                // Winding so the face looks along n (Unity's front face: Cross(b - a, c - a) points out).
+                if (Vector3.Dot(Vector3.Cross(tip - p0, p1 - p0), n) > 0f)
+                    triangles.AddRange(new[] { v, v + 1, v + 2 });
+                else
+                    triangles.AddRange(new[] { v, v + 2, v + 1 });
+                int c = vertices.Count;
+                vertices.AddRange(new[] { Vector3.zero, p1, p0 });
+                normals.AddRange(new[] { Vector3.down, Vector3.down, Vector3.down });
+                uvs.AddRange(new[] { new Vector2(0.5f, 0.5f), new Vector2(1f, 0f), new Vector2(0f, 0f) });
+                triangles.AddRange(new[] { c, c + 2, c + 1 });
+            }
+            var mesh = new Mesh();
+            mesh.SetVertices(vertices);
+            mesh.SetNormals(normals);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(triangles, 0);
+            mesh.RecalculateBounds();
+            return mesh;
         }
 
         // Workshop upgrade "electric discharge": the pulse logic and its ring on the ground (off until a pulse).
@@ -476,7 +595,24 @@ namespace ZombiCar.EditorTools
             visual.transform.localScale = new Vector3(0.07f, 0.07f, 0.24f);   // a short tracer, not a laser bolt
             visual.layer = Layers.c_ProjectileIndex;
             visual.GetComponent<MeshRenderer>().receiveShadows = false;
-            go.AddComponent<Bullet>();
+
+            // Trail of the bullet skins (off by default; Bullet.ApplySkin colours and enables it).
+            var trailGo = new GameObject("Trail") { layer = Layers.c_ProjectileIndex };
+            trailGo.transform.SetParent(go.transform, false);
+            var trail = trailGo.AddComponent<TrailRenderer>();
+            trail.sharedMaterial = FxBuilder.Material("M_FX_BulletTrail", "T_BulletGlow", Color.white, true);
+            trail.time = 0.12f;
+            trail.minVertexDistance = 0.15f;
+            trail.widthMultiplier = 0.12f;
+            trail.widthCurve = AnimationCurve.Linear(0f, 1f, 1f, 0.1f);
+            trail.alignment = LineAlignment.View;
+            trail.textureMode = LineTextureMode.Stretch;
+            trail.shadowCastingMode = ShadowCastingMode.Off;
+            trail.receiveShadows = false;
+            trail.enabled = false;
+
+            var bulletComponent = go.AddComponent<Bullet>();
+            Wire(bulletComponent, ("m_Visual", visual.GetComponent<MeshRenderer>()), ("m_Trail", trail));
             GameObject saved = SavePrefab(go, $"{EditorPaths.c_PrefabsCharacters}/Bullet.prefab");
             return saved.GetComponent<Bullet>();
         }
@@ -513,7 +649,7 @@ namespace ZombiCar.EditorTools
             Wire(desktop, ("m_AimOrigin", root.transform));
             Wire(aimGizmos, ("m_Weapon", weapon));
             Wire(provider, ("m_Desktop", desktop), ("m_Mobile", mobile));
-            Wire(pool, ("m_Prefab", bulletPrefab));
+            Wire(pool, ("m_Prefab", bulletPrefab), ("m_Cosmetics", CosmeticsBuilder.Catalog));
             Wire(weapon, ("m_Config", weaponConfig),
                 ("m_InputProvider", provider), ("m_Pool", pool),
                 ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)), ("m_Run", run));

@@ -63,6 +63,23 @@ var YandexSdkLib = {
       } catch (e) { console.warn(e); Ya.send("OnAdClose", "0"); }
     });
   },
+
+  // Rewarded video (a case opened for watching): the reward is granted only in onRewarded, the game resumes on close.
+  YaShowRewardedAd: function () {
+    Ya.sdk().then(function (s) {
+      if (!s || !s.adv) { Ya.send("OnRewardedClose", "0"); return; }
+      try {
+        s.adv.showRewardedVideo({
+          callbacks: {
+            onOpen: function () { Ya.send("OnAdOpen"); },
+            onRewarded: function () { Ya.send("OnRewarded"); },
+            onClose: function () { Ya.send("OnRewardedClose", "1"); },
+            onError: function (e) { console.warn("[YandexSdk] rewarded error", e); Ya.send("OnRewardedClose", "0"); },
+          },
+        });
+      } catch (e) { console.warn(e); Ya.send("OnRewardedClose", "0"); }
+    });
+  },
 };
 
 autoAddDeps(YandexSdkLib, "$Ya");

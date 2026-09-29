@@ -1,5 +1,6 @@
 using UnityEngine;
 using ZombiCar.Core;
+using ZombiCar.Props;
 
 namespace ZombiCar.Player
 {
@@ -66,8 +67,38 @@ namespace ZombiCar.Player
                 }
                 if (best != null)
                     return new AimSolution { Source = AimSource.Assist, Point = AtBarrel(best, muzzleHeight), Target = best };
+
+                // No zombie near the cursor: a cursor on (or next to) an explosive barrel aims at its middle.
+                ExplosiveProp barrel = NearestExplosive(point, config.AimAssistRadius + c_ExplosiveAssistExtra);
+                if (barrel != null)
+                {
+                    Vector3 c = barrel.transform.position;
+                    return new AimSolution { Source = AimSource.Assist, Point = new Vector3(c.x, muzzleHeight, c.z) };
+                }
             }
             return new AimSolution { Source = AimSource.Plane, Point = point };
+        }
+
+        // Barrels are drawn tall on screen: the cursor over the top of one meets the bullet plane well behind its base.
+        private const float c_ExplosiveAssistExtra = 0.4f;
+
+        private static ExplosiveProp NearestExplosive(Vector3 point, float radius)
+        {
+            ExplosiveProp best = null;
+            float bestSqr = radius * radius;
+            foreach (ExplosiveProp prop in ExplosiveProp.All)
+            {
+                if (!prop.IsAlive)
+                    continue;
+                Vector3 d = prop.transform.position - point;
+                d.y = 0f;
+                if (d.sqrMagnitude < bestSqr)
+                {
+                    bestSqr = d.sqrMagnitude;
+                    best = prop;
+                }
+            }
+            return best;
         }
 
         private static Vector3 AtBarrel(Collider enemy, float muzzleHeight)

@@ -27,6 +27,7 @@ namespace ZombiCar.EditorTools
         public const string c_InteractionState = EditorPaths.c_DataState + "/InteractionState.asset";
         public const string c_CarState = EditorPaths.c_DataState + "/CarState.asset";
         public const string c_WeaponState = EditorPaths.c_DataState + "/WeaponState.asset";
+        public const string c_TutorialState = EditorPaths.c_DataState + "/TutorialState.asset";
         public const string c_ProgressionConfig = EditorPaths.c_Data + "/ProgressionConfig.asset";
         public const string c_PerkPool = EditorPaths.c_Data + "/PerkPool.asset";
         public const string c_CarUpgrades = EditorPaths.c_Data + "/CarUpgrades.asset";
@@ -52,10 +53,12 @@ namespace ZombiCar.EditorTools
             Ensure<InteractionState>(c_InteractionState);
             Ensure<CarState>(c_CarState);
             Ensure<WeaponState>(c_WeaponState);
+            Ensure<TutorialState>(c_TutorialState);
             Ensure<ProgressionConfig>(c_ProgressionConfig);
             Ensure<PerkPool>(c_PerkPool);
             Ensure<CarUpgradeCatalog>(c_CarUpgrades);
             ProgressionBuilder.Run();
+            CosmeticsBuilder.Run();
             AudioBuilder.BuildSoundBank();
             SetMapMusic(c_MapConfig, "Music_Day");
             SetMapMusic(c_NightMapConfig, "Music_Night");

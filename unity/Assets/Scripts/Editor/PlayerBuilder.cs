@@ -35,6 +35,7 @@ namespace ZombiCar.EditorTools
         private const float c_RunThreshold = 0.3f;
         private const int c_BodySortingOrder = 0;
         private const int c_SmokeSortingOrder = 1;
+        private const int c_GunSkinSortingOrder = 1;         // right over the body (the smoke puffs float elsewhere)
         private const int c_GlowSortingOrder = 2;
         private const int c_FlashSortingOrder = 3;
         private const int c_AxeSortingOrder = 4;
@@ -51,7 +52,8 @@ namespace ZombiCar.EditorTools
         private const float c_FlashScale = 1.35f;          // body space: ~0.5 m wide star
         private const float c_GlowScale = 1.3f;            // ~0.9 m soft halo
         private const float c_SmokeSize = 0.45f;           // world, ~0.55 m puff
-        private const float c_FlashCoreOffsetPx = 7.7f;    // star core behind the sprite centre (muzzle_flash.py: 0.44 of 128 px)
+        private const float c_FlashCoreOffsetPx = 7.7f;
+        private const float c_FlashDesignHeightPx = 320f;  // the flash / glow scales above were tuned for 320 px tall body frames    // star core behind the sprite centre (muzzle_flash.py: 0.44 of 128 px)
         private static readonly Color s_FlashColor = new Color(1.4f, 1.3f, 1.15f, 1f);   // over 1: the bloom picks the flash up
         private static readonly Vector2 s_Shadow = new Vector2(1.3f, 0.6f);   // blob width / depth, metres
         private const int c_AtlasMaxSize = 2048;
@@ -98,6 +100,9 @@ namespace ZombiCar.EditorTools
             return sprite;
         }
 
+        private static string NoGunName(string frame) => PlayerGunMask.c_NoGunPrefix + frame.Substring("Player_".Length);
+        private static string GunName(string frame) => PlayerGunMask.c_GunPrefix + frame.Substring("Player_".Length);
+
         /// <summary>Body scale: 1.75 m apparent height; y also carries the camera-pitch compensation.</summary>
         private static Vector2 BodyScale(FramesMeta meta)
         {
@@ -114,11 +119,19 @@ namespace ZombiCar.EditorTools
             EditorPaths.EnsureFolder(c_Atlases);
             EditorSettings.spritePackerMode = SpritePackerMode.SpriteAtlasV2Build;   // atlases are packed for the player build
 
+            // The rifle split off the frames (axe in hand, rifle skins): made once, packed like the clips.
+            if (AssetDatabase.LoadAssetAtPath<Sprite>($"{c_Frames}/{NoGunName(meta.clips[0].frames[0])}.png") == null)
+            {
+                PlayerGunMask.Run();
+                AssetDatabase.Refresh();
+            }
             var clips = new Dictionary<string, AnimationClip>();
             foreach (ClipMeta clip in meta.clips)
             {
                 Sprite[] sprites = clip.frames.Select(Frame).ToArray();
                 BuildAtlas(clip.name, sprites);
+                BuildAtlas("NoGun_" + clip.name, clip.frames.Select(f => Frame(NoGunName(f))).ToArray());
+                BuildAtlas("GunGray_" + clip.name, clip.frames.Select(f => Frame(GunName(f))).ToArray());
                 clips[clip.name] = BuildClip(clip, sprites);
             }
             BuildAtlas("MuzzleFlash", Enumerable.Range(0, c_FlashFrames).Select(i => Frame($"Player_MuzzleFlash_{i}"))
@@ -326,11 +339,14 @@ namespace ZombiCar.EditorTools
             // the body; the star's core sits c_FlashCoreOffsetPx behind the sprite centre, the sprite is moved forward
             // so the core is on the muzzle. Scales are in body space (which already carries the pitch stretch).
             Sprite[] flashFrames = Enumerable.Range(0, c_FlashFrames).Select(i => Frame($"Player_MuzzleFlash_{i}")).ToArray();
+            // The flash sprites keep their pixels while the body frames may be smaller (PlayerFrameOptimizer): the body
+            // scale grows by that much, so the flash and the glow are scaled back to keep their size in the world.
+            float frameScale = meta.standingHeightPx / c_FlashDesignHeightPx;
             SpriteRenderer glow = EffectSprite("MuzzleGlow", muzzle, Frame("Player_MuzzleGlow"), spriteMaterial, c_GlowSortingOrder,
-                c_GlowScale, new Color(1f, 0.75f, 0.45f, 0f));
+                c_GlowScale * frameScale, new Color(1f, 0.75f, 0.45f, 0f));
             SpriteRenderer flash = EffectSprite("MuzzleFlash", muzzle, flashFrames[0], spriteMaterial, c_FlashSortingOrder,
-                c_FlashScale, s_FlashColor);
-            flash.transform.localPosition = new Vector3(c_FlashCoreOffsetPx / ArtImportPostprocessor.c_CharacterPixelsPerUnit * c_FlashScale, 0f, 0f);
+                c_FlashScale * frameScale, s_FlashColor);
+            flash.transform.localPosition = new Vector3(c_FlashCoreOffsetPx / ArtImportPostprocessor.c_CharacterPixelsPerUnit * c_FlashScale * frameScale, 0f, 0f);
             // Smoke puffs: children of the upright view (not flipped, not stretched by the body); placed in the world
             // at the muzzle on each shot.
             var smoke = new SpriteRenderer[c_SmokePuffs];
@@ -370,9 +386,24 @@ namespace ZombiCar.EditorTools
                 ("m_ShotSound", Sound("Player_Shot")), ("m_ReloadSound", Sound("Player_Reload")));
             CharacterBuilder.SetProps(playerView, ("m_Scale", scale), ("m_Tint", CharacterBuilder.s_SpriteTint),
                 ("m_ShotClipLength", shotMeta.frames.Length / shotMeta.fps), ("m_ReloadClipLength", reloadMeta.frames.Length / reloadMeta.fps),
-                ("m_StepSounds", new Object[] { Sound("Player_Step1"), Sound("Player_Step2"), Sound("Player_Step3") }),
+                ("m_StepSounds", StepSounds()), ("m_StepVolume", c_StepVolume),
                 ("m_FlashFrames", flashFrames.Cast<Object>().ToArray()), ("m_Smoke", smoke.Cast<Object>().ToArray()));
             PrefabBuilder.Wire(bodyGo.AddComponent<PlayerAnimationEvents>(), ("m_View", playerView));
+
+            // The rifle skin overlay: same canvas and pivot as the body frames, drawn right over it.
+            var overlayGo = new GameObject("GunSkin");
+            overlayGo.transform.SetParent(bodyGo.transform, false);
+            var overlay = overlayGo.AddComponent<SpriteRenderer>();
+            overlay.sharedMaterial = spriteMaterial;
+            overlay.sortingOrder = c_GunSkinSortingOrder;
+            overlay.shadowCastingMode = ShadowCastingMode.Off;
+            overlay.receiveShadows = false;
+            overlay.enabled = false;
+            string[] frameNames = meta.clips.SelectMany(c => c.frames).ToArray();
+            CharacterBuilder.SetProps(playerView, ("m_Frames", frameNames.Select(f => (Object)Frame(f)).ToArray()),
+                ("m_NoGunFrames", frameNames.Select(f => (Object)Frame(NoGunName(f))).ToArray()),
+                ("m_GunFrames", frameNames.Select(f => (Object)Frame(GunName(f))).ToArray()),
+                ("m_GunOverlay", overlay), ("m_Cosmetics", CosmeticsBuilder.Catalog));
             BuildAxe(view, bodyGo.transform, melee);
 
             WeaponConfig config = DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig);
@@ -406,7 +437,8 @@ namespace ZombiCar.EditorTools
             slash.sortingOrder = c_SlashSortingOrder;
             slash.enabled = false;
             var axeView = root.gameObject.AddComponent<AxeView>();
-            PrefabBuilder.Wire(axeView, ("m_Melee", melee), ("m_Body", body), ("m_Pivot", pivot), ("m_Axe", blade), ("m_Slash", slash));
+            PrefabBuilder.Wire(axeView, ("m_Melee", melee), ("m_Body", body), ("m_Pivot", pivot), ("m_Axe", blade), ("m_Slash", slash),
+                ("m_Cosmetics", CosmeticsBuilder.Catalog));
             CharacterBuilder.SetProps(axeView, ("m_Grip", s_AxeGrip), ("m_PitchCompensation", CharacterBuilder.PitchCompensation));
         }
 
@@ -427,9 +459,19 @@ namespace ZombiCar.EditorTools
             return renderer;
         }
 
+        // Soft rubber-sole steps (FootstepSynth), quieter than the old hard clicks: under the shots and the zombies.
+        private const float c_StepVolume = 0.16f;
+
+        private static Object[] StepSounds()
+        {
+            FootstepSynth.Build(false);
+            return Enumerable.Range(1, FootstepSynth.c_Variants).Select(i => (Object)Sound($"{FootstepSynth.c_Prefix}{i}")).ToArray();
+        }
+
         public static AudioClip Sound(string name)
         {
-            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>($"{c_Sfx}/{name}.ogg");
+            var clip = AssetDatabase.LoadAssetAtPath<AudioClip>($"{c_Sfx}/{name}.ogg") ??
+                       AssetDatabase.LoadAssetAtPath<AudioClip>($"{c_Sfx}/{name}.wav");
             if (clip == null)
                 Debug.LogError($"[PlayerBuilder] Sound {name} missing in {c_Sfx} (tools/characters/player_mp4/audio.py)");
             return clip;

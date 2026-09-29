@@ -120,6 +120,13 @@ namespace ZombiCar.Waves
         {
             m_Wave = Mathf.Clamp(wave, 1, m_Config.WaveCount);
             m_ToSpawn = 0;
+            if (m_BossWave || m_Boss != null)
+            {
+                m_BossWave = false;                          // the boss of the wave left behind is gone from the HUD
+                m_Boss = null;
+                if (m_WaveState != null)
+                    m_WaveState.SetBoss(null);
+            }
             StartCountdown(countdown);
         }
 

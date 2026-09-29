@@ -90,38 +90,82 @@ namespace ZombiCar.EditorTools
         /// Rearranges part of the lot so the night map is not a copy: about half of the props move 1.5–3.5 m and turn,
         /// some bushes shift. Spots near the car, the player spawn, the workshop and the fences are left alone.
         /// </summary>
-        private static void VaryLayout(Transform props, Transform nature, MapConfig map, int seed)
+        private static void VaryLayout(Transform props, Transform nature, Transform environment, MapConfig map, int seed)
         {
             var rnd = new Random(seed);
             int moved = 0;
+            // Every prop, building, parked car and the extra night lamps keep their footprint clear: a moved prop never
+            // lands inside another object (a barrel inside the cargo cart at the north fence was the bug).
+            // (The ground, roads and the workshop are left out: they are too big to count as a footprint — the workshop
+            // yard has its own exclusion in IsFreeForProp.)
+            var occupied = props.Cast<Transform>()
+                .Concat(environment.Cast<Transform>().Where(t => FootprintRadius(t) < c_MaxOccupiedRadius)).ToList();
             foreach (Transform t in props.Cast<Transform>().ToArray())
             {
                 if (rnd.NextDouble() > c_PropMoveChance)
                     continue;
-                if (TryMove(t, rnd, 1.5f, 3.5f, map))
+                if (TryMove(t, rnd, 1.5f, 3.5f, map, occupied))
                     moved++;
             }
             foreach (Transform t in nature.Cast<Transform>().Where(t => t.name.StartsWith("Bush")).ToArray())
             {
                 if (rnd.NextDouble() > c_BushMoveChance)
                     continue;
-                TryMove(t, rnd, 0.8f, 2f, map);
+                TryMove(t, rnd, 0.8f, 2f, map, null);
             }
             Debug.Log($"[SceneBuilder] Night layout: {moved} props moved.");
         }
 
-        private static bool TryMove(Transform t, Random rnd, float min, float max, MapConfig map)
+        private const float c_PropClearance = 0.6f;          // metres between the footprints of two props
+        private const float c_MaxOccupiedRadius = 4f;
+
+        private static bool TryMove(Transform t, Random rnd, float min, float max, MapConfig map, List<Transform> occupied)
         {
-            for (int attempt = 0; attempt < 8; attempt++)
+            for (int attempt = 0; attempt < 12; attempt++)
             {
                 double angle = rnd.NextDouble() * System.Math.PI * 2.0;
                 float distance = Mathf.Lerp(min, max, (float)rnd.NextDouble());
                 Vector3 p = t.position + new Vector3((float)System.Math.Cos(angle), 0f, (float)System.Math.Sin(angle)) * distance;
-                if (!IsFreeForProp(p, map))
+                if (!IsFreeForProp(p, map) || (occupied != null && Overlaps(t, p, occupied)))
                     continue;
                 t.position = p;
                 t.rotation = Quaternion.Euler(0f, t.eulerAngles.y + Mathf.Lerp(-60f, 60f, (float)rnd.NextDouble()), 0f);
                 return true;
+            }
+            return false;
+        }
+
+        // Footprint radius of a prop: half the larger side of its renderers' bounds.
+        private static float FootprintRadius(Transform t)
+        {
+            Renderer[] renderers = t.GetComponentsInChildren<Renderer>();
+            if (renderers.Length == 0)
+                return 0.5f;
+            Bounds b = renderers[0].bounds;
+            foreach (Renderer r in renderers)
+                b.Encapsulate(r.bounds);
+            return Mathf.Max(b.extents.x, b.extents.z);
+        }
+
+        private static bool Overlaps(Transform moving, Vector3 p, List<Transform> occupied)
+        {
+            float radius = FootprintRadius(moving);
+            foreach (Transform other in occupied)
+            {
+                if (other == moving)
+                    continue;
+                if (Near(p.x, p.z, other.position.x, other.position.z, radius + FootprintRadius(other) + c_PropClearance))
+                    return true;
+            }
+            foreach ((float x, float z, float _) in s_NightLotLamps)
+            {
+                if (Near(p.x, p.z, x, z, radius + 1f))
+                    return true;
+            }
+            foreach ((float x, float z, float _) in s_LotExplosives)                 // placed after the variation
+            {
+                if (Near(p.x, p.z, x, z, radius + 1.2f))
+                    return true;
             }
             return false;
         }

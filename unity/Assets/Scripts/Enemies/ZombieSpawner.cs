@@ -106,6 +106,9 @@ namespace ZombiCar.Enemies
             ZombieDied?.Invoke(zombie);
         }
 
+        /// <summary>A zombie removed without a kill (developer cheats): no reward, no kill count.</summary>
+        public void NotifyRemoved(ZombieController zombie) => Alive = Mathf.Max(0, Alive - 1);
+
         /// <summary>Called by a zombie when its corpse has sunk into the ground.</summary>
         public void Release(ZombieController zombie) => PoolFor(zombie.Config).Release(zombie);
 

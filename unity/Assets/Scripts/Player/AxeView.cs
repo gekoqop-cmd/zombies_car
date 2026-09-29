@@ -1,4 +1,5 @@
 using UnityEngine;
+using ZombiCar.Core;
 
 namespace ZombiCar.Player
 {
@@ -28,6 +29,8 @@ namespace ZombiCar.Player
         [SerializeField] private float m_StrikeAngle = -95f;
         [SerializeField, Min(0.01f)] private float m_StrikeTime = 0.09f;
         [SerializeField, Min(0.01f)] private float m_RecoverTime = 0.28f;
+        [Tooltip("The equipped axe skin tints the blade and the slash.")]
+        [SerializeField] private CosmeticCatalog m_Cosmetics;
 
         private MaterialPropertyBlock m_Block;
         private Color m_SlashColor;
@@ -36,6 +39,13 @@ namespace ZombiCar.Player
         {
             m_Block = new MaterialPropertyBlock();
             m_SlashColor = m_Slash.sharedMaterial.GetColor(s_BaseColor);
+            CosmeticItem skin = m_Cosmetics != null ? m_Cosmetics.Equipped(CosmeticSlot.Axe) : null;
+            if (skin == null || skin.IsDefault)
+                return;
+            var blade = new MaterialPropertyBlock();
+            blade.SetColor(s_BaseColor, m_Axe.sharedMaterial.GetColor(s_BaseColor) * skin.Color);
+            m_Axe.SetPropertyBlock(blade);
+            m_SlashColor = new Color(skin.Color2.r, skin.Color2.g, skin.Color2.b, m_SlashColor.a);
         }
 
         private void LateUpdate()

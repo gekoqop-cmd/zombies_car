@@ -51,6 +51,7 @@ namespace ZombiCar.Enemies
         private State m_State = State.Dead;
         private float m_StateTime;
         private int m_Health;
+        private bool m_Silent;                    // removed by a cheat: no kill reward
         private float m_NextRepath;
         private float m_NextAttack;
         private float m_StaggerAllowedAt;
@@ -127,6 +128,7 @@ namespace ZombiCar.Enemies
             m_Config = config;
             m_Owner = owner;
             m_Health = config.MaxHealth;
+            m_Silent = false;
             m_ChasingPlayer = false;
             m_NextAttack = 0f;
             m_StaggerAllowedAt = 0f;
@@ -187,6 +189,19 @@ namespace ZombiCar.Enemies
             m_Agent.Move(displacement);
         }
 
+        /// <summary>
+        /// Kills the zombie now in any state, also while it still rises from the ground (developer cheats). Without
+        /// <paramref name="rewarded"/> it is only removed: no kill, scrap or experience.
+        /// </summary>
+        public void Kill(bool rewarded)
+        {
+            if (m_State == State.Dead)
+                return;
+            m_Health = 0;
+            m_Silent = !rewarded;
+            Enter(State.Dead);
+        }
+
         public void TakeDamage(int amount, Vector3 direction)
         {
             if (m_State == State.Dead || m_State == State.Rising)
@@ -194,6 +209,7 @@ namespace ZombiCar.Enemies
             amount = Mathf.Max(1, Mathf.RoundToInt(amount * DamageTakenScale));
             m_Health -= amount;
             m_Animator.Flash(s_HitFlash, c_HitFlashTime);
+            m_Animator.Kick(direction);
             Damaged?.Invoke(this, amount);
             if (m_Health <= 0)
             {
@@ -251,7 +267,10 @@ namespace ZombiCar.Enemies
                     m_Agent.enabled = false;      // corpses are not in the crowd avoidance
                     SetShootable(false);
                     m_Animator.Play(CharacterAnim.Dead, 1f, true);
-                    m_Owner.NotifyDied(this);
+                    if (m_Silent)
+                        m_Owner.NotifyRemoved(this);
+                    else
+                        m_Owner.NotifyDied(this);
                     Died?.Invoke(this);
                     break;
             }
@@ -262,6 +281,7 @@ namespace ZombiCar.Enemies
             float t = Mathf.Clamp01(m_StateTime / c_RiseTime);
             float eased = 1f - (1f - t) * (1f - t);
             m_Animator.SetLift(-m_VisualHeight * (1f - eased));
+            m_Animator.SetRising(t);
             m_Shadow.localScale = m_ShadowScale * eased;
             if (t < 1f)
                 return;

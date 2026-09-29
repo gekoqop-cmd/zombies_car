@@ -148,6 +148,17 @@ namespace ZombiCar.Progression
             return true;
         }
 
+        /// <summary>The next level of a car upgrade for free (developer cheats); false when it is maxed out.</summary>
+        public bool GrantUpgrade(CarUpgrade upgrade)
+        {
+            int level = LevelOf(upgrade);
+            if (level >= upgrade.MaxLevel)
+                return false;
+            Levels["car:" + upgrade.Id] = level + 1;
+            Apply(upgrade.Effect, upgrade.ValuePerLevel);
+            return true;
+        }
+
         private void Apply(StatEffect effect, float value)
         {
             if (effect != StatEffect.HealPlayerFull && effect != StatEffect.RepairCar)

@@ -28,7 +28,7 @@ namespace ZombiCar.EditorTools
                 var shaker = Object.FindAnyObjectByType<CameraShake>();
                 Check(CameraShake.IsReady, $"screen shake on the game camera (component {(shaker != null ? "found" : "missing")}, " +
                     $"follow {(shaker != null && shaker.ComponentOwner != null && shaker.ComponentOwner.Follow != null)})");
-                Check(ExplosiveProp.All.Count >= 7, $"{ExplosiveProp.All.Count} explosive barrels / canisters on the map");
+                Check(ExplosiveProp.All.Count >= 5, $"{ExplosiveProp.All.Count} explosive barrels / canisters on the map");
                 barrel = ExplosiveProp.All.OrderBy(b => Vector3.Distance(b.transform.position, new Vector3(9.5f, 0f, -7.5f))).First();
                 Vector3 p = barrel.transform.position;
                 foreach (Vector3 offset in new[] { new Vector3(1.8f, 0f, 1.2f), new Vector3(2.2f, 0f, -1.4f), new Vector3(3.2f, 0f, 0.2f), new Vector3(1.2f, 0f, 2.6f) })

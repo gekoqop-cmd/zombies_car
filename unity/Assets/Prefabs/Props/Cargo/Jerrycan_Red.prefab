@@ -116,6 +116,8 @@ MonoBehaviour:
   m_Push: 1.4
   m_FxSize: 0.7
   m_ChainDelay: 0.15
+  m_HitboxPadding: 0.35
+  m_HitboxHeight: 1.7
   m_Explosion: {fileID: 7514051702815746530, guid: 59a3b4c9afb143f439cf48e41f958485, type: 3}
   m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
   m_Waves: {fileID: 11400000, guid: 73ea086a7dd071e4a8eff0ddb603fb56, type: 2}

@@ -226,7 +226,7 @@ namespace ZombiCar.EditorTools
             BuildDecals(decals);
             if (look.Night)
             {
-                VaryLayout(props, nature, map, c_NightLayoutSeed);
+                VaryLayout(props, nature, environment, map, c_NightLayoutSeed);
                 AddNightLotLamps(props);
             }
             BuildExplosives(Root("Explosives"));
@@ -291,6 +291,11 @@ namespace ZombiCar.EditorTools
                 ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
                 ("m_Spawner", spawner), ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
                 ("m_Player", player.GetComponent<PlayerHealth>()));
+            PrefabBuilder.Wire(systemsGo.AddComponent<TutorialDirector>(),
+                ("m_State", DataAssetsBuilder.Load<TutorialState>(DataAssetsBuilder.c_TutorialState)),
+                ("m_Input", player.GetComponent<PlayerInputProvider>()),
+                ("m_Weapons", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)),
+                ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)));
         }
 
         // Workshop: the spot in front of the garage door (the building faces the lot, its front wall at z 6.4).
@@ -886,12 +891,10 @@ namespace ZombiCar.EditorTools
             Place("Prop_Cabinet", p, -20.3f, 3.2f, 90f);
             Place("Workbench", p, -2.4f, 11.3f, 90f);
             Place("Cart_Tools", p, -2.2f, 8f, 200f);
-            Place("Jerrycan_Red", p, -3f, 5.6f, 20f);
-            Place("Jerrycan_Green", p, -2.4f, 6.1f, -10f);
+            // No barrels or canisters by the workshop (removed on request): the yard stays clear.
 
-            // North fence line (the gate is at x 3.7..7.7).
-            Place("Barrel_RedWhite", p, 0.5f, 13.4f);
-            Place("Barrel_Grey", p, 1.5f, 13.7f, 40f);
+            // North fence line (the gate is at x 3.7..7.7). The two barrels right of the workshop door were removed on
+            // request (no barrels by the workshop).
             Place("Cart_Cargo", p, 2.6f, 12f, 12f);
             Place("Crate_Big", p, 9.8f, 13.5f, 5f);
             Place("Crate_Small1", p, 11.1f, 13.7f, -8f);
@@ -928,10 +931,11 @@ namespace ZombiCar.EditorTools
         }
 
         // Red explosive barrels out in the lot (the ones by the fences are in BuildProps): where the zombies walk in
-        // from the spawn points towards the car, clear of the car's free circle.
+        // from the spawn points towards the car, clear of the car's free circle. None by the workshop (removed on
+        // request: the one at (-13.5, 1.5) stood in front of it).
         private static readonly (float x, float z, float yaw)[] s_LotExplosives =
         {
-            (-11.5f, -6.5f, 20f), (9.5f, -7.5f, 140f), (12.5f, 5f, 70f), (-13.5f, 1.5f, 200f),
+            (-11.5f, -6.5f, 20f), (9.5f, -7.5f, 140f), (12.5f, 5f, 70f),
         };
 
         private static void BuildExplosives(Transform parent)

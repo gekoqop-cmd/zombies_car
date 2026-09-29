@@ -31,6 +31,10 @@ namespace ZombiCar.Props
         [Tooltip("Size of the comic effect.")]
         [SerializeField, Min(0.1f)] private float m_FxSize = 1f;
         [SerializeField, Min(0f)] private float m_ChainDelay = 0.15f;
+        [Tooltip("Bullets hit a trigger this much wider than the prop (metres), so near misses still count.")]
+        [SerializeField, Min(0f)] private float m_HitboxPadding = 0.35f;
+        [Tooltip("Height of the bullet hitbox, metres (covers the whole band bullets fly in).")]
+        [SerializeField, Min(0.1f)] private float m_HitboxHeight = 1.7f;
         [SerializeField] private ComicExplosion m_Explosion;
         [SerializeField] private RunState m_Run;
         [SerializeField] private WaveState m_Waves;
@@ -58,9 +62,34 @@ namespace ZombiCar.Props
 
         private void Awake()
         {
+            AddHitbox();
             m_Renderers = GetComponentsInChildren<Renderer>(true);
             m_Colliders = GetComponentsInChildren<Collider>(true);
             m_Left = m_Health;
+        }
+
+        /// <summary>
+        /// A wider, taller trigger capsule around the prop (on its layer, so bullets sweep it): the solid collider is
+        /// hugging the model and shots that grazed it did not register. Made at runtime, so the NavMesh never sees it;
+        /// the player and the zombies walk through triggers.
+        /// </summary>
+        private void AddHitbox()
+        {
+            var solid = GetComponent<Collider>();
+            if (solid == null)
+                return;
+            Bounds b = solid.bounds;
+            var go = new GameObject("BulletHitbox") { layer = gameObject.layer };
+            go.transform.SetParent(transform, false);
+            go.transform.position = new Vector3(b.center.x, transform.position.y, b.center.z);
+            Vector3 scale = transform.lossyScale;
+            float s = Mathf.Max(0.01f, Mathf.Max(scale.x, scale.z));
+            var capsule = go.AddComponent<CapsuleCollider>();
+            capsule.isTrigger = true;
+            capsule.direction = 1;
+            capsule.radius = (Mathf.Max(b.extents.x, b.extents.z) + m_HitboxPadding) / s;
+            capsule.height = Mathf.Max(m_HitboxHeight, capsule.radius * 2f * s) / Mathf.Max(0.01f, scale.y);
+            capsule.center = new Vector3(0f, capsule.height * 0.5f, 0f);
         }
 
         private void OnEnable()

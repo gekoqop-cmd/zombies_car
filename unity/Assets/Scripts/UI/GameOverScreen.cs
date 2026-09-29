@@ -25,6 +25,12 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_Level;
         [SerializeField] private TMP_Text m_Kills;
         [SerializeField] private TMP_Text m_Wave;
+        [Tooltip("Coins for the cases in the main menu earned by this run.")]
+        [SerializeField] private TMP_Text m_Coins;
+        [Tooltip("Coins per zombie killed, per wave reached and for a victory.")]
+        [SerializeField, Min(0)] private int m_CoinsPerKill = 1;
+        [SerializeField, Min(0)] private int m_CoinsPerWave = 10;
+        [SerializeField, Min(0)] private int m_VictoryCoins = 300;
         [SerializeField] private Button m_RestartButton;
         [SerializeField] private Button m_MenuButton;
         [SerializeField] private Color m_DefeatColor = new Color(1f, 0.38f, 0.3f, 1f);
@@ -109,11 +115,19 @@ namespace ZombiCar.UI
             m_Wave.SetText(m_Run.Wave.ToString());
             m_Money.SetText("0");
             m_Kills.SetText("0");
+            int coins = CoinsEarned;
+            MetaProgress.AddCoins(coins);
+            if (m_Coins != null)
+                m_Coins.SetText($"+{coins} МОНЕТ ДЛЯ КЕЙСОВ  •  ВСЕГО {MetaProgress.Coins}");
             m_Root.gameObject.SetActive(true);
             m_Root.interactable = m_Root.blocksRaycasts = true;
             m_RestartButton.interactable = m_MenuButton.interactable = true;
             AudioManager.PlaySfx(victory ? Sound.Victory : Sound.Defeat);
         }
+
+        /// <summary>Coins this run pays for the cases: kills, the wave reached (the first counts 0), a victory bonus.</summary>
+        public int CoinsEarned => m_Run.Kills * m_CoinsPerKill + Mathf.Max(0, m_Run.Wave - 1) * m_CoinsPerWave +
+                                  (m_Run.Outcome == RunOutcome.Victory ? m_VictoryCoins : 0);
 
         /// <summary>Plays the same map again (buttons, tests).</summary>
         public void Restart()

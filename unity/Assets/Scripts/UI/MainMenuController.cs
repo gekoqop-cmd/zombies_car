@@ -20,6 +20,11 @@ namespace ZombiCar.UI
         [SerializeField] private CanvasGroup m_Dim;
         [SerializeField, Range(0f, 1f)] private float m_DimAlpha = 0.65f;
         [SerializeField] private SettingsPanel m_Settings;
+        [Tooltip("Cases of rifle / axe / bullet skins (optional).")]
+        [SerializeField] private Button m_CasesButton;
+        [SerializeField] private CasesScreen m_Cases;
+        [Tooltip("Coins the player has, next to the cases button.")]
+        [SerializeField] private TMPro.TMP_Text m_CoinsLabel;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.3f;
         [Tooltip("Calm menu track (cross-fades from the map's music when coming back).")]
         [SerializeField] private AudioClip m_Music;
@@ -28,6 +33,7 @@ namespace ZombiCar.UI
 
         public bool IsMapSelectionOpen => m_MapOpen;
         public SettingsPanel Settings => m_Settings;
+        public CasesScreen Cases => m_Cases;
 
         private void Awake()
         {
@@ -36,7 +42,23 @@ namespace ZombiCar.UI
             m_SettingsButton.onClick.AddListener(() => m_Settings.Show());
             if (m_BackButton != null)
                 m_BackButton.onClick.AddListener(() => ShowMapSelection(false));
+            if (m_CasesButton != null && m_Cases != null)
+                m_CasesButton.onClick.AddListener(m_Cases.Show);
             Apply(1f, true);
+        }
+
+        private void OnEnable()
+        {
+            MetaProgress.Changed += ShowCoins;
+            ShowCoins();
+        }
+
+        private void OnDisable() => MetaProgress.Changed -= ShowCoins;
+
+        private void ShowCoins()
+        {
+            if (m_CoinsLabel != null)
+                m_CoinsLabel.SetText($"МОНЕТЫ: {MetaProgress.Coins}");
         }
 
         // The menu is the first screen the player can use: the game is loaded for the platform.
@@ -62,12 +84,13 @@ namespace ZombiCar.UI
         private void Apply(float step, bool instant)
         {
             float map = m_MapOpen ? 1f : 0f;
+            bool cases = m_Cases != null && m_Cases.IsOpen;              // the cases screen hides the logo and buttons
             float Move(float from, float to) => instant ? to : Mathf.MoveTowards(from, to, step);
             m_MapScreen.alpha = Move(m_MapScreen.alpha, map);
-            m_MainScreen.alpha = Move(m_MainScreen.alpha, 1f - map);
+            m_MainScreen.alpha = Move(m_MainScreen.alpha, cases ? 0f : 1f - map);
             m_Dim.alpha = Move(m_Dim.alpha, map * m_DimAlpha);
             m_MapScreen.interactable = m_MapScreen.blocksRaycasts = m_MapOpen;
-            m_MainScreen.interactable = m_MainScreen.blocksRaycasts = !m_MapOpen;
+            m_MainScreen.interactable = m_MainScreen.blocksRaycasts = !m_MapOpen && !cases;
             if (!m_MapOpen && m_MapScreen.alpha <= 0f)
                 m_MapScreen.gameObject.SetActive(false);
         }

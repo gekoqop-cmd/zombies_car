@@ -12,11 +12,11 @@ namespace ZombiCar.Player
         [SerializeField, Min(0.1f)] private float m_FireRate = 6f;
         [Tooltip("Health points one bullet takes from a zombie.")]
         [SerializeField, Min(1)] private int m_Damage = 10;
-        [SerializeField, Min(1)] private int m_MagazineSize = 24;
+        [SerializeField, Min(1)] private int m_MagazineSize = 20;
         [Tooltip("Spare ammo at the start of the map.")]
-        [SerializeField, Min(0)] private int m_StartReserve = 120;
+        [SerializeField, Min(0)] private int m_StartReserve = 60;
         [Tooltip("Reserve ammo never grows past this (caps the between-waves car resupply).")]
-        [SerializeField, Min(0)] private int m_MaxReserve = 240;
+        [SerializeField, Min(0)] private int m_MaxReserve = 100;
         [SerializeField, Min(0f)] private float m_ReloadTime = 1.4f;
         [SerializeField, Min(0.1f)] private float m_BulletSpeed = 35f;
         [SerializeField, Min(0.01f)] private float m_BulletRadius = 0.08f;

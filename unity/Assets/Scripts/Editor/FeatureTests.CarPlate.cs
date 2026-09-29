@@ -78,9 +78,11 @@ namespace ZombiCar.EditorTools
                 s_PlayerHealth.TakeDamage(5, Vector3.right);
                 Check(Playing("Player_Hurt1") || Playing("Player_Hurt2"), "the player takes a hit: hit sound");
                 s_PlayerHealth.Heal(5);
-                // Hull upgrade: the maximum grows, the stage thresholds (absolute HP) stay.
-                var pool = AssetDatabase.LoadAssetAtPath<PerkPool>(DataAssetsBuilder.c_PerkPool);
-                s_Run.TakePerk(pool.Perks.First(p => p.Id == "carplate"));
+                // Hull upgrade (workshop): the maximum grows, the stage thresholds (absolute HP) stay.
+                var catalog = AssetDatabase.LoadAssetAtPath<CarUpgradeCatalog>(DataAssetsBuilder.c_CarUpgrades);
+                CarUpgrade hull = catalog.Upgrades.First(u => u.Id == "hull");
+                s_Run.AddMoney(hull.CostAt(0));
+                s_Run.TryBuy(hull);
                 s_Car.TakeDamage(s_Car.Health - (s_Car.Config.DamagedAtOrBelow + 10), Vector3.right);
             });
             At(10.0f, () =>

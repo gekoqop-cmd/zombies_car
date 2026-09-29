@@ -66,6 +66,11 @@ namespace ZombiCar.EditorTools
                 "ИГРАТЬ", 52f, s_PlayColor, outline);
             Button settingsButton = HudButton("SettingsButton", main, topRight, new Vector2(columnX, y - buttonHeight - 24f),
                 new Vector2(buttonWidth, buttonHeight), "НАСТРОЙКИ", 46f, Color.white, outline);
+            Button casesButton = HudButton("CasesButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 2f),
+                new Vector2(buttonWidth, buttonHeight), "КЕЙСЫ", 46f, new Color(1f, 0.82f, 0.35f, 1f), outline);
+            TextMeshProUGUI coins = OutlinedLabel("Coins", main, topRight, topRight,
+                new Vector2(columnX, y - (buttonHeight + 24f) * 3f + 10f), new Vector2(buttonWidth, 56f), "МОНЕТЫ: 0", 36f,
+                TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f, 1f), outline);
 
             // Map selection.
             RectTransform mapScreen = UiFactory.Stretch("MapScreen", safe);
@@ -74,12 +79,14 @@ namespace ZombiCar.EditorTools
             Button back = BuildMapSelection(mapScreen, outline);
             mapScreen.gameObject.SetActive(false);
 
+            CasesScreen cases = BuildCasesScreen(safe, outline);
             SettingsPanel settings = BuildSettingsPopup(canvas.transform, outline, false);
 
             var menu = canvas.gameObject.AddComponent<MainMenuController>();
             PrefabBuilder.Wire(menu, ("m_PlayButton", play), ("m_SettingsButton", settingsButton), ("m_BackButton", back),
                 ("m_MainScreen", mainGroup), ("m_MapScreen", mapGroup), ("m_Dim", dim), ("m_Settings", settings),
-                ("m_Music", AudioBuilder.Music("Music_Menu")));
+                ("m_Music", AudioBuilder.Music("Music_Menu")), ("m_CasesButton", casesButton), ("m_Cases", cases),
+                ("m_CoinsLabel", coins));
             SaveUiPrefab(canvas.gameObject, "MainMenu");
             UiFactory.EventSystem();
             AudioBuilder.AddAudio();
@@ -451,6 +458,7 @@ namespace ZombiCar.EditorTools
             RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue,
                 out TextMeshProUGUI killsValue);
             BuildInteractionPrompt(safe, outline);
+            BuildTutorialHint(safe, outline);
             WaveBanner banner = BuildWaveBanner(safe, outline);
             BuildCarAttackAlert(safe, outline, banner);
             BuildWeaponSlots(safe, outline);

@@ -16,7 +16,6 @@ namespace ZombiCar.EditorTools
         private static readonly Color s_Gun = new Color(0.95f, 0.55f, 0.18f);
         private static readonly Color s_Survival = new Color(0.86f, 0.27f, 0.25f);
         private static readonly Color s_Axe = new Color(0.72f, 0.47f, 0.27f);
-        private static readonly Color s_Car = new Color(0.3f, 0.56f, 0.9f);
         private static readonly Color s_Run = new Color(0.93f, 0.76f, 0.24f);
 
         private static Sprite Icon(string name) => UiFactory.Sprite("UI_Icon_" + name);
@@ -40,8 +39,9 @@ namespace ZombiCar.EditorTools
             new Perk("damage", "КРУПНЫЙ КАЛИБР", "Урон оружия +20%", Icon("Damage"), s_Gun, StatEffect.WeaponDamage, 0.2f, 5, 1f),
             new Perk("firerate", "СКОРОСТРЕЛ", "Скорострельность +15%", Icon("FireRate"), s_Gun, StatEffect.FireRate, 0.15f, 5, 1f),
             new Perk("reload", "БЫСТРЫЕ РУКИ", "Перезарядка быстрее на 20%", Icon("Reload"), s_Gun, StatEffect.ReloadSpeed, 0.2f, 3, 1f),
-            new Perk("magazine", "БОЛЬШОЙ МАГАЗИН", "+8 патронов в магазине", Icon("Magazine"), s_Gun, StatEffect.MagazineSize, 8f, 4, 1f),
-            new Perk("reserve", "ЗАПАСЛИВЫЙ", "+60 к запасу патронов,\nсразу пополняется", Icon("AmmoBox"), s_Gun, StatEffect.MaxReserve, 60f, 4, 1f),
+            // Ammo is scarce on purpose (WeaponConfig: 20 in the magazine, 60 / 100 in reserve): small steps up.
+            new Perk("magazine", "БОЛЬШОЙ МАГАЗИН", "+5 патронов в магазине", Icon("Magazine"), s_Gun, StatEffect.MagazineSize, 5f, 4, 1f),
+            new Perk("reserve", "ЗАПАСЛИВЫЙ", "+30 к запасу патронов,\nсразу пополняется", Icon("AmmoBox"), s_Gun, StatEffect.MaxReserve, 30f, 4, 0.8f),
             new Perk("pierce", "БРОНЕБОЙНЫЕ ПУЛИ", "Пуля пробивает\nещё одного зомби", Icon("Pierce"), s_Gun, StatEffect.BulletPierce, 1f, 3, 0.8f),
             new Perk("crit", "ТОЧНЫЙ ГЛАЗ", "10% шанс\nдвойного урона", Icon("Crit"), s_Gun, StatEffect.CritChance, 0.1f, 4, 1f),
             new Perk("range", "ДАЛЬНОБОЙ", "Дальность стрельбы +20%", Icon("Range"), s_Gun, StatEffect.WeaponRange, 0.2f, 3, 0.8f),
@@ -54,9 +54,7 @@ namespace ZombiCar.EditorTools
             new Perk("speed", "ЛЁГКИЕ НОГИ", "Скорость бега +10%", Icon("Speed"), s_Survival, StatEffect.MoveSpeed, 0.1f, 3, 0.9f),
             new Perk("vampire", "ВАМПИРИЗМ", "Каждое убийство\nлечит 2 здоровья", Icon("Vampire"), s_Survival, StatEffect.KillHeal, 2f, 3, 0.9f),
             new Perk("medkit", "АПТЕЧКА", "Полностью восстанавливает\nздоровье", Icon("Medkit"), s_Survival, StatEffect.HealPlayerFull, 0f, 0, 0.6f),
-            // Car.
-            new Perk("carplate", "БРОНЕЛИСТЫ", "Машина: +80 к прочности\nи ремонт на 80", Icon("CarPlate"), s_Car, StatEffect.CarMaxHealth, 80f, 4, 1f),
-            new Perk("carregen", "САМОРЕМОНТ", "Машина чинится\nна 2 в секунду", Icon("CarRegen"), s_Car, StatEffect.CarRegen, 2f, 3, 0.9f),
+            // No car cards: the car is upgraded only in the workshop (CarUpgrades below).
             // Run.
             new Perk("scrap", "БАРАХОЛЬЩИК", "Металлолома +25%", Icon("ScrapGain"), s_Run, StatEffect.MoneyGain, 0.25f, 3, 0.9f),
             new Perk("xp", "СМЕКАЛКА", "Опыта +20%", Icon("Xp"), s_Run, StatEffect.XpGain, 0.2f, 3, 0.9f),

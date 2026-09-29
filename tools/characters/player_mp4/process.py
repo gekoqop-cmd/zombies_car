@@ -22,7 +22,8 @@ OUT_PORTRAIT = os.path.join(UNITY, "Art", "Textures", "UI", "UI_PortraitPlayer.p
 OUT_JSON = os.path.join(UNITY, "Data", "Characters", "Player_Frames.json")
 
 SOURCE_FPS = 24
-TARGET_HEIGHT = 320          # px of the standing character (idle) in the exported frames
+TARGET_HEIGHT = 192          # px of the standing character (idle) in the exported frames (drawn ~150-200 px on a 1080p
+                             # screen; 320 px frames used 3x the video memory for nothing: PlayerFrameOptimizer.cs)
 MARGIN = 6                   # px of empty border around the canvas
 WATERMARK = (0.72, 0.90)     # KlingAI mark: x > 72 % and y > 90 % of the frame
 NEAR = 14                    # px: detached pieces this close to the body are kept (hair tips, gun parts)
@@ -201,7 +202,7 @@ def main():
     # Frame selection.
     thumbs = {c: [small(r, a, anchors[c][i]) for i, (r, a) in enumerate(f)] for c, f in clips.items()}
     d, s, length = best_loop(thumbs["idle"], 36, 72, range(0, 12))
-    idle_sel = list(range(s, s + length, 2))                                 # 24 -> 12 fps
+    idle_sel = list(range(s, s + length, 4))                                 # 24 -> 6 fps: a slow breath needs no more
     print("idle loop", s, length, "diff %.4f" % d)
     d, s, length = best_loop(thumbs["run"], 14, 20, range(8, 80))
     run_sel = list(range(s, s + length, 2))
@@ -224,7 +225,7 @@ def main():
     reload_sel = list(range(r0, r1 + 1, step))
     print("reload active", r0, r1, "frames", len(reload_sel))
 
-    selection = {"Idle": ("idle", idle_sel, 12.0, True), "Run": ("run", run_sel, 12.0, True),
+    selection = {"Idle": ("idle", idle_sel, 6.0, True), "Run": ("run", run_sel, 12.0, True),
                  "Shot": ("shot", shot_sel, 24.0, False), "Reload": ("reload", reload_sel, len(reload_sel) / 1.4, False)}
 
 

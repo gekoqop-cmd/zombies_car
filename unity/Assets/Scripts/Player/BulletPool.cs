@@ -10,6 +10,10 @@ namespace ZombiCar.Player
         private const string c_ContainerName = "[Bullets]";
 
         [SerializeField] private Bullet m_Prefab;
+        [Tooltip("The equipped bullet skin is put on every pooled bullet once, when it is created.")]
+        [SerializeField] private ZombiCar.Core.CosmeticCatalog m_Cosmetics;
+
+        private ZombiCar.Core.CosmeticItem m_Skin;
 
         private ObjectPool<Bullet> m_Pool;
         private Transform m_Container;   // scene-root parent: bullets must not move with the shooter
@@ -44,8 +48,15 @@ namespace ZombiCar.Player
             if (m_Pool != null)
                 return;
             m_Container = new GameObject(c_ContainerName).transform;
+            m_Skin = m_Cosmetics != null ? m_Cosmetics.Equipped(ZombiCar.Core.CosmeticSlot.Bullet) : null;
             m_Pool = new ObjectPool<Bullet>(
-                createFunc: () => Instantiate(m_Prefab, m_Container),
+                createFunc: () =>
+                {
+                    Bullet b = Instantiate(m_Prefab, m_Container);
+                    if (m_Skin != null && !m_Skin.IsDefault)
+                        b.ApplySkin(m_Skin);
+                    return b;
+                },
                 actionOnGet: b => b.gameObject.SetActive(true),
                 actionOnRelease: b => b.gameObject.SetActive(false),
                 actionOnDestroy: b =>

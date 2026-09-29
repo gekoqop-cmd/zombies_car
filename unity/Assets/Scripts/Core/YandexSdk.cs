@@ -25,12 +25,14 @@ namespace ZombiCar.Core
         [DllImport("__Internal")] private static extern void YaLoadingReady();
         [DllImport("__Internal")] private static extern void YaGameplay(int running);
         [DllImport("__Internal")] private static extern void YaShowFullscreenAd();
+        [DllImport("__Internal")] private static extern void YaShowRewardedAd();
         private static readonly bool s_Live = true;
 #else
         private static void YaInit() { }
         private static void YaLoadingReady() { }
         private static void YaGameplay(int running) { }
         private static void YaShowFullscreenAd() { }
+        private static void YaShowRewardedAd() { }
         private static readonly bool s_Live = false;
 #endif
 
@@ -39,6 +41,8 @@ namespace ZombiCar.Core
         private bool m_Gameplay;
         private bool m_GameplayReported;
         private Action m_AdDone;
+        private Action<bool> m_RewardedDone;
+        private bool m_Rewarded;
 
         /// <summary>The player's language from the SDK ("ru", "en", …); "ru" until the SDK answers.</summary>
         public static string Language { get; private set; } = "ru";
@@ -98,6 +102,25 @@ namespace ZombiCar.Core
             YaShowFullscreenAd();
         }
 
+        /// <summary>
+        /// Shows a rewarded video (the button says so); <paramref name="done"/> gets true only when the platform
+        /// confirmed the reward (onRewarded), after the video is closed. Outside Yandex Games the reward is granted at
+        /// once (editor and local tests).
+        /// </summary>
+        public static void ShowRewardedAd(Action<bool> done)
+        {
+            if (!s_Live || s_Instance == null)
+            {
+                done?.Invoke(true);
+                return;
+            }
+            if (s_Instance.m_RewardedDone != null || s_Instance.m_AdDone != null)
+                return;                                   // one ad at a time
+            s_Instance.m_Rewarded = false;
+            s_Instance.m_RewardedDone = done ?? (_ => { });
+            YaShowRewardedAd();
+        }
+
         // Gameplay for the platform = a map is open and nothing pauses it.
         private void Report()
         {
@@ -126,6 +149,16 @@ namespace ZombiCar.Core
         private void OnPlatformResume(string _) => GamePause.Set(GamePause.Reason.Platform, false);
 
         private void OnAdOpen(string _) => GamePause.Set(GamePause.Reason.Ad, true);
+
+        private void OnRewarded(string _) => m_Rewarded = true;
+
+        private void OnRewardedClose(string _)
+        {
+            GamePause.Set(GamePause.Reason.Ad, false);
+            Action<bool> done = m_RewardedDone;
+            m_RewardedDone = null;
+            done?.Invoke(m_Rewarded);
+        }
 
         private void OnAdClose(string _)
         {

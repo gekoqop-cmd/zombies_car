@@ -63,6 +63,30 @@ namespace ZombiCar.EditorTools
                 throw new InvalidOperationException($"WebGL build {summary.result}");
         }
 
+        private const string c_WebDevBuildFolder = "Builds/WebGL_Dev";
+
+        /// <summary>
+        /// Development WebGL build (cheats on Insert, the Unity "Development Build" mark, bigger and slower) into
+        /// Builds/WebGL_Dev, then opened in the browser from Unity's local web server. Never upload it to Yandex Games.
+        /// </summary>
+        [MenuItem("Tools/Build WebGL Player (Development, with cheats)")]
+        public static void BuildWebGLDevelopment()
+        {
+            var options = new BuildPlayerOptions
+            {
+                scenes = Array.ConvertAll(EditorBuildSettings.scenes, s => s.path),
+                locationPathName = c_WebDevBuildFolder,
+                target = BuildTarget.WebGL,
+                options = BuildOptions.Development | BuildOptions.AutoRunPlayer,
+            };
+            BuildReport report = BuildPipeline.BuildPlayer(options);
+            BuildSummary summary = report.summary;
+            Debug.Log($"[ProjectBuild] WebGL development build {summary.result}: {summary.totalSize / (1024f * 1024f):F1} MB, " +
+                      $"{summary.totalTime.TotalMinutes:F1} min, errors {summary.totalErrors}");
+            if (summary.result != BuildResult.Succeeded)
+                throw new InvalidOperationException($"WebGL development build {summary.result}");
+        }
+
         private static void Step(string name, Action action)
         {
             var timer = Stopwatch.StartNew();
