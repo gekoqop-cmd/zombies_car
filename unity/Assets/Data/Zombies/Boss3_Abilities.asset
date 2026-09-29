@@ -12,53 +12,77 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: af7c78ee85e1bbe43a48d169bfa3a474, type: 3}
   m_Name: Boss3_Abilities
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.BossConfig
-  m_Summon: 1
-  m_SummonInterval: 9
-  m_SummonWindup: 1
-  m_SummonCount: 5
-  m_SummonRadius: 3.2
-  m_MaxMinions: 14
-  m_Minions:
-  - {fileID: 11400000, guid: b9accf8975114a04cbd6286e9b314e5b, type: 2}
-  - {fileID: 11400000, guid: 6b9e7af8de63afa44a61012e1ee5206a, type: 2}
-  - {fileID: 11400000, guid: c09e01af4e06f4d47b00f7bf209cf08b, type: 2}
-  - {fileID: 11400000, guid: 0068ac740452c624895f090ebb7cdfd6, type: 2}
-  - {fileID: 11400000, guid: bbc78e3049cc4584587ba080c0dff3b6, type: 2}
-  m_Spit: 1
-  m_SpitInterval: 6
+  m_Summon: 0
+  m_SummonInterval: 7
+  m_SummonWindup: 0.9
+  m_SummonCount: 4
+  m_SummonRadius: 2.6
+  m_MaxMinions: 12
+  m_Minions: []
+  m_Spit: 0
+  m_SpitInterval: 5
   m_SpitWindup: 0.5
-  m_SpitVolley: 5
-  m_SpitDamage: 16
-  m_SpitRadius: 1.6
+  m_SpitVolley: 3
+  m_SpitDamage: 14
+  m_SpitRadius: 1.5
   m_SpitFlight: 1.1
   m_SpitSpread: 2.6
   m_SpitRange: 15
-  m_Charge: 1
-  m_ChargeInterval: 10
-  m_ChargeWindup: 0.9
-  m_ChargeSpeed: 14
+  m_SpitCadence: 0.14
+  m_SpitPuddle: 0
+  m_SpitPuddleDps: 8
+  m_EnrageVolley: 1
+  m_Sweep: 1
+  m_SweepInterval: 3.5
+  m_SweepWindup: 0.75
+  m_SweepRange: 4.6
+  m_SweepArc: 170
+  m_SweepDamage: 34
+  m_SweepCarDamage: 25
+  m_SweepKnockback: 5
+  m_Cracks: 1
+  m_CracksInterval: 8
+  m_CracksWindup: 2
+  m_CracksCount: 4
+  m_CracksSpread: 22
+  m_CracksLength: 13
+  m_CracksWidth: 1.3
+  m_CracksDamage: 24
+  m_Reap: 1
+  m_ReapInterval: 7
+  m_ReapWindup: 1.2
+  m_EnrageMinions: []
+  m_EnrageSummonBonus: 0
+  m_Charge: 0
+  m_ChargeInterval: 8
+  m_ChargeWindup: 1
+  m_ChargeSpeed: 13
   m_ChargeDistance: 12
   m_ChargeMinRange: 4
   m_ChargeMaxRange: 15
-  m_ChargeDamage: 36
-  m_ChargeCarDamage: 45
+  m_ChargeDamage: 30
+  m_ChargeCarDamage: 40
   m_ChargeHitRadius: 1.5
   m_ChargeKnockback: 7
   m_ChargeStun: 1.3
   m_StunDamageTaken: 1.5
   m_Enrage: 1
   m_EnrageAt: 0.5
-  m_EnrageSpeed: 1.35
-  m_EnrageDamage: 1.3
-  m_EnrageCooldowns: 0.6
-  m_EnrageScale: 1.12
-  m_EnrageTint: {r: 1, g: 0.6, b: 0.5, a: 1}
-  m_Slam: 1
+  m_EnrageSpeed: 1.25
+  m_EnrageDamage: 1.25
+  m_EnrageCooldowns: 0.7
+  m_EnrageScale: 1.1
+  m_EnrageTint: {r: 1, g: 0.7, b: 0.45, a: 1}
+  m_Slam: 0
   m_SlamInterval: 6
   m_SlamWindup: 0.8
-  m_SlamRadius: 4.8
-  m_SlamDamage: 30
+  m_SlamRadius: 4.5
+  m_SlamDamage: 28
   m_SlamCarDamage: 25
   m_SlamKnockback: 6
   m_VoicePitch: 0.78
   m_AuraColor: {r: 1, g: 0.55, b: 0.2, a: 0.6}
+  m_RoarClip: {fileID: 8300000, guid: 7979ba3ea4da9fa47843dda81bc97168, type: 3}
+  m_AttackClip: {fileID: 8300000, guid: 1964f0950229ed14c8070bf891bbc114, type: 3}
+  m_DeathClip: {fileID: 8300000, guid: d22c321d60b3a8b409eeb0703b2ce740, type: 3}
+  m_SpecialClip: {fileID: 8300000, guid: 2e7f3f9f9ed4b8942bfc3d349a57ec84, type: 3}

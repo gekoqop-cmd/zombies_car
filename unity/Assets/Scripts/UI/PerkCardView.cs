@@ -6,8 +6,8 @@ using ZombiCar.Progression;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// One level-up card: icon on a disc in the perk's colour, title, what it does, its level ("НОВОЕ" or
-    /// "УР. 1 → 2", with the maximum) and the number key that picks it on desktop. <see cref="LevelUpScreen"/> drives
+    /// One level-up card: icon on a disc in the perk's colour, title, what it does, "НОВОЕ" and a pulsing glow when
+    /// the run has not taken it yet, and the number key that picks it on desktop. <see cref="LevelUpScreen"/> drives
     /// its appear / pick animation.
     /// </summary>
     public sealed class PerkCardView : MonoBehaviour
@@ -24,6 +24,8 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_KeyHint;
         [SerializeField] private Image m_Glow;
 
+        private bool m_New;
+
         public Button Button => m_Button;
 
         public void Bind(Perk perk, int stacks, int index, bool showKey)
@@ -31,11 +33,11 @@ namespace ZombiCar.UI
             m_Icon.sprite = perk.Icon;
             m_IconDisc.color = perk.Color;
             m_Title.SetText(perk.Title);
-            m_Description.SetText(perk.Description);
-            string level = stacks == 0 ? "НОВОЕ" : $"УР. {stacks} → {stacks + 1}";
-            if (perk.MaxStacks > 0)
-                level += $"   (МАКС. {perk.MaxStacks})";
-            m_Level.SetText(level);
+            m_Description.SetText(perk.DescriptionAt(stacks));                  // what taking it NOW gives
+            // Only a card the run has not taken yet is marked ("НОВОЕ" and a glow); levels are on the HUD.
+            m_New = stacks == 0;
+            m_Level.gameObject.SetActive(m_New);
+            m_Level.SetText("НОВОЕ");
             m_KeyHint.gameObject.SetActive(showKey);
             m_KeyHint.SetText((index + 1).ToString());
             if (m_Glow != null)
@@ -60,7 +62,8 @@ namespace ZombiCar.UI
             if (m_Glow != null)
             {
                 Color c = m_Glow.color;
-                c.a = picked > 0f ? (1f - picked) * 0.9f : 0f;
+                float newGlow = m_New ? (0.2f + 0.12f * Mathf.Sin(Time.unscaledTime * 4f)) * Mathf.Clamp01(appear) * (1f - fade) : 0f;
+                c.a = picked > 0f ? (1f - picked) * 0.9f : newGlow;
                 m_Glow.color = c;
             }
         }

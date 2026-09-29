@@ -24,14 +24,18 @@ namespace ZombiCar.Core
             LevelUp = 1 << 5,
             Workshop = 1 << 6,
             GameOver = 1 << 7,
+            Tutorial = 1 << 8,
+            BossIntro = 1 << 9,
         }
 
         // Reasons that also silence the sound (the menus keep it).
         private const Reason c_Mute = Reason.Platform | Reason.Ad | Reason.Focus;
         // Reasons that belong to one map session; cleared when a scene is loaded.
-        private const Reason c_Session = Reason.Settings | Reason.ControlsLayout | Reason.LevelUp | Reason.Workshop | Reason.GameOver;
+        private const Reason c_Session = Reason.Settings | Reason.ControlsLayout | Reason.LevelUp | Reason.Workshop | Reason.GameOver |
+                                          Reason.Tutorial | Reason.BossIntro;
 
         private static Reason s_Reasons;
+        private static float s_SlowMotion = 1f;
 
         /// <summary>Raised when the set of reasons changes.</summary>
         public static event Action Changed;
@@ -56,11 +60,23 @@ namespace ZombiCar.Core
         }
 
         /// <summary>Drops the pauses of the scene being left (its pop-ups are gone with it).</summary>
-        public static void ClearSession() => Set(c_Session, false);
+        public static void ClearSession()
+        {
+            s_SlowMotion = 1f;
+            Set(c_Session, false);
+            Apply();
+        }
+
+        /// <summary>Game speed while nothing pauses it (1 = normal; the victory finale slows it down).</summary>
+        public static void SetSlowMotion(float scale)
+        {
+            s_SlowMotion = Mathf.Clamp(scale, 0.05f, 1f);
+            Apply();
+        }
 
         private static void Apply()
         {
-            Time.timeScale = s_Reasons == Reason.None ? 1f : 0f;
+            Time.timeScale = s_Reasons == Reason.None ? s_SlowMotion : 0f;
             AudioListener.pause = (s_Reasons & c_Mute) != 0;
         }
 
@@ -68,6 +84,7 @@ namespace ZombiCar.Core
         private static void ResetStatics()
         {
             s_Reasons = Reason.None;
+            s_SlowMotion = 1f;
             Changed = null;
         }
     }

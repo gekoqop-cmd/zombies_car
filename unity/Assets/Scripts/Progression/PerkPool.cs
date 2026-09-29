@@ -24,10 +24,13 @@ namespace ZombiCar.Progression
         [SerializeField, Min(0)] private int m_MaxStacks = 3;
         [Tooltip("Relative chance to be offered.")]
         [SerializeField, Min(0f)] private float m_Weight = 1f;
+        [Tooltip("Every next time it is taken it gives this much more (0 = the same each time: an ability, not a number).")]
+        [SerializeField] private float m_ValueStep;
 
         public Perk(string id, string title, string description, Sprite icon, Color color, StatEffect effect, float value,
-            int maxStacks, float weight)
+            int maxStacks, float weight, float valueStep = 0f)
         {
+            m_ValueStep = valueStep;
             m_Id = id;
             m_Title = title;
             m_Description = description;
@@ -41,7 +44,20 @@ namespace ZombiCar.Progression
 
         public string Id => m_Id;
         public string Title => m_Title;
-        public string Description => m_Description;
+        /// <summary>The text of the first time; {0} is the value, {1} the value in percent.</summary>
+        public string Description => DescriptionAt(0);
+
+        /// <summary>What taking it after <paramref name="stacks"/> times gives, in words.</summary>
+        public string DescriptionAt(int stacks)
+        {
+            float value = ValueAt(stacks);
+            string number = Mathf.Approximately(value, Mathf.Round(value)) ? Mathf.RoundToInt(value).ToString()
+                : value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+            return string.Format(m_Description, number, Mathf.RoundToInt(value * 100f));
+        }
+
+        /// <summary>What taking it after <paramref name="stacks"/> times gives: the value grows by the step each time.</summary>
+        public float ValueAt(int stacks) => m_Value + m_ValueStep * stacks;
         public Sprite Icon => m_Icon;
         public Color Color => m_Color;
         public StatEffect Effect => m_Effect;

@@ -80,6 +80,55 @@ var YandexSdkLib = {
       } catch (e) { console.warn(e); Ya.send("OnRewardedClose", "0"); }
     });
   },
+
+  // Leaderboard score (the victory's time). Needs an authorized player: the SDK refuses otherwise, which is fine —
+  // nothing is sent. Current API: ysdk.leaderboards.setScore; older SDKs: getLeaderboards().setLeaderboardScore.
+  YaSubmitScore: function (namePtr, score) {
+    var name = UTF8ToString(namePtr);
+    Ya.sdk().then(function (s) {
+      if (!s) { Ya.send("OnScoreSubmitted", "0"); return; }
+      var done = function () { Ya.send("OnScoreSubmitted", "1"); };
+      var fail = function (e) { console.warn("[YandexSdk] setScore", e); Ya.send("OnScoreSubmitted", "0"); };
+      try {
+        if (s.leaderboards && s.leaderboards.setScore) {
+          var check = s.isAvailableMethod ? s.isAvailableMethod("leaderboards.setScore") : Promise.resolve(true);
+          check.then(function (ok) {
+            if (!ok) { Ya.send("OnScoreSubmitted", "0"); return; }
+            s.leaderboards.setScore(name, score).then(done, fail);
+          }, fail);
+        } else if (s.getLeaderboards) {
+          s.getLeaderboards().then(function (lb) { return lb.setLeaderboardScore(name, score); }).then(done, fail);
+        } else Ya.send("OnScoreSubmitted", "0");
+      } catch (e) { fail(e); }
+    });
+  },
+
+  // The top of a leaderboard with the player's own entry; answers with JSON (or "" when there is nothing to show).
+  YaGetLeaderboardEntries: function (namePtr, count) {
+    var name = UTF8ToString(namePtr);
+    Ya.sdk().then(function (s) {
+      if (!s) { Ya.send("OnLeaderboardEntries", ""); return; }
+      var options = { quantityTop: count, includeUser: true, quantityAround: 0 };
+      var fail = function (e) { console.warn("[YandexSdk] getEntries", e); Ya.send("OnLeaderboardEntries", ""); };
+      var toJson = function (res) {
+        var entry = function (e) {
+          var p = e.player || {};
+          var avatar = "";
+          try { avatar = p.getAvatarSrc ? p.getAvatarSrc("small") : ""; } catch (x) { }
+          return { rank: e.rank || 0, name: p.publicName || "", avatar: avatar || "", score: e.score || 0 };
+        };
+        var out = { available: true, entries: [], userRank: res.userRank || 0 };
+        (res.entries || []).forEach(function (e) { out.entries.push(entry(e)); });
+        Ya.send("OnLeaderboardEntries", JSON.stringify(out));
+      };
+      try {
+        if (s.leaderboards && s.leaderboards.getEntries) s.leaderboards.getEntries(name, options).then(toJson, fail);
+        else if (s.getLeaderboards)
+          s.getLeaderboards().then(function (lb) { return lb.getLeaderboardEntries(name, options); }).then(toJson, fail);
+        else Ya.send("OnLeaderboardEntries", "");
+      } catch (e) { fail(e); }
+    });
+  },
 };
 
 autoAddDeps(YandexSdkLib, "$Ya");

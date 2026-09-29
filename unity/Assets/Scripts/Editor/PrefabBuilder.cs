@@ -260,6 +260,31 @@ namespace ZombiCar.EditorTools
             BuildCarDamageView(go, health);
             BuildCarShockField(go, health);
             BuildCarSpikes(go, health);
+            BuildCarMines(go);
+        }
+
+        // Workshop supply "mines": the placer on the car with an inactive mine to copy (a flat steel disc with a
+        // blinking light on top; no colliders, the zombies walk onto it).
+        private static void BuildCarMines(GameObject car)
+        {
+            var template = new GameObject("MineTemplate");
+            template.transform.SetParent(car.transform, false);
+            Mesh cylinder = Resources.GetBuiltinResource<Mesh>("Cylinder.fbx");
+            Material steel = MaterialLibrary.Get("M_CarSpike");
+            void Part(string name, Mesh mesh, Material material, Vector3 position, Vector3 scale)
+            {
+                GameObject part = MeshObject(name, mesh, material, false);
+                part.transform.SetParent(template.transform, false);
+                part.transform.localPosition = position;
+                part.transform.localScale = scale;
+            }
+            Part("Body", cylinder, steel, new Vector3(0f, 0.04f, 0f), new Vector3(0.62f, 0.04f, 0.62f));
+            Part("Top", cylinder, steel, new Vector3(0f, 0.1f, 0f), new Vector3(0.3f, 0.03f, 0.3f));
+            Part("Light", Resources.GetBuiltinResource<Mesh>("Sphere.fbx"), MaterialLibrary.Get("M_Bullet"), new Vector3(0f, 0.15f, 0f),
+                Vector3.one * 0.13f);
+            template.SetActive(false);
+            Wire(car.AddComponent<CarMines>(), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Template", template), ("m_Explosion", s_Explosion));
         }
 
         // Workshop upgrade "spikes": steel cones on the body, one set per level (CarUpgrades: 4 levels, 8 damage each).

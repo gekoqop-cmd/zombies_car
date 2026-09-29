@@ -193,6 +193,18 @@ namespace ZombiCar.Player
                 m_MuzzleGlow.enabled = false;
         }
 
+        /// <summary>The player is back on their feet (revived): upright, normal colours, animated again.</summary>
+        public void ShowUp()
+        {
+            if (!m_Down)
+                return;
+            m_Down = false;
+            m_Animator.speed = 1f;
+            m_Body.transform.localRotation = Quaternion.identity;
+            m_Body.transform.localPosition = Vector3.zero;
+            m_Body.color = m_Tint * SceneTint.Characters;
+        }
+
         /// <summary>Animation event of the Run clip (foot strike), forwarded by <see cref="PlayerAnimationEvents"/>.</summary>
         public void Footstep()
         {

@@ -11,7 +11,8 @@ namespace ZombiCar.UI
     /// <summary>
     /// Roguelike level-up choice (HUD scene): whenever the run has a level-up waiting (<see cref="RunState"/>), the
     /// game pauses and three random cards from the <see cref="PerkPool"/> fly in; a click (or 1 / 2 / 3 on the
-    /// keyboard) takes one. Several level-ups in a row deal a new hand each; the game goes on after the last one.
+    /// keyboard) takes one. "ПЕРЕБРОСИТЬ" deals a new hand for scrap (50, then +50 per reroll of the run). Several
+    /// level-ups in a row deal a new hand each; the game goes on after the last one.
     /// Never shown once the run is over.
     /// </summary>
     public sealed class LevelUpScreen : MonoBehaviour
@@ -25,6 +26,16 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_Title;
         [SerializeField] private TMP_Text m_Subtitle;
         [SerializeField] private PerkCardView[] m_Cards = System.Array.Empty<PerkCardView>();
+        [Header("Reroll")]
+        [Tooltip("\"ПЕРЕБРОСИТЬ • 50\": deals a new hand for scrap.")]
+        [SerializeField] private UnityEngine.UI.Button m_RerollButton;
+        [SerializeField] private TMP_Text m_RerollLabel;
+        [SerializeField] private UnityEngine.UI.Image m_RerollPlate;
+        [Tooltip("The first reroll of a run costs this; every next one this much more (50 → 100 → 150 ...).")]
+        [SerializeField, Min(0)] private int m_RerollBase = 50;
+        [SerializeField, Min(0)] private int m_RerollStep = 50;
+        [SerializeField] private Color m_RerollColor = new Color(0.3f, 0.56f, 0.9f, 1f);
+        [SerializeField] private Color m_RerollDisabled = new Color(0.33f, 0.33f, 0.36f, 1f);
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.2f;
         [SerializeField, Min(0.01f)] private float m_CardTime = 0.35f;
         [SerializeField, Min(0f)] private float m_CardStagger = 0.09f;
@@ -53,6 +64,8 @@ namespace ZombiCar.UI
                 int index = i;
                 m_Cards[i].Button.onClick.AddListener(() => Pick(index));
             }
+            if (m_RerollButton != null)
+                m_RerollButton.onClick.AddListener(() => Reroll());
             m_Root.alpha = 0f;
             m_Root.gameObject.SetActive(false);
         }
@@ -61,12 +74,14 @@ namespace ZombiCar.UI
         {
             m_Run.LevelUpsChanged += TryOpen;
             m_Run.OutcomeChanged += OnOutcome;
+            m_Run.Changed += RefreshReroll;
         }
 
         private void OnDisable()
         {
             m_Run.LevelUpsChanged -= TryOpen;
             m_Run.OutcomeChanged -= OnOutcome;
+            m_Run.Changed -= RefreshReroll;
             if (m_Open)
                 GamePause.Set(GamePause.Reason.LevelUp, false);
         }
@@ -99,8 +114,7 @@ namespace ZombiCar.UI
                     m_Cards[i].Bind(m_Hand[i], m_Run.StacksOf(m_Hand[i]), i, keys);
             }
             m_Title.SetText("НОВЫЙ УРОВЕНЬ!");
-            int level = m_Stats != null ? m_Stats.Level - m_Run.PendingLevelUps + 1 : 0;
-            m_Subtitle.SetText(level > 0 ? $"УРОВЕНЬ {level}: ВЫБЕРИТЕ УЛУЧШЕНИЕ" : "ВЫБЕРИТЕ УЛУЧШЕНИЕ");
+            m_Subtitle.SetText("ВЫБЕРИТЕ УЛУЧШЕНИЕ");
             m_Picked = -1;
             m_DealTime = Time.unscaledTime;
             if (!m_Open)
@@ -111,8 +125,37 @@ namespace ZombiCar.UI
                 GamePause.Set(GamePause.Reason.LevelUp, true);
             }
             Animate();
+            RefreshReroll();
             AudioManager.PlaySfx(Sound.LevelUp);
             Dealt?.Invoke();
+        }
+
+        /// <summary>Scrap the next reroll costs (it grows with every reroll of the run).</summary>
+        public int RerollCost => m_RerollBase + m_RerollStep * m_Run.Rerolls;
+
+        /// <summary>Pays for a new hand of cards (button, tests); false when the scrap is not enough.</summary>
+        public bool Reroll()
+        {
+            if (!m_Open || m_Picked >= 0 || !m_Run.TryReroll(RerollCost))
+            {
+                AudioManager.PlaySfx(Sound.UiDenied);
+                return false;
+            }
+            Debug.Log($"[LevelUpScreen] Rerolled (#{m_Run.Rerolls}), scrap left {m_Run.Money}.");
+            Deal();
+            return true;
+        }
+
+        private void RefreshReroll()
+        {
+            if (m_RerollButton == null)
+                return;
+            int cost = RerollCost;
+            bool can = m_Open && m_Picked < 0 && m_Run.Money >= cost;
+            m_RerollButton.interactable = can;
+            if (m_RerollPlate != null)
+                m_RerollPlate.color = can ? m_RerollColor : m_RerollDisabled;
+            m_RerollLabel.SetText($"ПЕРЕБРОСИТЬ • {cost}");
         }
 
         /// <summary>Takes the card at <paramref name="index"/> (clicks, number keys, tests).</summary>
@@ -124,6 +167,7 @@ namespace ZombiCar.UI
                 return;                                            // a click still meant for the previous hand
             m_Picked = index;
             m_PickStart = Time.unscaledTime;
+            RefreshReroll();
             AudioManager.PlaySfx(Sound.CardPick);
             Picked?.Invoke(m_Hand[index]);
         }

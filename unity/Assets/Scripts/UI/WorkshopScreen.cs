@@ -4,6 +4,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using ZombiCar.Car;
 using ZombiCar.Core;
+using ZombiCar.Player;
 using ZombiCar.Progression;
 
 namespace ZombiCar.UI
@@ -24,6 +25,13 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_Money;
         [SerializeField] private TMP_Text m_CarStatus;
         [SerializeField] private WorkshopRowView[] m_Rows = System.Array.Empty<WorkshopRowView>();
+        [Tooltip("The supplies (first-aid kit, repair, ammo, mines), in the catalog's order.")]
+        [SerializeField] private WorkshopRowView[] m_SupplyRows = System.Array.Empty<WorkshopRowView>();
+        [Tooltip("To tell whether a supply is needed now.")]
+        [SerializeField] private PlayerStats m_Player;
+        [SerializeField] private AmmoState m_Ammo;
+        [Tooltip("Mines are not sold while this many still lie around the car.")]
+        [SerializeField, Min(1)] private int m_MaxArmedMines = 4;
         [SerializeField] private Button m_CloseButton;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.18f;
 
@@ -46,6 +54,11 @@ namespace ZombiCar.UI
                 int index = i;
                 m_Rows[i].BuyButton.onClick.AddListener(() => Buy(index));
             }
+            for (int i = 0; i < m_SupplyRows.Length; i++)
+            {
+                int index = i;
+                m_SupplyRows[i].BuyButton.onClick.AddListener(() => BuySupply(index));
+            }
             m_CloseButton.onClick.AddListener(Close);
             m_Root.alpha = 0f;
             m_Root.gameObject.SetActive(false);
@@ -58,6 +71,10 @@ namespace ZombiCar.UI
             m_Run.ModifiersChanged += Refresh;
             if (m_Car != null)
                 m_Car.Changed += Refresh;
+            if (m_Player != null)
+                m_Player.Changed += Refresh;
+            if (m_Ammo != null)
+                m_Ammo.Changed += Refresh;
             OnWorkshopChanged();
         }
 
@@ -68,6 +85,10 @@ namespace ZombiCar.UI
             m_Run.ModifiersChanged -= Refresh;
             if (m_Car != null)
                 m_Car.Changed -= Refresh;
+            if (m_Player != null)
+                m_Player.Changed -= Refresh;
+            if (m_Ammo != null)
+                m_Ammo.Changed -= Refresh;
             if (m_Open)
                 GamePause.Set(GamePause.Reason.Workshop, false);
         }
@@ -94,19 +115,78 @@ namespace ZombiCar.UI
         {
             if (!m_Open || index < 0 || index >= m_Catalog.Upgrades.Length)
                 return false;
-            CarUpgrade upgrade = m_Catalog.Upgrades[index];
-            if (!m_Run.TryBuy(upgrade))
+            return Purchase(m_Catalog.Upgrades[index], m_Rows[index]);
+        }
+
+        /// <summary>Buys the supply of row <paramref name="index"/> (buttons, tests); refused when it is not needed now.</summary>
+        public bool BuySupply(int index)
+        {
+            if (!m_Open || index < 0 || index >= m_Catalog.Supplies.Length)
+                return false;
+            CarUpgrade supply = m_Catalog.Supplies[index];
+            WorkshopRowView row = index < m_SupplyRows.Length ? m_SupplyRows[index] : null;
+            return supply.ForAd ? WatchAdFor(supply, row) : Purchase(supply, row, IsUseful(supply));
+        }
+
+        /// <summary>
+        /// A supply paid with a rewarded ad (the repair): only while it is useful and the run's uses are left; the
+        /// effect comes when the platform confirms the reward (a closed or failed video gives nothing, the tile stays).
+        /// </summary>
+        private bool WatchAdFor(CarUpgrade supply, WorkshopRowView row)
+        {
+            if (m_Run.LevelOf(supply) >= supply.AdUsesPerRun || !IsUseful(supply))
+            {
+                AudioManager.PlaySfx(Sound.UiDenied);
+                Refused?.Invoke();
+                return false;
+            }
+            YandexSdk.ShowRewardedAd(rewarded =>
+            {
+                if (!rewarded || this == null || m_Run.LevelOf(supply) >= supply.AdUsesPerRun || !m_Run.GrantUpgrade(supply))
+                    return;
+                AudioManager.PlaySfx(Sound.UiBuy);
+                Debug.Log($"[WorkshopScreen] {supply.Id} for an ad (#{m_Run.LevelOf(supply)} of {supply.AdUsesPerRun}).");
+                if (row != null)
+                    row.Punch();
+                Refresh();
+                Bought?.Invoke(supply);
+            });
+            return true;
+        }
+
+        private bool Purchase(CarUpgrade upgrade, WorkshopRowView row, bool useful = true)
+        {
+            if (!useful || !m_Run.TryBuy(upgrade))
             {
                 AudioManager.PlaySfx(Sound.UiDenied);
                 Refused?.Invoke();
                 return false;
             }
             AudioManager.PlaySfx(Sound.UiBuy);
-            Debug.Log($"[WorkshopScreen] Bought {upgrade.Id} level {m_Run.LevelOf(upgrade)}, scrap left {m_Run.Money}.");
-            m_Rows[index].Punch();
+            Debug.Log($"[WorkshopScreen] Bought {upgrade.Id} (#{m_Run.LevelOf(upgrade)}), scrap left {m_Run.Money}.");
+            if (row != null)
+                row.Punch();
             Refresh();
             Bought?.Invoke(upgrade);
             return true;
+        }
+
+        /// <summary>Whether a supply would do anything now ("НЕ НУЖНО" otherwise).</summary>
+        public bool IsUseful(CarUpgrade supply)
+        {
+            switch (supply.Effect)
+            {
+                case StatEffect.HealPlayerFull:
+                    return m_Player == null || m_Player.Health < m_Player.MaxHealth;
+                case StatEffect.RepairCar:
+                    return m_Car == null || m_Car.Health < m_Car.MaxHealth;
+                case StatEffect.RefillAmmo:
+                    return m_Ammo == null || !m_Ammo.IsFull;
+                case StatEffect.PlaceMines:
+                    return m_Run.ArmedMines < m_MaxArmedMines;
+                default:
+                    return true;
+            }
         }
 
         public void Close() => m_Run.SetWorkshopOpen(false);
@@ -123,6 +203,14 @@ namespace ZombiCar.UI
                 m_Rows[i].gameObject.SetActive(used);
                 if (used)
                     m_Rows[i].Bind(upgrades[i], m_Run.LevelOf(upgrades[i]), m_Run.Money);
+            }
+            CarUpgrade[] supplies = m_Catalog.Supplies;
+            for (int i = 0; i < m_SupplyRows.Length; i++)
+            {
+                bool used = i < supplies.Length;
+                m_SupplyRows[i].gameObject.SetActive(used);
+                if (used)
+                    m_SupplyRows[i].Bind(supplies[i], m_Run.LevelOf(supplies[i]), m_Run.Money, IsUseful(supplies[i]));
             }
             if (m_Car != null && m_CarStatus != null)
             {

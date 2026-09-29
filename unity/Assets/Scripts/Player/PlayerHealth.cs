@@ -97,6 +97,17 @@ namespace ZombiCar.Player
             m_Stats.SetHealth(m_Stats.Health + amount);
         }
 
+        /// <summary>Back on their feet with full health (the revive for an ad).</summary>
+        public void Revive()
+        {
+            if (m_Stats == null)
+                return;
+            m_Dead = false;
+            m_Stats.SetHealth(m_Stats.MaxHealth);
+            if (m_View != null)
+                m_View.ShowUp();
+        }
+
         private void ApplyModifiers()
         {
             if (m_Run != null && m_Stats != null)

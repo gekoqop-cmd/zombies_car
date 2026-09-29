@@ -12,7 +12,8 @@ namespace ZombiCar.Core
     /// <item>GameplayAPI.start / stop — gameplay runs while a map is open and nothing pauses it (<see cref="GamePause"/>);</item>
     /// <item>game_api_pause / resume — pause the game and the sound while the platform asks;</item>
     /// <item>fullscreen ads at logical breaks (<see cref="ShowFullscreenAd"/>), with the game paused and muted meanwhile;</item>
-    /// <item>the player's language (<see cref="Language"/>).</item>
+    /// <item>the player's language (<see cref="Language"/>);</item>
+    /// <item>the "best_time" leaderboard: a victory's time sent, the top and the player's line read.</item>
     /// </list>
     /// Outside a WebGL build every call is a no-op and ads complete at once.
     /// </summary>
@@ -26,6 +27,8 @@ namespace ZombiCar.Core
         [DllImport("__Internal")] private static extern void YaGameplay(int running);
         [DllImport("__Internal")] private static extern void YaShowFullscreenAd();
         [DllImport("__Internal")] private static extern void YaShowRewardedAd();
+        [DllImport("__Internal")] private static extern void YaSubmitScore(string leaderboard, int score);
+        [DllImport("__Internal")] private static extern void YaGetLeaderboardEntries(string leaderboard, int count);
         private static readonly bool s_Live = true;
 #else
         private static void YaInit() { }
@@ -33,8 +36,50 @@ namespace ZombiCar.Core
         private static void YaGameplay(int running) { }
         private static void YaShowFullscreenAd() { }
         private static void YaShowRewardedAd() { }
+        private static void YaSubmitScore(string leaderboard, int score) { }
+        private static void YaGetLeaderboardEntries(string leaderboard, int count) { }
         private static readonly bool s_Live = false;
 #endif
+
+        /// <summary>
+        /// Technical name of the leaderboard "Лучшее время прохождения" in the Yandex Games console: seconds of a
+        /// victory, sorted ascending (fewer seconds = better). Only victories are sent.
+        /// </summary>
+        public const string c_BestTimeLeaderboard = "best_time";
+
+        // ---------------------------------------------------------------- leaderboard
+        /// <summary>One line of the leaderboard.</summary>
+        [Serializable]
+        public sealed class LeaderboardEntry
+        {
+            public int rank;
+            public string name;
+            public string avatar;
+            public int score;                                       // seconds
+        }
+
+        /// <summary>The top of the leaderboard and the player's own line (null when they are not on it).</summary>
+        [Serializable]
+        public sealed class LeaderboardEntries
+        {
+            public bool available;
+            public LeaderboardEntry[] entries = Array.Empty<LeaderboardEntry>();
+            public int userRank;
+
+            [NonSerialized] public LeaderboardEntry Player;
+
+            /// <summary>Nothing to show: the SDK is not there (editor, local build) or it answered with an error.</summary>
+            public static LeaderboardEntries Unavailable => new LeaderboardEntries { available = false };
+        }
+
+        /// <summary>
+        /// Every time sent with <see cref="SubmitTimeScore"/> (also outside Yandex Games, where nothing leaves the
+        /// game): the tests' stand-in for the SDK.
+        /// </summary>
+        public static System.Collections.Generic.List<int> SubmittedScores { get; } = new System.Collections.Generic.List<int>();
+
+        /// <summary>Tests: what <see cref="GetLeaderboardEntries"/> answers outside Yandex Games (null = unavailable).</summary>
+        public static LeaderboardEntries StubEntries { get; set; }
 
         private static YandexSdk s_Instance;
         private bool m_ReadySent;
@@ -120,6 +165,74 @@ namespace ZombiCar.Core
             s_Instance.m_RewardedDone = done ?? (_ => { });
             YaShowRewardedAd();
         }
+
+        /// <summary>
+        /// A victory's time to the <see cref="c_BestTimeLeaderboard"/> leaderboard. Only an authorized player on Yandex
+        /// Games gets on it; otherwise (a guest, the editor, a local build) nothing is sent and nothing fails.
+        /// </summary>
+        public static void SubmitTimeScore(int seconds)
+        {
+            if (seconds <= 0)
+                return;
+            SubmittedScores.Add(seconds);
+            if (!s_Live || s_Instance == null || !IsAvailable)
+            {
+                Debug.Log($"[YandexSdk] Leaderboard '{c_BestTimeLeaderboard}': {seconds} s not sent (no SDK).");
+                return;
+            }
+            YaSubmitScore(c_BestTimeLeaderboard, seconds);
+        }
+
+        /// <summary>
+        /// The top <paramref name="count"/> of the <see cref="c_BestTimeLeaderboard"/> leaderboard with the player's own
+        /// line. Without the SDK (or on an error) <paramref name="callback"/> gets an unavailable, empty answer at once.
+        /// </summary>
+        public static void GetLeaderboardEntries(int count, Action<LeaderboardEntries> callback)
+        {
+            if (callback == null)
+                return;
+            if (!s_Live || s_Instance == null || !IsAvailable)
+            {
+                callback(Finish(StubEntries) ?? LeaderboardEntries.Unavailable);
+                return;
+            }
+            s_Instance.m_EntriesDone += callback;
+            if (s_Instance.m_EntriesDone.GetInvocationList().Length == 1)       // one request at a time
+                YaGetLeaderboardEntries(c_BestTimeLeaderboard, Mathf.Clamp(count, 1, 20));
+        }
+
+        private Action<LeaderboardEntries> m_EntriesDone;
+
+        // The player's line: the entry at userRank.
+        private static LeaderboardEntries Finish(LeaderboardEntries result)
+        {
+            if (result == null)
+                return null;
+            result.entries ??= Array.Empty<LeaderboardEntry>();
+            result.Player = result.userRank > 0 ? Array.Find(result.entries, e => e.rank == result.userRank) : null;
+            return result;
+        }
+
+        private void OnLeaderboardEntries(string json)
+        {
+            LeaderboardEntries result = null;
+            if (!string.IsNullOrEmpty(json))
+            {
+                try
+                {
+                    result = JsonUtility.FromJson<LeaderboardEntries>(json);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[YandexSdk] leaderboard answer: {e.Message}");
+                }
+            }
+            Action<LeaderboardEntries> done = m_EntriesDone;
+            m_EntriesDone = null;
+            done?.Invoke(Finish(result) ?? LeaderboardEntries.Unavailable);
+        }
+
+        private void OnScoreSubmitted(string ok) => Debug.Log($"[YandexSdk] Leaderboard score {(ok == "1" ? "sent" : "not sent")}.");
 
         // Gameplay for the platform = a map is open and nothing pauses it.
         private void Report()

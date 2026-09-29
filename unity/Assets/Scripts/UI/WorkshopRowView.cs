@@ -6,9 +6,9 @@ using ZombiCar.Progression;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// One car upgrade in the workshop: icon, title, what a level gives, level pips (or the number of repairs for a
-    /// repeatable service) and the buy button with the price, greyed out when the scrap is not enough or the upgrade
-    /// is maxed out.
+    /// One thing in the workshop: icon, title, what it gives, level pips — "МАСТЕР N" once past the last level, the
+    /// number bought for a supply — and the buy button with the price, greyed out when the scrap is not enough, or
+    /// "НЕ НУЖНО" when a supply would do nothing now.
     /// </summary>
     public sealed class WorkshopRowView : MonoBehaviour
     {
@@ -21,6 +21,9 @@ namespace ZombiCar.UI
         [SerializeField] private Image m_BuyPlate;
         [SerializeField] private TMP_Text m_Price;
         [SerializeField] private GameObject m_PriceIcon;
+        [Tooltip("The gold ad icon on the button (a supply paid with a rewarded ad).")]
+        [SerializeField, Core.OptionalReference] private GameObject m_AdIcon;
+        [SerializeField] private Color m_AdColor = new Color(0.95f, 0.72f, 0.2f, 1f);
         [SerializeField] private RectTransform m_Body;
         [SerializeField] private Color m_PipOn = new Color(1f, 0.66f, 0.2f, 1f);
         [SerializeField] private Color m_PipOff = new Color(0.25f, 0.26f, 0.3f, 1f);
@@ -33,33 +36,66 @@ namespace ZombiCar.UI
 
         public Button BuyButton => m_BuyButton;
 
-        public void Bind(CarUpgrade upgrade, int level, int money)
+        /// <param name="useful">False when buying would do nothing now (a supply: health or ammo already full...).</param>
+        public void Bind(CarUpgrade upgrade, int level, int money, bool useful = true)
         {
             m_Icon.sprite = upgrade.Icon;
             m_Title.SetText(upgrade.Title);
-            m_Description.SetText(upgrade.Description);
             bool repeatable = upgrade.Repeatable;
+            bool master = upgrade.HasMaster && level >= upgrade.RegularLevels;
+            m_Description.SetText(upgrade.DescriptionAt(level));                // what the NEXT level gives
             for (int i = 0; i < m_Pips.Length; i++)
             {
-                bool used = !repeatable && i < upgrade.MaxLevel;
+                bool used = !repeatable && !master && i < upgrade.RegularLevels;
                 m_Pips[i].gameObject.SetActive(used);
                 if (used)
                     m_Pips[i].color = i < level ? m_PipOn : m_PipOff;
             }
-            if (m_Count != null)
+            if (m_Count != null && !upgrade.ForAd)
             {
-                m_Count.gameObject.SetActive(repeatable);
-                m_Count.SetText(level > 0 ? $"СДЕЛАНО: {level}" : string.Empty);
+                int n = upgrade.MasterLevel(level);
+                m_Count.gameObject.SetActive(repeatable || master);
+                m_Count.SetText(master ? (n > 0 ? $"МАСТЕР {n}" : "МАСТЕР-УРОВЕНЬ ОТКРЫТ")
+                    : level > 0 ? $"КУПЛЕНО: {level}" : string.Empty);
             }
 
+            if (upgrade.ForAd)
+            {
+                BindAd(upgrade, level, useful);
+                return;
+            }
+            if (m_AdIcon != null)
+                m_AdIcon.SetActive(false);
             int cost = upgrade.CostAt(level);
             bool maxed = cost < 0 || level >= upgrade.MaxLevel;
-            bool affordable = !maxed && money >= cost;
+            bool affordable = !maxed && useful && money >= cost;
             m_BuyButton.interactable = affordable;
             m_BuyPlate.color = affordable ? m_BuyColor : m_DisabledColor;
-            m_PriceIcon.SetActive(!maxed);
-            m_Price.SetText(maxed ? "МАКС." : cost.ToString());
-            m_Price.color = maxed || affordable ? m_PriceOk : m_PriceTooHigh;
+            m_PriceIcon.SetActive(!maxed && useful);
+            m_Price.gameObject.SetActive(true);
+            m_Price.SetText(maxed ? "МАКС." : !useful ? "НЕ НУЖНО" : cost.ToString());
+            m_Price.color = maxed || !useful || affordable ? m_PriceOk : m_PriceTooHigh;
+        }
+
+        // Paid with a rewarded ad: the gold ad icon on the button; "ИСПОЛЬЗОВАНО" after the run's uses, "НЕ НУЖНО" when
+        // it would do nothing now.
+        private void BindAd(CarUpgrade upgrade, int used, bool useful)
+        {
+            bool spent = used >= upgrade.AdUsesPerRun;
+            bool available = !spent && useful;
+            if (m_Count != null)
+            {
+                m_Count.gameObject.SetActive(true);
+                m_Count.SetText($"ОСТАЛОСЬ: {Mathf.Max(0, upgrade.AdUsesPerRun - used)}");
+            }
+            m_BuyButton.interactable = available;
+            m_BuyPlate.color = available ? m_AdColor : m_DisabledColor;
+            m_PriceIcon.SetActive(false);
+            if (m_AdIcon != null)
+                m_AdIcon.SetActive(available);
+            m_Price.gameObject.SetActive(!available);
+            m_Price.SetText(spent ? "ИСПОЛЬЗОВАНО" : "НЕ НУЖНО");
+            m_Price.color = m_PriceOk;
         }
 
         /// <summary>A short pop after a purchase.</summary>

@@ -26,6 +26,10 @@ namespace ZombiCar.EditorTools
             Register("hitbox", Hitbox);
             Register("cheats", Cheats);
             Register("motion", Motion);
+            Register("screens", Screens);
+            Register("tutorial", Tutorial);
+            Register("economy", Economy);
+            Register("leaderboard", Leaderboard);
         }
 
         // ================================================================== 1. workshop, levels, cards
@@ -75,17 +79,20 @@ namespace ZombiCar.EditorTools
             {
                 int carMax = s_Car.MaxHealth;
                 Check(workshop.Buy(0), "bought armour");
-                Check(Mathf.Approximately(s_Car.Armor, 0.08f), $"car armour {s_Car.Armor:P0}");
+                Check(Mathf.Approximately(s_Car.Armor, 0.06f), $"car armour {s_Car.Armor:P0}");
                 Check(workshop.Buy(1), "bought the reinforced hull");
-                Check(s_Car.MaxHealth == carMax + 60 && s_Car.Health == s_Car.MaxHealth, $"car durability {s_Car.Health}/{s_Car.MaxHealth}");
+                Check(s_Car.MaxHealth == carMax + 40 && s_Car.Health == s_Car.MaxHealth, $"car durability {s_Car.Health}/{s_Car.MaxHealth}");
                 Check(workshop.Buy(2), "bought spikes");
                 Check(s_Car.Spikes == 8, $"spikes {s_Car.Spikes}");
                 Check(workshop.Buy(3), "bought the electric discharge");
                 money = s_Run.Money;
                 Check(money == 700 - 60 - 50 - 70 - 150, $"scrap left {money}");
-                Check(workshop.Buy(5), "bought a repair");
-                Check(workshop.Buy(3), "bought the discharge's second level");
-                Check(!workshop.Buy(3), $"the third discharge level (450) is refused with {s_Run.Money} scrap");
+                Check(!workshop.BuySupply(3), "a repair of an intact car is not offered (НЕ НУЖНО)");
+                s_Car.TakeDamage(120, Vector3.right);
+                int damaged = s_Car.Health;
+                Check(workshop.BuySupply(3) && s_Car.Health == Mathf.Min(damaged + 200, s_Car.MaxHealth) && s_Run.Money == money,
+                    "the repair (+200, up to the maximum) comes for an ad, not for scrap");
+                Check(!workshop.Buy(3), $"the second discharge level (420) is refused with {s_Run.Money} scrap");
             });
             At(3.4f, () => Shot("1_Workshop_Bought"));
             At(3.5f, () =>

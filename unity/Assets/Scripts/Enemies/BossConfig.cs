@@ -33,6 +33,47 @@ namespace ZombiCar.Enemies
         [Tooltip("Globs land around the player within this radius (the first one aims at the player).")]
         [SerializeField, Min(0f)] private float m_SpitSpread = 2.6f;
         [SerializeField, Min(1f)] private float m_SpitRange = 15f;
+        [Tooltip("Seconds between two globs of a volley (an acid rain: many globs, close together).")]
+        [SerializeField, Min(0.02f)] private float m_SpitCadence = 0.14f;
+        [Tooltip("A landed glob leaves a burning puddle this many seconds (0 = none).")]
+        [SerializeField, Min(0f)] private float m_SpitPuddle;
+        [Tooltip("Damage per second to the player standing in a puddle.")]
+        [SerializeField, Min(0)] private int m_SpitPuddleDps = 8;
+        [Tooltip("The volley is this many times bigger in the second phase.")]
+        [SerializeField, Min(1f)] private float m_EnrageVolley = 1f;
+
+        [Header("Scythe sweep")]
+        [SerializeField] private bool m_Sweep;
+        [SerializeField, Min(1f)] private float m_SweepInterval = 4f;
+        [SerializeField, Min(0.1f)] private float m_SweepWindup = 0.8f;
+        [SerializeField, Min(0.5f)] private float m_SweepRange = 4.5f;
+        [Tooltip("Width of the arc in front of the boss, degrees.")]
+        [SerializeField, Range(30f, 360f)] private float m_SweepArc = 160f;
+        [SerializeField, Min(1)] private int m_SweepDamage = 35;
+        [SerializeField, Min(1)] private int m_SweepCarDamage = 20;
+        [SerializeField, Min(0f)] private float m_SweepKnockback = 5f;
+
+        [Header("Fire cracks (lines of lava fanning out along the ground)")]
+        [SerializeField] private bool m_Cracks;
+        [SerializeField, Min(1f)] private float m_CracksInterval = 7f;
+        [SerializeField, Min(0.1f)] private float m_CracksWindup = 1f;
+        [SerializeField, Min(1)] private int m_CracksCount = 4;
+        [Tooltip("Angle between two cracks, degrees (the fan is centred on the player).")]
+        [SerializeField, Min(1f)] private float m_CracksSpread = 22f;
+        [SerializeField, Min(1f)] private float m_CracksLength = 12f;
+        [SerializeField, Min(0.2f)] private float m_CracksWidth = 1.3f;
+        [SerializeField, Min(1)] private int m_CracksDamage = 26;
+
+        [Header("Reap (second phase): teleport to the player, then a sweep")]
+        [SerializeField] private bool m_Reap;
+        [SerializeField, Min(1f)] private float m_ReapInterval = 7f;
+        [Tooltip("Seconds the landing mark shows before the boss appears on it.")]
+        [SerializeField, Min(0.2f)] private float m_ReapWindup = 1f;
+
+        [Header("Swarm (second phase): extra summon")]
+        [Tooltip("Also summoned in the second phase (e.g. fast hounds).")]
+        [SerializeField] private ZombieConfig[] m_EnrageMinions = Array.Empty<ZombieConfig>();
+        [SerializeField, Min(0)] private int m_EnrageSummonBonus;
 
         [Header("Charge")]
         [SerializeField] private bool m_Charge;
@@ -75,6 +116,12 @@ namespace ZombiCar.Enemies
         [Tooltip("Pitch of the boss's roars and hits (bigger boss = lower).")]
         [SerializeField, Range(0.5f, 1.5f)] private float m_VoicePitch = 1f;
         [SerializeField] private Color m_AuraColor = new Color(0.6f, 1f, 0.4f, 0.6f);
+        [Tooltip("The boss's own voice (BossVoiceSynth); a missing one falls back to the shared boss sound.")]
+        [SerializeField] private AudioClip m_RoarClip;
+        [SerializeField] private AudioClip m_AttackClip;
+        [SerializeField] private AudioClip m_DeathClip;
+        [Tooltip("Its signature ability: the brood's call, the acid rain, the reap.")]
+        [SerializeField] private AudioClip m_SpecialClip;
 
         public bool Summon => m_Summon;
         public float SummonInterval => m_SummonInterval;
@@ -93,6 +140,35 @@ namespace ZombiCar.Enemies
         public float SpitFlight => m_SpitFlight;
         public float SpitSpread => m_SpitSpread;
         public float SpitRange => m_SpitRange;
+        public float SpitCadence => m_SpitCadence;
+        public float SpitPuddle => m_SpitPuddle;
+        public int SpitPuddleDps => m_SpitPuddleDps;
+        public float EnrageVolley => m_EnrageVolley;
+
+        public bool Sweep => m_Sweep;
+        public float SweepInterval => m_SweepInterval;
+        public float SweepWindup => m_SweepWindup;
+        public float SweepRange => m_SweepRange;
+        public float SweepArc => m_SweepArc;
+        public int SweepDamage => m_SweepDamage;
+        public int SweepCarDamage => m_SweepCarDamage;
+        public float SweepKnockback => m_SweepKnockback;
+
+        public bool Cracks => m_Cracks;
+        public float CracksInterval => m_CracksInterval;
+        public float CracksWindup => m_CracksWindup;
+        public int CracksCount => m_CracksCount;
+        public float CracksSpread => m_CracksSpread;
+        public float CracksLength => m_CracksLength;
+        public float CracksWidth => m_CracksWidth;
+        public int CracksDamage => m_CracksDamage;
+
+        public bool Reap => m_Reap;
+        public float ReapInterval => m_ReapInterval;
+        public float ReapWindup => m_ReapWindup;
+
+        public ZombieConfig[] EnrageMinions => m_EnrageMinions;
+        public int EnrageSummonBonus => m_EnrageSummonBonus;
 
         public bool Charge => m_Charge;
         public float ChargeInterval => m_ChargeInterval;
@@ -126,5 +202,9 @@ namespace ZombiCar.Enemies
 
         public float VoicePitch => m_VoicePitch;
         public Color AuraColor => m_AuraColor;
+        public AudioClip RoarClip => m_RoarClip;
+        public AudioClip AttackClip => m_AttackClip;
+        public AudioClip DeathClip => m_DeathClip;
+        public AudioClip SpecialClip => m_SpecialClip;
     }
 }

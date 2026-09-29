@@ -23,6 +23,9 @@ namespace ZombiCar.Waves
         [NonSerialized] private WavePhase m_Phase;
         [NonSerialized] private int m_WaveCount;
         [NonSerialized] private string m_BossName;
+        [NonSerialized] private int m_BossHealth;
+        [NonSerialized] private int m_BossMaxHealth;
+        [NonSerialized] private bool m_BossEnraged;
 
         /// <summary>Wave number or countdown changed (at most once per second).</summary>
         public event Action Changed;
@@ -44,7 +47,24 @@ namespace ZombiCar.Waves
         /// <summary>The boss of the running wave (null when it has none or it is dead).</summary>
         public string BossName => m_BossName;
 
+        /// <summary>Health of the boss of the running wave (the HUD's boss bar polls it every frame).</summary>
+        public int BossHealth => m_BossHealth;
+        public int BossMaxHealth => m_BossMaxHealth;
+
+        /// <summary>The boss is in its second (enraged) phase.</summary>
+        public bool BossEnraged => m_BossEnraged;
+
+        public bool HasBoss => !string.IsNullOrEmpty(m_BossName);
+
         public bool IsWaveRunning => m_Phase == WavePhase.Running;
+
+        /// <summary>The boss's health this frame (no event: it changes too often).</summary>
+        public void SetBossHealth(int health, int maxHealth, bool enraged)
+        {
+            m_BossHealth = Mathf.Max(0, health);
+            m_BossMaxHealth = Mathf.Max(1, maxHealth);
+            m_BossEnraged = enraged;
+        }
 
         public void Set(int wave, int secondsLeft)
         {

@@ -85,7 +85,7 @@ namespace ZombiCar.EditorTools
         }
 
         // ================================================================== 4b. victory
-        /// <summary>The last wave's boss and zombies dead: the victory screen.</summary>
+        /// <summary>The last boss dead: the victory finale, then the victory screen.</summary>
         private static void Victory()
         {
             At(1.0f, () =>
@@ -104,19 +104,29 @@ namespace ZombiCar.EditorTools
                 ZombieController boss = s_Director.Boss;
                 Check(boss != null, "the last boss is out");
                 if (boss != null)
-                    boss.TakeDamage(1000000, Vector3.right);
-                KillAll();
+                    boss.TakeDamage(1000000, Vector3.right);             // the finale drops the other zombies itself
             });
-            At(3.6f, KillAll);
-            At(6.0f, () =>
+            // The last boss's death: the finale (slow motion, blasts, every zombie drops, "ГОРОД СПАСЁН!", fireworks).
+            At(4.2f, () =>
+            {
+                Check(s_Run.Outcome == RunOutcome.Victory, "the last boss dead: victory");
+                Check(Find<GameOverDirector>().FinalePlaying && Time.timeScale < 1f, "the finale plays in slow motion");
+                Check(Find<VictoryFinaleView>().IsPlaying, "ГОРОД СПАСЁН! with fireworks");
+                Check(Playing("Victory"), "victory fanfare");
+                Check(!LiveZombies().Any(), "every zombie on the map dropped");
+                Check(s_Run.Map == null || MetaProgress.IsBeaten(s_Run.Map.name), "the map is marked beaten for the menu");
+                Shot("4_Victory_Finale");
+            });
+            At(8.0f, () =>
             {
                 GameOverScreen screen = Find<GameOverScreen>();
-                Check(s_Run.Outcome == RunOutcome.Victory && s_Waves.Phase == WavePhase.Finished, "all 30 waves: victory");
                 Check(screen.IsShown && screen.Title == "ПОБЕДА!", "victory screen: ПОБЕДА!");
-                Check(Playing("Victory"), "victory fanfare");
+                Check(GamePause.Has(GamePause.Reason.GameOver), "the game is paused behind it");
+                Check(screen.CoinsEarned >= 1500, $"the victory pays a big coin reward ({screen.CoinsEarned})");
+                MetaProgress.TrySpend(screen.CoinsEarned);                     // the developer's own coins stay as they were
             });
-            At(7.5f, () => Shot("4_Victory"));
-            At(7.7f, Finish);
+            At(11.5f, () => Shot("4_Victory"));
+            At(11.7f, Finish);
         }
     }
 }

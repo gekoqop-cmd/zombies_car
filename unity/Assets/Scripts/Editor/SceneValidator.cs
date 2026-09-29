@@ -58,7 +58,7 @@ namespace ZombiCar.EditorTools
                 {
                     if (property.propertyType != SerializedPropertyType.ObjectReference || property.objectReferenceValue != null)
                         continue;
-                    if (IsOptional(component.GetType(), property.name))
+                    if (IsOptional(component.GetType(), property.propertyPath))
                         continue;
                     string kind = property.objectReferenceEntityIdValue.IsValid() ? "broken" : "empty";
                     Debug.LogError($"[SceneValidator] {sceneName}: {kind} reference {component.GetType().Name}.{property.name} on {PathOf(go)}");
@@ -68,17 +68,34 @@ namespace ZombiCar.EditorTools
             return problems;
         }
 
-        // [OptionalReference] fields may be empty on purpose.
-        private static bool IsOptional(System.Type type, string field)
+        // [OptionalReference] fields may be empty on purpose, also inside serialized classes and arrays of them
+        // ("m_Cards.Array.data[2].Icon2": the path is followed field by field).
+        private static bool IsOptional(System.Type type, string path)
+        {
+            System.Reflection.FieldInfo info = null;
+            foreach (string part in path.Split('.'))
+            {
+                if (part == "Array" || part.StartsWith("data["))
+                    continue;
+                info = FindField(type, part);
+                if (info == null)
+                    return false;
+                type = info.FieldType.IsArray ? info.FieldType.GetElementType()
+                    : info.FieldType.IsGenericType ? info.FieldType.GetGenericArguments()[0] : info.FieldType;
+            }
+            return info != null && info.IsDefined(typeof(ZombiCar.Core.OptionalReferenceAttribute), false);
+        }
+
+        private static System.Reflection.FieldInfo FindField(System.Type type, string field)
         {
             for (; type != null; type = type.BaseType)
             {
                 var info = type.GetField(field, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public |
                                                 System.Reflection.BindingFlags.NonPublic);
                 if (info != null)
-                    return info.IsDefined(typeof(ZombiCar.Core.OptionalReferenceAttribute), false);
+                    return info;
             }
-            return false;
+            return null;
         }
 
         private static string PathOf(GameObject go)

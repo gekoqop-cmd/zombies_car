@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace ZombiCar.Player
 {
-    /// <summary>The weapon in hand, shared with the HUD scene (weapon slots, the touch weapon button).</summary>
+    /// <summary>The weapon in hand, shared with the HUD scene (weapon slots on PC and on touch screens).</summary>
     [CreateAssetMenu(fileName = "WeaponState", menuName = "ZombiCar/State/Weapon State")]
     public sealed class WeaponState : ScriptableObject
     {
@@ -11,6 +11,9 @@ namespace ZombiCar.Player
         [NonSerialized] private bool m_Automatic;
 
         public event Action Changed;
+
+        /// <summary>A HUD slot was clicked / tapped: the player's switcher takes that weapon.</summary>
+        public event Action<WeaponSlot> Requested;
 
         public WeaponSlot Current => m_Current;
 
@@ -23,5 +26,7 @@ namespace ZombiCar.Player
             m_Automatic = automatic;
             Changed?.Invoke();
         }
+
+        public void Request(WeaponSlot slot) => Requested?.Invoke(slot);
     }
 }

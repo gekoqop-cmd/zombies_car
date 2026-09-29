@@ -13,6 +13,7 @@ namespace ZombiCar.Player
         [NonSerialized] private int m_InMagazine;
         [NonSerialized] private int m_Reserve;
         [NonSerialized] private bool m_IsReloading;
+        [NonSerialized] private bool m_IsFull;
         [NonSerialized] private float m_ReloadStartTime;
         [NonSerialized] private float m_ReloadDuration;
 
@@ -27,10 +28,14 @@ namespace ZombiCar.Player
             ? Mathf.Clamp01((Time.time - m_ReloadStartTime) / m_ReloadDuration)
             : 1f;
 
-        public void Set(int inMagazine, int reserve, bool isReloading, float reloadDuration = 0f)
+        /// <summary>The magazine and the reserve are both full (the workshop's ammo box is not needed).</summary>
+        public bool IsFull => m_IsFull;
+
+        public void Set(int inMagazine, int reserve, bool isReloading, float reloadDuration = 0f, bool isFull = false)
         {
-            if (inMagazine == m_InMagazine && reserve == m_Reserve && isReloading == m_IsReloading)
+            if (inMagazine == m_InMagazine && reserve == m_Reserve && isReloading == m_IsReloading && isFull == m_IsFull)
                 return;
+            m_IsFull = isFull;
             if (isReloading && !m_IsReloading)
             {
                 m_ReloadStartTime = Time.time;

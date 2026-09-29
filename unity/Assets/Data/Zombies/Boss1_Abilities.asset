@@ -13,24 +13,49 @@ MonoBehaviour:
   m_Name: Boss1_Abilities
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.BossConfig
   m_Summon: 1
-  m_SummonInterval: 7
+  m_SummonInterval: 8
   m_SummonWindup: 1
   m_SummonCount: 4
   m_SummonRadius: 2.8
-  m_MaxMinions: 12
+  m_MaxMinions: 10
   m_Minions:
   - {fileID: 11400000, guid: b9accf8975114a04cbd6286e9b314e5b, type: 2}
   - {fileID: 11400000, guid: c09e01af4e06f4d47b00f7bf209cf08b, type: 2}
-  - {fileID: 11400000, guid: bbc78e3049cc4584587ba080c0dff3b6, type: 2}
-  m_Spit: 0
-  m_SpitInterval: 5
-  m_SpitWindup: 0.5
-  m_SpitVolley: 3
-  m_SpitDamage: 14
-  m_SpitRadius: 1.5
+  m_Spit: 1
+  m_SpitInterval: 6
+  m_SpitWindup: 0.6
+  m_SpitVolley: 2
+  m_SpitDamage: 10
+  m_SpitRadius: 1.6
   m_SpitFlight: 1.1
-  m_SpitSpread: 2.6
-  m_SpitRange: 15
+  m_SpitSpread: 2
+  m_SpitRange: 14
+  m_SpitCadence: 0.3
+  m_SpitPuddle: 4
+  m_SpitPuddleDps: 8
+  m_EnrageVolley: 1
+  m_Sweep: 0
+  m_SweepInterval: 4
+  m_SweepWindup: 0.8
+  m_SweepRange: 4.5
+  m_SweepArc: 160
+  m_SweepDamage: 35
+  m_SweepCarDamage: 20
+  m_SweepKnockback: 5
+  m_Cracks: 0
+  m_CracksInterval: 7
+  m_CracksWindup: 1
+  m_CracksCount: 4
+  m_CracksSpread: 22
+  m_CracksLength: 12
+  m_CracksWidth: 1.3
+  m_CracksDamage: 26
+  m_Reap: 0
+  m_ReapInterval: 7
+  m_ReapWindup: 1
+  m_EnrageMinions:
+  - {fileID: 11400000, guid: bbc78e3049cc4584587ba080c0dff3b6, type: 2}
+  m_EnrageSummonBonus: 2
   m_Charge: 0
   m_ChargeInterval: 8
   m_ChargeWindup: 1
@@ -44,13 +69,13 @@ MonoBehaviour:
   m_ChargeKnockback: 7
   m_ChargeStun: 1.3
   m_StunDamageTaken: 1.5
-  m_Enrage: 0
+  m_Enrage: 1
   m_EnrageAt: 0.5
-  m_EnrageSpeed: 1.4
-  m_EnrageDamage: 1.3
-  m_EnrageCooldowns: 0.6
-  m_EnrageScale: 1.12
-  m_EnrageTint: {r: 1, g: 0.55, b: 0.5, a: 1}
+  m_EnrageSpeed: 1.15
+  m_EnrageDamage: 1.1
+  m_EnrageCooldowns: 0.5
+  m_EnrageScale: 1.06
+  m_EnrageTint: {r: 0.8, g: 1, b: 0.6, a: 1}
   m_Slam: 0
   m_SlamInterval: 6
   m_SlamWindup: 0.8
@@ -60,3 +85,7 @@ MonoBehaviour:
   m_SlamKnockback: 6
   m_VoicePitch: 1.1
   m_AuraColor: {r: 0.5, g: 1, b: 0.3, a: 0.55}
+  m_RoarClip: {fileID: 8300000, guid: 5f617671647449f459d250b49361c601, type: 3}
+  m_AttackClip: {fileID: 8300000, guid: 70adaa5fbff4f0940aefdf9b5b7e418f, type: 3}
+  m_DeathClip: {fileID: 8300000, guid: 0a2420611cd3a154782d99ee786720cd, type: 3}
+  m_SpecialClip: {fileID: 8300000, guid: f7bcb069ee6b07a438cb6af14753bc32, type: 3}

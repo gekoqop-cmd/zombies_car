@@ -12,8 +12,9 @@ namespace ZombiCar.EditorTools
         // ================================================================== 3. bosses
         /// <summary>
         /// Waves 10 / 20 / 30 bring their bosses: announced (banner, boss music, HUD timer), with a health plate; the
-        /// brood mother summons minions, the juggernaut spits acid and charges, the reaper enrages at half health and
-        /// slams; a boss wave ends only when the boss is dead, and the kill pays its reward.
+        /// brood mother summons minions and spits puddles, the ram charges and rains acid, the reaper sweeps, sends fire
+        /// cracks and, enraged at half health, teleports to the player; a boss wave ends only when the boss is dead, and
+        /// the kill pays its reward.
         /// </summary>
         private static void Bosses()
         {
@@ -47,9 +48,13 @@ namespace ZombiCar.EditorTools
             });
             At(3.4f, () => Shot("3_Boss1_Arrives"));
             At(6.4f, () => Shot("3_Boss1_Summon"));
+            bool sawPuddleGlob = false;
+            for (float t = 2.7f; t < 8f; t += 0.1f)
+                At(t, () => sawPuddleGlob |= Object.FindObjectsByType<AcidGlob>(FindObjectsInactive.Exclude).Length > 0);
             At(8.0f, () =>
             {
                 Check(brain.MinionsAlive > 0, $"the brood mother summoned minions ({brain.MinionsAlive} alive)");
+                Check(sawPuddleGlob && brain.Config.SpitPuddle > 0f, "the brood mother spits acid that leaves puddles");
                 moneyBefore = s_Run.Money;
                 boss.TakeDamage(100000, Vector3.right);
             });
@@ -78,14 +83,15 @@ namespace ZombiCar.EditorTools
                 Teleport(boss.transform.position + new Vector3(-8f, 0f, 0f));
                 s_PlayerHealth.Damaged += _ => hurt++;
             });
-            bool sawCharge = false, sawGlob = false;
+            bool sawCharge = false;
+            int maxGlobs = 0;
             for (float t = 12.2f; t < 26f; t += 0.1f)
                 At(t, () =>
                 {
                     if (brain == null)
                         return;
                     sawCharge |= brain.CurrentAbility == "Charge" || brain.CurrentAbility == "Dash";
-                    sawGlob |= Object.FindObjectsByType<AcidGlob>(FindObjectsInactive.Exclude).Length > 0;
+                    maxGlobs = Mathf.Max(maxGlobs, Object.FindObjectsByType<AcidGlob>(FindObjectsInactive.Exclude).Length);
                     // Stay in charge range, away from the boss's melee.
                     Vector3 away = s_Player.position - boss.transform.position;
                     away.y = 0f;
@@ -95,7 +101,7 @@ namespace ZombiCar.EditorTools
             At(15.3f, () => Shot("3_Boss2_Telegraph"));
             At(26.0f, () =>
             {
-                Check(sawGlob, "the juggernaut spat acid globs");
+                Check(maxGlobs >= 8, $"the ram's acid rain: {maxGlobs} globs at once");
                 Check(sawCharge, "the juggernaut charged");
                 Check(hurt > 0, $"its attacks hurt the player ({hurt} hits)");
                 boss.TakeDamage(100000, Vector3.right);
@@ -110,8 +116,9 @@ namespace ZombiCar.EditorTools
                 boss = s_Director.Boss;
                 brain = boss != null ? boss.GetComponent<BossBrain>() : null;
                 Check(boss != null && boss.Config.DisplayName == "ЖНЕЦ" && s_Waves.WaveCount == 30, "wave 30: the reaper comes out (last wave)");
-                Check(brain.Config.Summon && brain.Config.Spit && brain.Config.Charge && brain.Config.Enrage && brain.Config.Slam,
-                    "the reaper has every ability plus the second phase");
+                Check(brain.Config.Sweep && brain.Config.Cracks && brain.Config.Reap && brain.Config.Enrage &&
+                      !brain.Config.Summon && !brain.Config.Spit && !brain.Config.Charge && !brain.Config.Slam,
+                    "the reaper: scythe sweep, fire cracks, reap in the second phase (nothing else)");
                 Teleport(boss.transform.position + new Vector3(-3.5f, 0f, -2f));
                 boss.TakeDamage(Mathf.CeilToInt(boss.MaxHealth * 0.55f), Vector3.right);
             });
@@ -121,20 +128,41 @@ namespace ZombiCar.EditorTools
                     $"below half health it enrages (speed x{boss.SpeedScale:F2})");
                 Shot("3_Boss3_Enraged");
             });
-            bool sawSlam = false;
+            bool sawSweep = false, sawCracks = false, sawReap = false, shotBurn = false;
+            int crackSteps = 0;
             for (float t = 30.0f; t < 45f; t += 0.1f)
+            {
+                bool far = t >= 38f;                                          // far away: the reaper comes to the player
                 At(t, () =>
                 {
-                    sawSlam |= brain.CurrentAbility == "Slam" || brain.CurrentAbility == "Shockwave";
+                    string a = brain.CurrentAbility;
+                    sawSweep |= a == "Sweep" || a == "SweepFlash";
+                    sawCracks |= a == "Cracks" || a == "CracksBurn";
+                    sawReap |= a == "Reap";
+                    // The cracks growing (1.2 s into the 2 s warning) and then burning.
+                    if (a == "Cracks" && ++crackSteps == 12)
+                        Shot("3_Boss3_CracksWarn");
+                    if (a == "CracksBurn" && !shotBurn)
+                    {
+                        shotBurn = true;
+                        Shot("3_Boss3_CracksBurn");
+                    }
+                    if (a == "Reap")
+                        return;                                               // let it land where it aimed
                     Vector3 d = s_Player.position - boss.transform.position;
                     d.y = 0f;
-                    if (d.magnitude > 4f || d.magnitude < 1.5f)
+                    if (!far && (d.magnitude > 4f || d.magnitude < 1.5f))
                         Teleport(boss.transform.position + new Vector3(-3f, 0f, -1.5f));
+                    else if (far && d.magnitude < 7f)
+                        Teleport(boss.transform.position + new Vector3(-9f, 0f, -2f));
                 });
+            }
             At(33.5f, () => Shot("3_Boss3_Fight"));
             At(45.0f, () =>
             {
-                Check(sawSlam, "the enraged reaper slams the ground");
+                Check(sawSweep, "the reaper sweeps its scythe");
+                Check(sawCracks, "the reaper sends fire cracks along the ground");
+                Check(sawReap, "the enraged reaper teleports to the player (reap)");
                 boss.TakeDamage(100000, Vector3.right);
                 KillAll();
             });

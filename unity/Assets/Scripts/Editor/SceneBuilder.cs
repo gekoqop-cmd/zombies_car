@@ -127,6 +127,7 @@ namespace ZombiCar.EditorTools
             UiFactory.Font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(c_FontAsset);
             s_PrefabIndex = null;
             EditorPaths.EnsureFolder(EditorPaths.c_Scenes);
+            UiIconPainter.EnsureIcons();                               // the gold ad / coin icons the UI uses
             BuildBoot();
             BuildMainMenu();
             BuildHud();
@@ -282,7 +283,8 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(systemsGo.AddComponent<GameOverDirector>(),
                 ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)), ("m_Car", car.GetComponent<CarHealth>()),
                 ("m_Player", player.GetComponent<PlayerHealth>()), ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
-                ("m_Director", systemsGo.GetComponent<WaveDirector>()));
+                ("m_Director", systemsGo.GetComponent<WaveDirector>()),
+                ("m_Explosion", AssetDatabase.LoadAssetAtPath<ZombiCar.Props.ComicExplosion>(FxBuilder.c_ExplosionPrefab)));
             PrefabBuilder.Wire(systemsGo.AddComponent<MusicDirector>(), ("m_Map", systemsGo.GetComponent<MapBootstrap>().Map),
                 ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)));
             PrefabBuilder.Wire(systemsGo.AddComponent<PlayerProgression>(),
@@ -294,8 +296,9 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(systemsGo.AddComponent<TutorialDirector>(),
                 ("m_State", DataAssetsBuilder.Load<TutorialState>(DataAssetsBuilder.c_TutorialState)),
                 ("m_Input", player.GetComponent<PlayerInputProvider>()),
-                ("m_Weapons", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)),
-                ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)));
+                ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)), ("m_Spawner", spawner));
         }
 
         // Workshop: the spot in front of the garage door (the building faces the lot, its front wall at z 6.4).

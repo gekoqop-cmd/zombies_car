@@ -1,5 +1,6 @@
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
 using System;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -149,10 +150,10 @@ namespace ZombiCar.DevTools
             {
                 RunState run = workshop.Run;
                 Header("МАШИНА (МАСТЕРСКАЯ)");
-                foreach (CarUpgrade upgrade in workshop.Catalog.Upgrades)
+                foreach (CarUpgrade upgrade in workshop.Catalog.Upgrades.Concat(workshop.Catalog.Supplies))
                 {
                     CarUpgrade u = upgrade;
-                    string level = u.Repeatable ? $"использовано {run.LevelOf(u)}" : $"ур. {run.LevelOf(u)}/{u.MaxLevel}";
+                    string level = u.Repeatable ? $"использовано {run.LevelOf(u)}" : $"ур. {run.LevelOf(u)}/{u.RegularLevels}";
                     RectTransform row = Row();
                     Label(row, $"{u.Title}  <color=#9aa>{level}</color>", 380f);
                     Button(row, u.Repeatable ? "СДЕЛАТЬ" : "+1", 90f, s_ButtonColor,

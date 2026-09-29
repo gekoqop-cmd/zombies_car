@@ -35,8 +35,20 @@ namespace ZombiCar.Enemies
         private Color m_TargetColor;
         private Color m_SplatColor;
         private Vector3 m_ShadowScale;
+        private float m_Puddle;
+        private int m_PuddleDps;
+        private float m_NextBurn;
+
+        private const float c_BurnTick = 0.5f;
 
         public bool IsBusy => gameObject.activeSelf;
+
+        /// <summary>The next launch leaves a burning puddle for <paramref name="seconds"/> (0: just the splash).</summary>
+        public void SetPuddle(float seconds, int damagePerSecond)
+        {
+            m_Puddle = Mathf.Max(0f, seconds);
+            m_PuddleDps = damagePerSecond;
+        }
 
         /// <summary>Raised when the glob lands: the point and whether it hit the player.</summary>
         public event Action<Vector3, bool> Landed;
@@ -90,7 +102,21 @@ namespace ZombiCar.Enemies
                     Land();
                 return;
             }
-            float fade = 1f - Mathf.Clamp01((m_Age - m_Flight) / m_SplatTime);
+            // A puddle stays and burns for a while, then fades like a splash.
+            float onGround = m_Age - m_Flight;
+            if (onGround < m_Puddle)
+            {
+                SetColor(m_Splat, m_SplatColor, 0.75f + 0.25f * Mathf.Sin(m_Age * 5f));
+                if (Time.time >= m_NextBurn)
+                {
+                    m_NextBurn = Time.time + c_BurnTick;
+                    PlayerHealth player = m_Owner != null ? m_Owner.Player : null;
+                    if (player != null && player.IsAlive && Planar(player.transform.position, m_To) <= m_Radius * 1.1f + player.Radius * 0.5f)
+                        player.TakeDamage(Mathf.Max(1, Mathf.RoundToInt(m_PuddleDps * c_BurnTick)), Vector3.zero);
+                }
+                return;
+            }
+            float fade = 1f - Mathf.Clamp01((onGround - m_Puddle) / m_SplatTime);
             SetColor(m_Splat, m_SplatColor, fade);
             if (fade <= 0f)
                 gameObject.SetActive(false);
@@ -99,6 +125,7 @@ namespace ZombiCar.Enemies
         private void Land()
         {
             m_Landed = true;
+            m_NextBurn = Time.time + c_BurnTick;
             m_Ball.gameObject.SetActive(false);
             m_Shadow.gameObject.SetActive(false);
             m_Target.enabled = false;

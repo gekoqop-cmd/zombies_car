@@ -13,8 +13,8 @@ namespace ZombiCar.Player
     }
 
     /// <summary>
-    /// Which weapon is in hand: the gun or the axe. PC: Q or the mouse wheel toggles, 1 / 2 pick; touch screens: the
-    /// weapon button. When the gun is completely empty (no rounds in the magazine nor in reserve) and the player
+    /// Which weapon is in hand: the gun or the axe. PC: Q or the mouse wheel toggles, 1 / 2 or a click on a HUD slot
+    /// pick; touch screens: a tap on a weapon slot (<see cref="WeaponState.Request"/>). When the gun is completely empty (no rounds in the magazine nor in reserve) and the player
     /// attacks, the axe comes out by itself, and the gun comes back by itself as soon as there are rounds again (only
     /// after such an automatic switch). Switching cancels a reload. Publishes the weapon to <see cref="WeaponState"/>
     /// for the HUD.
@@ -41,6 +41,26 @@ namespace ZombiCar.Player
         {
             m_Input = m_InputProvider != null ? m_InputProvider.Input : null;
             Apply(WeaponSlot.Gun, false, true);
+        }
+
+        private void OnEnable()
+        {
+            if (m_State != null)
+                m_State.Requested += OnRequested;
+        }
+
+        private void OnDisable()
+        {
+            if (m_State != null)
+                m_State.Requested -= OnRequested;
+        }
+
+        // A HUD slot was clicked / tapped.
+        private void OnRequested(WeaponSlot slot)
+        {
+            if (GamePause.IsPaused || (m_Run != null && m_Run.IsOver))
+                return;
+            Switch(slot);
         }
 
         private void Update()

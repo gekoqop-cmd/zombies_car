@@ -34,6 +34,11 @@ namespace ZombiCar.Progression
         [NonSerialized] private MapConfig m_Map;
         [NonSerialized] private RunModifiers m_Modifiers;
         [NonSerialized] private Dictionary<string, int> m_Levels;
+        [NonSerialized] private bool m_Revived;
+        [NonSerialized] private int m_Rerolls;
+        [NonSerialized] private int m_ArmedMines;
+        [NonSerialized] private float m_StartTime;
+        [NonSerialized] private float m_PlayTime = -1f;
 
         /// <summary>Scrap, kills or the wave changed.</summary>
         public event Action Changed;
@@ -68,6 +73,21 @@ namespace ZombiCar.Progression
 
         public RunModifiers Modifiers => m_Modifiers ??= new RunModifiers();
 
+        /// <summary>Game-time seconds of the run (pauses excluded); frozen when it ended.</summary>
+        public float PlayTime => m_PlayTime >= 0f ? m_PlayTime : Time.time - m_StartTime;
+
+        /// <summary>Coins already paid into the menu for this run (a revived run is only paid the difference at its end).</summary>
+        public int CoinsPaid { get; set; }
+
+        /// <summary>The end screen's coins were doubled for a rewarded ad (once a run).</summary>
+        public bool CoinsDoubled { get; set; }
+
+        /// <summary>A defeat can still be undone once this run (the revive for an ad).</summary>
+        public bool CanRevive => !m_Revived && (m_Outcome == RunOutcome.CarDestroyed || m_Outcome == RunOutcome.PlayerDied);
+
+        /// <summary>The run was taken back from a defeat (the map puts the player and the car back up).</summary>
+        public event Action Revived;
+
         private Dictionary<string, int> Levels => m_Levels ??= new Dictionary<string, int>();
 
         /// <summary>A fresh run on <paramref name="map"/>: no scrap, no kills, no upgrades.</summary>
@@ -79,6 +99,12 @@ namespace ZombiCar.Progression
             m_PendingLevelUps = 0;
             m_WorkshopOpen = false;
             m_Outcome = RunOutcome.None;
+            m_Revived = false;
+            m_Rerolls = m_ArmedMines = 0;
+            CoinsPaid = 0;
+            CoinsDoubled = false;
+            m_StartTime = Time.time;
+            m_PlayTime = -1f;
             Modifiers.Clear();
             Levels.Clear();
             Changed?.Invoke();
@@ -132,8 +158,9 @@ namespace ZombiCar.Progression
         public void TakePerk(Perk perk)
         {
             string key = "perk:" + perk.Id;
-            Levels[key] = StacksOf(perk) + 1;
-            Apply(perk.Effect, perk.Value);
+            int stacks = StacksOf(perk);
+            Levels[key] = stacks + 1;
+            Apply(perk.Effect, perk.ValueAt(stacks));
         }
 
         /// <summary>Buys the next level of a car upgrade if there is one and the scrap is enough.</summary>
@@ -144,24 +171,51 @@ namespace ZombiCar.Progression
             if (cost < 0 || level >= upgrade.MaxLevel || !TrySpend(cost))
                 return false;
             Levels["car:" + upgrade.Id] = level + 1;
-            Apply(upgrade.Effect, upgrade.ValuePerLevel);
+            Apply(upgrade.Effect, upgrade.ValueAt(level));
             return true;
+        }
+
+        // ---------------------------------------------------------------- level-up rerolls, mines
+        /// <summary>Hands of level-up cards dealt again this run (the price of the next one grows with it).</summary>
+        public int Rerolls => m_Rerolls;
+
+        /// <summary>Pays for one reroll of the level-up cards; false when the scrap is not enough.</summary>
+        public bool TryReroll(int cost)
+        {
+            if (!TrySpend(cost))
+                return false;
+            m_Rerolls++;
+            return true;
+        }
+
+        /// <summary>Mines lying around the car now (written by the map, read by the workshop).</summary>
+        public int ArmedMines => m_ArmedMines;
+
+        public void SetArmedMines(int count)
+        {
+            if (count == m_ArmedMines)
+                return;
+            m_ArmedMines = count;
+            Changed?.Invoke();
         }
 
         /// <summary>The next level of a car upgrade for free (developer cheats); false when it is maxed out.</summary>
         public bool GrantUpgrade(CarUpgrade upgrade)
         {
             int level = LevelOf(upgrade);
-            if (level >= upgrade.MaxLevel)
+            if (level >= (upgrade.Repeatable ? upgrade.MaxLevel : upgrade.RegularLevels))       // no master levels for free
                 return false;
             Levels["car:" + upgrade.Id] = level + 1;
-            Apply(upgrade.Effect, upgrade.ValuePerLevel);
+            Apply(upgrade.Effect, upgrade.ValueAt(level));
             return true;
         }
 
+        private static bool IsInstant(StatEffect effect) => effect == StatEffect.HealPlayerFull || effect == StatEffect.RepairCar ||
+                                                           effect == StatEffect.RefillAmmo || effect == StatEffect.PlaceMines;
+
         private void Apply(StatEffect effect, float value)
         {
-            if (effect != StatEffect.HealPlayerFull && effect != StatEffect.RepairCar)
+            if (!IsInstant(effect))
             {
                 Modifiers.Add(effect, value);
                 ModifiersChanged?.Invoke();
@@ -201,12 +255,27 @@ namespace ZombiCar.Progression
             if (m_Outcome != RunOutcome.None || outcome == RunOutcome.None)
                 return;
             m_Outcome = outcome;
+            m_PlayTime = Time.time - m_StartTime;
             if (m_WorkshopOpen)
             {
                 m_WorkshopOpen = false;
                 WorkshopChanged?.Invoke();
             }
             OutcomeChanged?.Invoke();
+        }
+
+        /// <summary>Takes back a defeat once per run (after the rewarded ad); false when it cannot.</summary>
+        public bool Revive()
+        {
+            if (!CanRevive)
+                return false;
+            m_Revived = true;
+            m_Outcome = RunOutcome.None;
+            m_StartTime = Time.time - m_PlayTime;                    // the clock goes on from where it stopped
+            m_PlayTime = -1f;
+            OutcomeChanged?.Invoke();
+            Revived?.Invoke();
+            return true;
         }
     }
 }

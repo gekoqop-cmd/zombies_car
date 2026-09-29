@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ZombiCar.Core
@@ -14,11 +15,16 @@ namespace ZombiCar.Core
         private const string c_CoinsKey = "meta.coins";
         private const string c_OwnedKey = "meta.owned";
         private const string c_EquipKey = "meta.equip.";
+        private const string c_SeenKey = "meta.seen";
         private const string c_TutorialKey = "meta.tutorialDone";
+        private const string c_LiveHintsKey = "meta.liveHintsDone";
+        private const string c_BeatenKey = "meta.beaten.";
+        private const string c_BestTimeKey = "meta.bestTime.";
 
         private static bool s_Loaded;
         private static int s_Coins;
         private static readonly HashSet<string> s_Owned = new HashSet<string>();
+        private static readonly HashSet<string> s_Seen = new HashSet<string>();
         private static readonly Dictionary<CosmeticSlot, string> s_Equipped = new Dictionary<CosmeticSlot, string>();
 
         /// <summary>Coins, the collection or an equipped skin changed.</summary>
@@ -33,7 +39,7 @@ namespace ZombiCar.Core
             }
         }
 
-        /// <summary>The short tutorial of the first run was seen (or skipped).</summary>
+        /// <summary>The intro cards of the tutorial were seen (or skipped).</summary>
         public static bool TutorialDone
         {
             get => PlayerPrefs.GetInt(c_TutorialKey, 0) == 1;
@@ -42,6 +48,48 @@ namespace ZombiCar.Core
                 PlayerPrefs.SetInt(c_TutorialKey, value ? 1 : 0);
                 PlayerPrefs.Save();
             }
+        }
+
+        /// <summary>The live hints of the first run (first zombie, no ammo, workshop, first card) were all shown.</summary>
+        public static bool LiveHintsDone
+        {
+            get => PlayerPrefs.GetInt(c_LiveHintsKey, 0) == 1;
+            set
+            {
+                PlayerPrefs.SetInt(c_LiveHintsKey, value ? 1 : 0);
+                PlayerPrefs.Save();
+            }
+        }
+
+        /// <summary>All waves of <paramref name="map"/> (a MapConfig name) were beaten at least once.</summary>
+        public static bool IsBeaten(string map) => PlayerPrefs.GetInt(c_BeatenKey + map, 0) == 1;
+
+        /// <summary>Fastest victory on <paramref name="map"/>, game seconds; 0 when it was never beaten.</summary>
+        public static float BestTime(string map) => PlayerPrefs.GetFloat(c_BestTimeKey + map, 0f);
+
+        /// <summary>Saves a victory on <paramref name="map"/>; true when <paramref name="seconds"/> is a new best time.</summary>
+        public static bool RecordVictory(string map, float seconds)
+        {
+            if (string.IsNullOrEmpty(map))
+                return false;
+            float best = BestTime(map);
+            bool record = best <= 0f || seconds < best;
+            PlayerPrefs.SetInt(c_BeatenKey + map, 1);
+            if (record)
+                PlayerPrefs.SetFloat(c_BestTimeKey + map, seconds);
+            PlayerPrefs.Save();
+            Changed?.Invoke();
+            return record;
+        }
+
+        /// <summary>The menu opens the cases screen when it loads (the victory screen's "К КЕЙСАМ"); not saved.</summary>
+        public static bool OpenCasesOnMenu { get; set; }
+
+        /// <summary>"12:34" (or "1:02:03") for game seconds.</summary>
+        public static string FormatTime(float seconds)
+        {
+            int s = Mathf.Max(0, Mathf.RoundToInt(seconds));
+            return s >= 3600 ? $"{s / 3600}:{s / 60 % 60:00}:{s % 60:00}" : $"{s / 60:00}:{s % 60:00}";
         }
 
         public static void AddCoins(int amount)
@@ -79,6 +127,24 @@ namespace ZombiCar.Core
             return true;
         }
 
+        /// <summary>An owned skin the player has not looked at in the collection yet ("НОВЫЙ").</summary>
+        public static bool IsNew(CosmeticItem item)
+        {
+            Load();
+            return item != null && !item.IsDefault && s_Owned.Contains(item.Id) && !s_Seen.Contains(item.Id);
+        }
+
+        /// <summary>The skins were seen in the collection: no longer "НОВЫЙ".</summary>
+        public static void MarkSeen(IEnumerable<CosmeticItem> items)
+        {
+            Load();
+            bool changed = false;
+            foreach (CosmeticItem item in items)
+                changed |= item != null && s_Owned.Contains(item.Id) && s_Seen.Add(item.Id);
+            if (changed)
+                Save();
+        }
+
         public static string EquippedId(CosmeticSlot slot)
         {
             Load();
@@ -99,6 +165,7 @@ namespace ZombiCar.Core
             s_Loaded = true;
             s_Coins = 0;
             s_Owned.Clear();
+            s_Seen.Clear();
             s_Equipped.Clear();
             Save();
         }
@@ -123,6 +190,14 @@ namespace ZombiCar.Core
                 if (!string.IsNullOrEmpty(id))
                     s_Owned.Add(id);
             }
+            // Skins won before the "new" marks existed count as seen.
+            s_Seen.Clear();
+            string seen = PlayerPrefs.GetString(c_SeenKey, null);
+            foreach (string id in seen == null ? s_Owned.ToArray() : seen.Split(','))
+            {
+                if (!string.IsNullOrEmpty(id))
+                    s_Seen.Add(id);
+            }
             s_Equipped.Clear();
             foreach (CosmeticSlot slot in (CosmeticSlot[])Enum.GetValues(typeof(CosmeticSlot)))
             {
@@ -136,6 +211,7 @@ namespace ZombiCar.Core
         {
             PlayerPrefs.SetInt(c_CoinsKey, s_Coins);
             PlayerPrefs.SetString(c_OwnedKey, string.Join(",", s_Owned));
+            PlayerPrefs.SetString(c_SeenKey, string.Join(",", s_Seen));
             foreach (CosmeticSlot slot in (CosmeticSlot[])Enum.GetValues(typeof(CosmeticSlot)))
                 PlayerPrefs.SetString(c_EquipKey + slot, s_Equipped.TryGetValue(slot, out string id) ? id : string.Empty);
             PlayerPrefs.Save();

@@ -68,9 +68,12 @@ namespace ZombiCar.EditorTools
                 new Vector2(buttonWidth, buttonHeight), "НАСТРОЙКИ", 46f, Color.white, outline);
             Button casesButton = HudButton("CasesButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 2f),
                 new Vector2(buttonWidth, buttonHeight), "КЕЙСЫ", 46f, new Color(1f, 0.82f, 0.35f, 1f), outline);
-            TextMeshProUGUI coins = OutlinedLabel("Coins", main, topRight, topRight,
-                new Vector2(columnX, y - (buttonHeight + 24f) * 3f + 10f), new Vector2(buttonWidth, 56f), "МОНЕТЫ: 0", 36f,
-                TextAlignmentOptions.Center, new Color(1f, 0.85f, 0.4f, 1f), outline);
+            Button leadersButton = HudButton("LeaderboardButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 3f),
+                new Vector2(buttonWidth, buttonHeight), "ТАБЛИЦА ЛИДЕРОВ", 34f, new Color(0.3f, 0.56f, 0.9f, 1f), outline);
+            // The coins for the cases: the gold coin and the number, centred under the column.
+            const float coinsWidth = 240f;
+            TextMeshProUGUI coins = CoinCounter("Coins", main, topRight, topRight,
+                new Vector2(columnX - (buttonWidth - coinsWidth) * 0.5f, y - (buttonHeight + 24f) * 4f + 6f), 56f, coinsWidth, "0", 40f, outline);
 
             // Map selection.
             RectTransform mapScreen = UiFactory.Stretch("MapScreen", safe);
@@ -81,12 +84,14 @@ namespace ZombiCar.EditorTools
 
             CasesScreen cases = BuildCasesScreen(safe, outline);
             SettingsPanel settings = BuildSettingsPopup(canvas.transform, outline, false);
+            BuildTutorialCards(safe, outline);                         // replayed from the settings
+            LeaderboardPanel leaders = BuildLeaderboardPanel(safe, outline);
 
             var menu = canvas.gameObject.AddComponent<MainMenuController>();
             PrefabBuilder.Wire(menu, ("m_PlayButton", play), ("m_SettingsButton", settingsButton), ("m_BackButton", back),
                 ("m_MainScreen", mainGroup), ("m_MapScreen", mapGroup), ("m_Dim", dim), ("m_Settings", settings),
                 ("m_Music", AudioBuilder.Music("Music_Menu")), ("m_CasesButton", casesButton), ("m_Cases", cases),
-                ("m_CoinsLabel", coins));
+                ("m_CoinsLabel", coins), ("m_LeaderboardButton", leadersButton), ("m_Leaderboard", leaders));
             SaveUiPrefab(canvas.gameObject, "MainMenu");
             UiFactory.EventSystem();
             AudioBuilder.AddAudio();
@@ -142,6 +147,7 @@ namespace ZombiCar.EditorTools
             RectTransform picture = UiFactory.Rect("Picture", card, top, top, new Vector2(0f, -118f), new Vector2(pictureWidth, pictureHeight));
             picture.gameObject.AddComponent<RectMask2D>();
             CanvasGroup nightGroup = null;
+            RectTransform badge = null;
             bool locked = day == null;
             if (locked)
             {
@@ -159,6 +165,14 @@ namespace ZombiCar.EditorTools
                 nightGroup = nightRt.gameObject.AddComponent<CanvasGroup>();
                 nightGroup.alpha = 0f;
                 nightGroup.blocksRaycasts = false;
+                // "ПРОЙДЕНО" stamped in the corner once the map shown (day or night) was beaten.
+                var topRight = new Vector2(1f, 1f);
+                badge = UiFactory.Rect("BeatenBadge", picture, topRight, center, new Vector2(-170f, -70f), new Vector2(340f, 92f));
+                badge.localRotation = Quaternion.Euler(0f, 0f, -10f);
+                UiFactory.Image(badge, UiFactory.Sprite("UI_Button"), new Color(0.3f, 0.75f, 0.3f, 1f), true);
+                OutlinedLabel("Label", badge, center, center, Vector2.zero, new Vector2(320f, 88f), "ПРОЙДЕНО", 54f,
+                    TextAlignmentOptions.Center, Color.white, outline);
+                badge.gameObject.SetActive(false);
             }
 
             // Bottom row: Day / Night switch on the left, Play on the right.
@@ -182,7 +196,8 @@ namespace ZombiCar.EditorTools
             var mapCard = card.gameObject.AddComponent<MapCard>();
             PrefabBuilder.Wire(mapCard, ("m_DayMap", day), ("m_NightMap", night), ("m_NightPicture", nightGroup),
                 ("m_DayButton", dayButton), ("m_NightButton", nightButton), ("m_DayButtonPlate", dayPlate),
-                ("m_NightButtonPlate", nightPlate), ("m_PlayButton", play));
+                ("m_NightButtonPlate", nightPlate), ("m_PlayButton", play),
+                ("m_BeatenBadge", badge != null ? badge.gameObject : null));
             return mapCard;
         }
 
@@ -245,6 +260,57 @@ namespace ZombiCar.EditorTools
             return button;
         }
 
+        private static readonly Color s_AdGold = new Color(1f, 0.8f, 0.32f, 1f);
+
+        /// <summary>
+        /// The one look of every "reward for a rewarded ad" button: a gold plate with the shared UI_Icon_Ad disc (TV +
+        /// play on gold) and, where the reward needs a word, a short caption beside it ("+200", "×2", "ВОСКРЕСНУТЬ") —
+        /// never the word "реклама".
+        /// </summary>
+        private static Button AdButton(string name, Transform parent, Vector2 anchor, Vector2 pos, Vector2 size, string caption,
+            float fontSize, Material outline)
+        {
+            RectTransform rt = UiFactory.Rect(name, parent, anchor, anchor, pos, size);
+            Image plate = UiFactory.Image(rt, UiFactory.Sprite("UI_GearButton"), s_AdGold, true, true);
+            float icon = size.y * 0.78f;
+            var center = new Vector2(0.5f, 0.5f);
+            bool text = !string.IsNullOrEmpty(caption);
+            var iconAnchor = text ? new Vector2(0f, 0.5f) : center;
+            RectTransform iconRt = UiFactory.Rect("AdIcon", rt, iconAnchor, center, text ? new Vector2(12f + icon * 0.5f, 0f) : Vector2.zero,
+                new Vector2(icon, icon));
+            UiFactory.Image(iconRt, UiFactory.Sprite("UI_Icon_Ad"), Color.white, false).preserveAspect = true;
+            if (text)
+            {
+                TextMeshProUGUI label = OutlinedLabel("Label", rt, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(20f + icon, 0f),
+                    new Vector2(size.x - icon - 34f, size.y), caption, fontSize, TextAlignmentOptions.Center, s_ButtonLabel, outline);
+                label.enableAutoSizing = true;
+                label.fontSizeMin = fontSize * 0.55f;
+                label.fontSizeMax = fontSize;
+            }
+            var button = rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = plate;
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.12f, 1.12f, 1.12f, 1f);
+            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            colors.disabledColor = new Color(0.45f, 0.45f, 0.48f, 0.9f);
+            button.colors = colors;
+            rt.gameObject.AddComponent<UIButtonFx>();
+            return button;
+        }
+
+        /// <summary>A counter: the gold coin icon and the number beside it (no "МОНЕТЫ" word). Returns the number's label.</summary>
+        private static TextMeshProUGUI CoinCounter(string name, Transform parent, Vector2 anchor, Vector2 pivot, Vector2 pos, float height,
+            float width, string value, float fontSize, Material outline)
+        {
+            RectTransform rt = UiFactory.Rect(name, parent, anchor, pivot, pos, new Vector2(width, height));
+            var midLeft = new Vector2(0f, 0.5f);
+            RectTransform icon = UiFactory.Rect("Icon", rt, midLeft, midLeft, Vector2.zero, new Vector2(height, height));
+            UiFactory.Image(icon, UiFactory.Sprite("UI_Icon_Coin"), Color.white, false).preserveAspect = true;
+            return OutlinedLabel("Value", rt, midLeft, midLeft, new Vector2(height + 12f, 0f), new Vector2(width - height - 12f, height), value,
+                fontSize, TextAlignmentOptions.Left, new Color(1f, 0.85f, 0.4f, 1f), outline);
+        }
+
         private static TextMeshProUGUI OutlinedLabel(string name, Transform parent, Vector2 anchor, Vector2 pivot, Vector2 pos, Vector2 size,
             string text, float fontSize, TextAlignmentOptions align, Color color, Material outline)
         {
@@ -269,6 +335,10 @@ namespace ZombiCar.EditorTools
             UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
             OutlinedLabel("Title", window, top, top, new Vector2(0f, -34f), new Vector2(900f, 80f), "НАСТРОЙКИ", 60f,
                 TextAlignmentOptions.Center, s_ButtonLabel, outline);
+            // In the game (the pause): the coin balance, top left — the HUD itself never shows it during a run.
+            TextMeshProUGUI coins = menuButton
+                ? CoinCounter("Coins", window, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -46f), 56f, 230f, "0", 40f, outline)
+                : null;
 
             Slider master = VolumeRow(window, "MasterVolume", "ОБЩАЯ ГРОМКОСТЬ", -150f, outline);
             Slider music = VolumeRow(window, "MusicVolume", "ГРОМКОСТЬ МУЗЫКИ", -250f, outline);
@@ -300,18 +370,23 @@ namespace ZombiCar.EditorTools
             Button editControls = HudButton("EditLayoutButton", mobileRow, midRight, Vector2.zero, new Vector2(280f, 90f), "РАСПОЛОЖЕНИЕ",
                 30f, Color.white, outline);
             var bottom = new Vector2(0.5f, 0f);
-            // In the game: "To menu" next to Back (the main menu's own pop-up only has Back).
-            Button close = HudButton("BackButton", window, bottom, new Vector2(menuButton ? 200f : 0f, 40f), new Vector2(360f, 110f),
-                "НАЗАД", 48f, s_PlayColor, outline);
+            // Bottom row: "Tutorial" (replays the intro cards), in the game also "To menu", and Back.
+            var buttonSize = new Vector2(menuButton ? 310f : 360f, 110f);
+            float step = menuButton ? 330f : 200f;
+            Button close = HudButton("BackButton", window, bottom, new Vector2(step, 40f), buttonSize, "НАЗАД", 46f, s_PlayColor, outline);
+            Button tutorial = HudButton("TutorialButton", window, bottom, new Vector2(menuButton ? 0f : -step, 40f), buttonSize,
+                "ОБУЧЕНИЕ", 42f, Color.white, outline);
             Button toMenu = menuButton
-                ? HudButton("MenuButton", window, bottom, new Vector2(-200f, 40f), new Vector2(360f, 110f), "В МЕНЮ", 48f, Color.white, outline)
+                ? HudButton("MenuButton", window, bottom, new Vector2(-step, 40f), buttonSize, "В МЕНЮ", 46f, Color.white, outline)
                 : null;
 
             var settings = root.gameObject.AddComponent<SettingsPanel>();
             PrefabBuilder.Wire(settings, ("m_MasterSlider", master), ("m_MusicSlider", music), ("m_SfxSlider", sfx),
                 ("m_LowButton", low), ("m_MediumButton", medium), ("m_HighButton", high), ("m_UltraButton", ultra),
-                ("m_CloseButton", close), ("m_MenuButton", toMenu), ("m_MobileSection", mobileRow.gameObject),
-                ("m_ControlsSizeSlider", controlsSize), ("m_EditControlsButton", editControls), ("m_Window", window));
+                ("m_CloseButton", close), ("m_MenuButton", toMenu), ("m_MobileSection", mobileRow.gameObject), ("m_Coins", coins),
+                ("m_ControlsSizeSlider", controlsSize), ("m_EditControlsButton", editControls), ("m_Window", window),
+                ("m_TutorialButton", tutorial),
+                ("m_Tutorial", DataAssetsBuilder.Load<ZombiCar.Progression.TutorialState>(DataAssetsBuilder.c_TutorialState)));
             CharacterBuilder.SetProps(settings, ("m_MobileSectionHeight", c_MobileSettingsRowHeight));
             root.gameObject.SetActive(false);
             return settings;
@@ -408,15 +483,8 @@ namespace ZombiCar.EditorTools
             Image levelFill = UiFactory.Fill(levelFillRt, UiFactory.Sprite("UI_BarFillBlue"), Color.white, 0f);
             healthLabel.color = UiFactory.TextColor;
 
-            // ---- Wave / timer (wave.png): the notched panel, the wave above, the countdown below.
-            const float waveHeight = 120f;
-            RectTransform wave = UiFactory.Rect("WavePanel", safe, topCenter, topCenter, new Vector2(0f, -margin),
-                new Vector2(waveHeight * 1558f / 613f, waveHeight));
-            Part(wave, "Panel", "UI_WavePanel", 108, 142, 1666, 755, s_WaveRef);
-            TextMeshProUGUI waveLabel = PartLabel(wave, "WaveLabel", 300, 225, 1480, 440, s_WaveRef, string.Empty, 40f,
-                TextAlignmentOptions.Center, outline);
-            TextMeshProUGUI waveTimer = PartLabel(wave, "WaveTimer", 330, 480, 1450, 705, s_WaveRef, string.Empty, 42f,
-                TextAlignmentOptions.Center, outline);
+            // ---- Wave progress: "ВОЛНА 7" and the timer over a line from wave 1 to 30 with the boss marks.
+            BuildWaveProgress(safe, outline, margin, out TextMeshProUGUI waveLabel, out TextMeshProUGUI waveTimer);
 
             // ---- Ammo + settings (patronset.png): the ammo panel left of the gear button.
             const float ammoHeight = 90f;
@@ -457,8 +525,8 @@ namespace ZombiCar.EditorTools
             // Scrap and kills under the health panel; the interaction prompt at the bottom.
             RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue,
                 out TextMeshProUGUI killsValue);
+            BuildPerkTray(safe, outline, margin + hpHeight + 12f + 58f + 14f);
             BuildInteractionPrompt(safe, outline);
-            BuildTutorialHint(safe, outline);
             WaveBanner banner = BuildWaveBanner(safe, outline);
             BuildCarAttackAlert(safe, outline, banner);
             BuildWeaponSlots(safe, outline);
@@ -466,8 +534,13 @@ namespace ZombiCar.EditorTools
             BuildTouchControls(safe, outline);
             BuildLevelUpScreen(safe, outline);
             BuildWorkshopScreen(safe, outline);
-            BuildGameOverScreen(safe, outline);
+            BuildTutorialHint(safe, outline);                          // over the level-up cards (the first card's hint)
+            BuildBossIntro(safe, outline);
+            BuildVictoryFinale(safe, outline);                         // the fireworks go on behind the victory screen
+            GameOverScreen gameOver = BuildGameOverScreen(safe, outline);
+            PrefabBuilder.Wire(gameOver, ("m_Leaderboard", BuildLeaderboardPanel(safe, outline)));   // over the victory screen
             SettingsPanel settings = BuildSettingsPopup(safe, outline, true);
+            BuildTutorialCards(safe, outline);
 
             var hud = canvas.gameObject.AddComponent<HudController>();
             PrefabBuilder.Wire(hud,
@@ -495,6 +568,7 @@ namespace ZombiCar.EditorTools
         private const float c_StickRing = 260f;
         private const float c_StickKnob = 120f;
         private const float c_TouchButton = 150f;
+        private const float c_TouchSlot = 124f;             // a weapon slot of the touch column
 
         /// <summary>
         /// The mobile controls layer (hidden on desktop by <see cref="MobileControlsLayout"/>): move stick bottom-left,
@@ -516,7 +590,8 @@ namespace ZombiCar.EditorTools
             RectTransform aim = Stick("AimStick", area, bottomRight, new Vector2(-c_StickTouch * 0.5f, c_StickTouch * 0.5f),
                 VirtualJoystick.Role.Aim, new Color(1f, 0.62f, 0.3f, 1f), layout);
             RectTransform reload = UiFactory.Rect("ReloadButton", area, bottomRight, new Vector2(0.5f, 0.5f),
-                new Vector2(-c_StickTouch - 30f, c_StickTouch * 0.5f + 150f), new Vector2(c_TouchButton, c_TouchButton));
+                new Vector2(-c_StickTouch - 16f - c_TouchSlot * 0.5f, c_StickTouch * 0.5f + c_TouchSlot + c_WeaponSlotGap * 0.5f + 20f + c_TouchButton * 0.5f),
+                new Vector2(c_TouchButton, c_TouchButton));                 // above the weapon column
             UiFactory.Image(reload, UiFactory.Sprite("UI_RoundButton"), Color.white, false, true);
             RectTransform reloadIcon = UiFactory.Rect("Icon", reload, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
                 new Vector2(c_TouchButton * 0.5f, c_TouchButton * 0.5f));
@@ -541,20 +616,17 @@ namespace ZombiCar.EditorTools
                 ("m_State", DataAssetsBuilder.Load<ZombiCar.Progression.InteractionState>(DataAssetsBuilder.c_InteractionState)),
                 ("m_Layout", layout), ("m_Visual", actionVisual), ("m_Icon", actionImage));
 
-            // Weapon (gun / axe): under the reload button; shows the weapon it switches to.
-            RectTransform weapon = UiFactory.Rect("WeaponButton", area, bottomRight, new Vector2(0.5f, 0.5f),
-                new Vector2(-c_StickTouch - 30f, c_StickTouch * 0.5f - 10f), new Vector2(c_TouchButton, c_TouchButton));
-            UiFactory.Image(weapon, UiFactory.Sprite("UI_RoundButton"), Color.white, false, true);
-            RectTransform weaponIcon = UiFactory.Rect("Icon", weapon, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero,
-                new Vector2(c_TouchButton * 0.62f, c_TouchButton * 0.62f));
-            Image weaponImage = UiFactory.Image(weaponIcon, UiFactory.Sprite("UI_Icon_Axe"), Color.white, false);
-            weaponImage.preserveAspect = true;
-            var weaponButton = weapon.gameObject.AddComponent<TouchButton>();
-            PrefabBuilder.Wire(weaponButton, ("m_Layout", layout));
-            CharacterBuilder.SetProps(weaponButton, ("m_Action", (int)TouchButton.Action.SwitchWeapon));
-            PrefabBuilder.Wire(weapon.gameObject.AddComponent<WeaponButtonView>(),
-                ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)), ("m_Icon", weaponImage),
-                ("m_GunIcon", UiFactory.Sprite("UI_Icon_Rifle")), ("m_AxeIcon", UiFactory.Sprite("UI_Icon_Axe")));
+            // Weapons: the same column as on PC (gun on top, axe under it, the one in hand orange, no key numbers),
+            // right next to the fire stick; a tap takes that weapon. Moves with the other controls as one piece.
+            RectTransform weapon = UiFactory.Rect("WeaponSlots", area, bottomRight, new Vector2(0.5f, 0.5f),
+                new Vector2(-c_StickTouch - 16f - c_TouchSlot * 0.5f, c_StickTouch * 0.5f),
+                new Vector2(c_TouchSlot, c_TouchSlot * 2f + c_WeaponSlotGap));
+            Image gunSlot = WeaponSlotPlate("Gun", weapon, c_TouchSlot, c_TouchSlot + c_WeaponSlotGap, "UI_Icon_Rifle", null, outline);
+            Image axeSlot = WeaponSlotPlate("Axe", weapon, c_TouchSlot, 0f, "UI_Icon_Axe", null, outline);
+            var slots = weapon.gameObject.AddComponent<WeaponSlotsView>();
+            PrefabBuilder.Wire(slots, ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)),
+                ("m_GunPlate", gunSlot), ("m_AxePlate", axeSlot), ("m_Layout", layout));
+            CharacterBuilder.SetProps(slots, ("m_Mobile", true));
 
             // Edit overlay: dims the game, shows where the controls may go, takes the drags.
             RectTransform overlay = UiFactory.Stretch("EditOverlay", root);
@@ -574,7 +646,7 @@ namespace ZombiCar.EditorTools
             var so = new SerializedObject(layout);
             so.FindProperty("m_Area").objectReferenceValue = area;
             SerializedProperty controls = so.FindProperty("m_Controls");
-            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload), ("action", action), ("weapon", weapon) };
+            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload), ("action", action), ("weapons", weapon) };
             controls.arraySize = list.Length;
             for (int i = 0; i < list.Length; i++)
             {
@@ -613,7 +685,6 @@ namespace ZombiCar.EditorTools
 
         // Opaque boxes of the references (px): parts are placed by their reference coordinates inside these.
         private static readonly RectInt s_HpRef = new RectInt(64, 70, 2006, 565);
-        private static readonly RectInt s_WaveRef = new RectInt(108, 142, 1558, 613);
         private static readonly RectInt s_AmmoRef = new RectInt(50, 170, 1660, 383);
 
         /// <summary>A child rect covering reference pixels (x0, y0)-(x1, y1) of <paramref name="reference"/> (y down).</summary>

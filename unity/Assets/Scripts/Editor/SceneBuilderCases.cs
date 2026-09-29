@@ -34,8 +34,7 @@ namespace ZombiCar.EditorTools
             UiFactory.Image(UiFactory.Stretch("Dim", root), null, new Color(0.02f, 0.02f, 0.03f, 0.86f), false, true);
             OutlinedLabel("Title", root, top, top, new Vector2(0f, -36f), new Vector2(1200f, 90f), "КЕЙСЫ", 70f,
                 TextAlignmentOptions.Center, s_TitleColor, outline);
-            TextMeshProUGUI coins = OutlinedLabel("Coins", root, topRight, topRight, new Vector2(-40f, -44f), new Vector2(460f, 70f),
-                "МОНЕТЫ: 0", 44f, TextAlignmentOptions.Right, new Color(1f, 0.85f, 0.4f, 1f), outline);
+            TextMeshProUGUI coins = CoinCounter("Coins", root, topRight, topRight, new Vector2(-40f, -44f), 64f, 300f, "0", 48f, outline);
             OutlinedLabel("Hint", root, top, top, new Vector2(0f, -120f), new Vector2(1300f, 44f),
                 "МОНЕТЫ ДАЮТСЯ В КОНЦЕ КАЖДОГО ЗАБЕГА", 28f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
             Button close = HudButton("BackButton", root, bottomLeft, new Vector2(40f, 40f), new Vector2(300f, 96f), "НАЗАД", 40f,
@@ -135,8 +134,11 @@ namespace ZombiCar.EditorTools
             RectTransform iconRt = UiFactory.Rect("Icon", disc, center, center, Vector2.zero, new Vector2(126f, 126f));
             refs.Icon = UiFactory.Image(iconRt, icon, Color.white, false);
             refs.Icon.preserveAspect = true;
-            TextMeshProUGUI chances = OutlinedLabel("Chances", card, top, top, new Vector2(0f, -280f), new Vector2(380f, 140f),
-                "ОБЫЧНОЕ 55%", 27f, TextAlignmentOptions.Center, Color.white, outline);
+            TextMeshProUGUI chances = OutlinedLabel("Chances", card, top, top, new Vector2(0f, -272f), new Vector2(380f, 170f),
+                "ОБЫЧНОЕ 55%", 26f, TextAlignmentOptions.Center, Color.white, outline);
+            chances.enableAutoSizing = true;
+            chances.fontSizeMin = 18f;
+            chances.fontSizeMax = 26f;
             chances.textWrappingMode = TextWrappingModes.Normal;
             chances.richText = true;
             refs.Chances = chances;
@@ -144,8 +146,8 @@ namespace ZombiCar.EditorTools
             refs.OpenButton = HudButton("OpenButton", card, bottom, new Vector2(0f, 186f), new Vector2(380f, 90f), "ОТКРЫТЬ", 32f,
                 s_PlayColor, outline);
             refs.OpenLabel = refs.OpenButton.GetComponentInChildren<TMP_Text>();
-            refs.AdButton = HudButton("AdButton", card, bottom, new Vector2(0f, 100f), new Vector2(380f, 78f), "ЗА РЕКЛАМУ", 28f,
-                new Color(0.45f, 0.75f, 0.35f, 1f), outline);
+            // Open for a rewarded ad: the shared gold ad button, icon only.
+            refs.AdButton = AdButton("AdButton", card, bottom, new Vector2(0f, 100f), new Vector2(380f, 78f), null, 0f, outline);
             refs.CollectionButton = HudButton("CollectionButton", card, bottom, new Vector2(0f, 20f), new Vector2(380f, 72f), "КОЛЛЕКЦИЯ",
                 26f, Color.white, outline);
             refs.CollectionLabel = refs.CollectionButton.GetComponentInChildren<TMP_Text>();
@@ -175,6 +177,14 @@ namespace ZombiCar.EditorTools
             TextMeshProUGUI locked = OutlinedLabel("Locked", tile, center, center, new Vector2(0f, 24f), new Vector2(140f, 140f), "?", 110f,
                 TextAlignmentOptions.Center, new Color(0.75f, 0.75f, 0.8f, 1f), outline);
             locked.gameObject.SetActive(false);
+            // "НОВЫЙ": a tilted orange ribbon over the top right corner.
+            var topRight = new Vector2(1f, 1f);
+            RectTransform fresh = UiFactory.Rect("New", tile, topRight, center, new Vector2(-30f, -14f), new Vector2(120f, 40f));
+            fresh.localRotation = Quaternion.Euler(0f, 0f, -14f);
+            UiFactory.Image(fresh, UiFactory.Sprite("UI_Button"), new Color(1f, 0.55f, 0.15f, 1f), true);
+            OutlinedLabel("Label", fresh, center, center, Vector2.zero, new Vector2(120f, 40f), "НОВЫЙ", 24f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            fresh.gameObject.SetActive(false);
             var button = tile.gameObject.AddComponent<Button>();
             button.targetGraphic = plate;
             button.interactable = clickable;
@@ -186,7 +196,7 @@ namespace ZombiCar.EditorTools
                 tile.gameObject.AddComponent<UIButtonFx>();
             var view = tile.gameObject.AddComponent<ItemTile>();
             PrefabBuilder.Wire(view, ("m_Plate", plate), ("m_Icon", icon), ("m_Title", label), ("m_Equipped", equipped),
-                ("m_Locked", locked), ("m_Button", button));
+                ("m_Locked", locked), ("m_Button", button), ("m_New", fresh.gameObject));
             return view;
         }
     }

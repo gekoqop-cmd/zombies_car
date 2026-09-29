@@ -38,6 +38,11 @@ namespace ZombiCar.UI
         [SerializeField] private Button m_CloseButton;
         [Tooltip("Leaves the map for the main menu (only the HUD's pop-up has it).")]
         [SerializeField, OptionalReference] private Button m_MenuButton;
+        [Tooltip("The coin balance (coin icon + number): the in-game pause only.")]
+        [SerializeField, OptionalReference] private TMPro.TMP_Text m_Coins;
+        [Tooltip("Replays the tutorial: its intro cards now, its live hints in the game.")]
+        [SerializeField, OptionalReference] private Button m_TutorialButton;
+        [SerializeField, OptionalReference] private Progression.TutorialState m_Tutorial;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.15f;
 
         private CanvasGroup m_Group;
@@ -64,6 +69,8 @@ namespace ZombiCar.UI
             m_CloseButton.onClick.AddListener(Hide);
             if (m_MenuButton != null)
                 m_MenuButton.onClick.AddListener(ToMenu);
+            if (m_TutorialButton != null)
+                m_TutorialButton.onClick.AddListener(ReplayTutorial);
             bool mobile = DeviceInfo.IsMobile && m_MobileSection != null;
             if (m_MobileSection != null)
                 m_MobileSection.SetActive(mobile);
@@ -99,6 +106,8 @@ namespace ZombiCar.UI
             m_SfxSlider.SetValueWithoutNotify(SettingsService.SfxVolume);
             if (m_ControlsSizeSlider != null)
                 m_ControlsSizeSlider.SetValueWithoutNotify(SettingsService.ControlsScale);
+            if (m_Coins != null)
+                m_Coins.SetText(MetaProgress.Coins.ToString());
             if (m_EditControlsButton != null)
                 m_EditControlsButton.gameObject.SetActive(MobileControlsLayout.Instance != null);
             Highlight(SettingsService.Quality);
@@ -141,6 +150,16 @@ namespace ZombiCar.UI
             Snap();
             if (MobileControlsLayout.Instance != null)
                 MobileControlsLayout.Instance.BeginEdit();
+        }
+
+        private void ReplayTutorial()
+        {
+            if (m_Tutorial == null)
+                return;
+            Hide();
+            Snap();
+            MetaProgress.LiveHintsDone = false;                    // the live hints come again (now or in the next run)
+            m_Tutorial.OpenCards();
         }
 
         private void ToMenu()

@@ -1,3 +1,4 @@
+using System.Linq;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -6,6 +7,7 @@ using ZombiCar.Car;
 using ZombiCar.Player;
 using ZombiCar.Progression;
 using ZombiCar.UI;
+using ZombiCar.Waves;
 
 namespace ZombiCar.EditorTools
 {
@@ -50,34 +52,45 @@ namespace ZombiCar.EditorTools
         // ------------------------------------------------------------------ weapon slots (desktop)
         private const float c_WeaponSlot = 96f;
 
-        /// <summary>Bottom right (desktop): the gun [1] and the axe [2], the one in hand lit orange, the switch hint above.</summary>
+        private const float c_WeaponSlotGap = 14f;
+
+        /// <summary>
+        /// Bottom right (desktop): a column with the gun [1] on top and the axe [2] under it, the one in hand lit
+        /// orange; a click on a slot takes it. The "out of ammo: axe" notice shows left of the column when needed.
+        /// </summary>
         private static void BuildWeaponSlots(RectTransform safe, Material outline)
         {
             var bottomRight = new Vector2(1f, 0f);
             RectTransform root = UiFactory.Rect("WeaponSlots", safe, bottomRight, bottomRight, new Vector2(-24f, 24f),
-                new Vector2(c_WeaponSlot * 2f + 14f, c_WeaponSlot + 44f));
-            Image gun = WeaponSlotPlate("Gun", root, 0f, "UI_Icon_Rifle", "1", outline);
-            Image axe = WeaponSlotPlate("Axe", root, c_WeaponSlot + 14f, "UI_Icon_Axe", "2", outline);
-            var top = new Vector2(1f, 1f);
-            TextMeshProUGUI hint = OutlinedLabel("Hint", root, top, top, Vector2.zero, new Vector2(520f, 38f), "Q: СМЕНИТЬ ОРУЖИЕ", 26f,
-                TextAlignmentOptions.Right, Color.white, outline);
+                new Vector2(c_WeaponSlot, c_WeaponSlot * 2f + c_WeaponSlotGap));
+            Image gun = WeaponSlotPlate("Gun", root, c_WeaponSlot, c_WeaponSlot + c_WeaponSlotGap, "UI_Icon_Rifle", "1", outline);
+            Image axe = WeaponSlotPlate("Axe", root, c_WeaponSlot, 0f, "UI_Icon_Axe", "2", outline);
+            var bottomLeft = new Vector2(0f, 0f);
+            var hintPivot = new Vector2(1f, 0.5f);
+            TextMeshProUGUI hint = OutlinedLabel("EmptyHint", root, bottomLeft, hintPivot, new Vector2(-16f, c_WeaponSlot * 0.5f),
+                new Vector2(520f, 38f), "ПАТРОНЫ КОНЧИЛИСЬ: ТОПОР", 26f, TextAlignmentOptions.Right, UiFactory.AccentColor, outline);
+            hint.gameObject.SetActive(false);
             PrefabBuilder.Wire(root.gameObject.AddComponent<WeaponSlotsView>(),
                 ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)),
                 ("m_GunPlate", gun), ("m_AxePlate", axe), ("m_Hint", hint));
         }
 
-        private static Image WeaponSlotPlate(string name, RectTransform parent, float x, string icon, string key, Material outline)
+        /// <summary>A square slot at <paramref name="y"/> from the bottom of the column; <paramref name="key"/> null = no number.</summary>
+        private static Image WeaponSlotPlate(string name, RectTransform parent, float size, float y, string icon, string key, Material outline)
         {
-            var bottomLeft = new Vector2(0f, 0f);
+            var bottomCenter = new Vector2(0.5f, 0f);
             var center = new Vector2(0.5f, 0.5f);
-            RectTransform slot = UiFactory.Rect(name, parent, bottomLeft, center, new Vector2(x + c_WeaponSlot * 0.5f, c_WeaponSlot * 0.5f),
-                new Vector2(c_WeaponSlot, c_WeaponSlot));
-            Image plate = UiFactory.Image(slot, UiFactory.Sprite("UI_Panel"), s_PillColor, true);
-            RectTransform iconRt = UiFactory.Rect("Icon", slot, center, center, new Vector2(4f, -2f), new Vector2(c_WeaponSlot * 0.74f, c_WeaponSlot * 0.74f));
+            RectTransform slot = UiFactory.Rect(name, parent, bottomCenter, center, new Vector2(0f, y + size * 0.5f), new Vector2(size, size));
+            Image plate = UiFactory.Image(slot, UiFactory.Sprite("UI_Panel"), s_PillColor, true, true);
+            RectTransform iconRt = UiFactory.Rect("Icon", slot, center, center, new Vector2(key != null ? 4f : 0f, -2f),
+                new Vector2(size * 0.74f, size * 0.74f));
             UiFactory.Image(iconRt, UiFactory.Sprite(icon), Color.white, false).preserveAspect = true;
-            var topLeft = new Vector2(0f, 1f);
-            OutlinedLabel("Key", slot, topLeft, topLeft, new Vector2(8f, -2f), new Vector2(40f, 40f), key, 30f,
-                TextAlignmentOptions.TopLeft, Color.white, outline);
+            if (key != null)
+            {
+                var topLeft = new Vector2(0f, 1f);
+                OutlinedLabel("Key", slot, topLeft, topLeft, new Vector2(8f, -2f), new Vector2(40f, 40f), key, 30f,
+                    TextAlignmentOptions.TopLeft, Color.white, outline);
+            }
             return plate;
         }
 
@@ -180,6 +193,140 @@ namespace ZombiCar.EditorTools
                 ("m_ProgressFill", fill));
         }
 
+        // ------------------------------------------------------------------ wave progress
+        private static readonly Vector2 s_WaveProgress = new Vector2(660f, 108f);
+        private const float c_WaveBarHeight = 24f;
+        private const float c_BossMark = 52f;
+        private const float c_FinalBossMark = 72f;
+        private static readonly Color s_FinalBossColor = new Color(0.52f, 0.16f, 0.78f, 1f);
+        private const float c_BossBarIcon = 84f;
+
+        /// <summary>
+        /// Top centre: a dark pill with "ВОЛНА N" (left) and the timer (right) over a progress line from wave 1 to the
+        /// last wave; a boss mark (the boss icon on a red disc) sits on the line at every boss wave; the last boss's mark is bigger and purple.
+        /// While a boss is alive the same pill shows the boss's health bar instead (<see cref="WaveProgressView"/>).
+        /// </summary>
+        private static void BuildWaveProgress(RectTransform safe, Material outline, float margin, out TextMeshProUGUI label,
+            out TextMeshProUGUI timer)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var topLeft = new Vector2(0f, 1f);
+            var topRight = new Vector2(1f, 1f);
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform root = UiFactory.Rect("WaveProgress", safe, top, top, new Vector2(0f, -margin), s_WaveProgress);
+            UiFactory.Image(root, UiFactory.Sprite("UI_Panel"), s_PillColor, true);
+            RectTransform content = UiFactory.Stretch("Waves", root);
+            var waveGroup = content.gameObject.AddComponent<CanvasGroup>();
+            waveGroup.blocksRaycasts = false;
+            label = OutlinedLabel("WaveLabel", content, topLeft, topLeft, new Vector2(26f, -8f), new Vector2(320f, 50f), "ВОЛНА 1", 38f,
+                TextAlignmentOptions.Left, Color.white, outline);
+            timer = OutlinedLabel("WaveTimer", content, topRight, topRight, new Vector2(-84f, -8f), new Vector2(240f, 50f), "00:05", 38f,
+                TextAlignmentOptions.Right, s_TitleColor, outline);
+
+            float barWidth = s_WaveProgress.x - 80f;
+            RectTransform bar = UiFactory.Rect("Line", content, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 20f),
+                new Vector2(barWidth, c_WaveBarHeight));
+            UiFactory.Image(bar, UiFactory.Sprite("UI_BarTrack"), Color.white, true);
+            Image fill = UiFactory.Fill(Inset(UiFactory.Stretch("Fill", bar), 4f), UiFactory.Sprite("UI_BarFillRed"),
+                new Color(1f, 0.72f, 0.35f, 1f), 0f);
+
+            var waves = DataAssetsBuilder.Load<WaveConfig>(DataAssetsBuilder.c_WaveConfig);
+            int count = Mathf.Max(1, waves.WaveCount);
+            int[] bossWaves = waves.Bosses.Where(b => b != null && b.Boss != null).Select(b => b.Wave).OrderBy(w => w).ToArray();
+            var marks = new RectTransform[bossWaves.Length];
+            for (int i = 0; i < bossWaves.Length; i++)
+            {
+                float x = -barWidth * 0.5f + barWidth * bossWaves[i] / count;
+                bool final = i == bossWaves.Length - 1;              // the last boss: a bigger purple mark
+                float size = final ? c_FinalBossMark : c_BossMark;
+                RectTransform mark = UiFactory.Rect($"Boss{bossWaves[i]}", bar, center, center, new Vector2(x, 0f),
+                    new Vector2(size, size));
+                UiFactory.Image(mark, UiFactory.Sprite("UI_StickKnob"), final ? s_FinalBossColor : new Color(0.75f, 0.12f, 0.1f, 1f), false);
+                RectTransform icon = UiFactory.Rect("Icon", mark, center, center, Vector2.zero, new Vector2(size * 0.78f, size * 0.78f));
+                UiFactory.Image(icon, UiFactory.Sprite("UI_Icon_Boss"), Color.white, false).preserveAspect = true;
+                marks[i] = mark;
+            }
+            // The boss bar over the same pill (hidden until a boss comes out): the boss icon on a disc, its name and
+            // the wave, a big health bar with the lost-health trail and the number on it.
+            RectTransform bossRoot = UiFactory.Stretch("BossBar", root);
+            var bossGroup = bossRoot.gameObject.AddComponent<CanvasGroup>();
+            bossGroup.blocksRaycasts = false;
+            bossGroup.alpha = 0f;
+            var left = new Vector2(0f, 0.5f);
+            RectTransform disc = UiFactory.Rect("Icon", bossRoot, left, center, new Vector2(18f + c_BossBarIcon * 0.5f, 0f),
+                new Vector2(c_BossBarIcon, c_BossBarIcon));
+            Image discImage = UiFactory.Image(disc, UiFactory.Sprite("UI_StickKnob"), new Color(0.75f, 0.12f, 0.1f, 1f), false);
+            RectTransform bossIcon = UiFactory.Rect("Face", disc, center, center, Vector2.zero, new Vector2(c_BossBarIcon * 0.78f, c_BossBarIcon * 0.78f));
+            UiFactory.Image(bossIcon, UiFactory.Sprite("UI_Icon_Boss"), Color.white, false).preserveAspect = true;
+            float textLeft = 18f + c_BossBarIcon + 14f;
+            float textWidth = s_WaveProgress.x - textLeft - 22f;
+            TextMeshProUGUI bossName = OutlinedLabel("Name", bossRoot, topLeft, topLeft, new Vector2(textLeft, -6f),
+                new Vector2(textWidth - 170f, 46f), "БОСС", 34f, TextAlignmentOptions.Left, new Color(1f, 0.55f, 0.4f, 1f), outline);
+            bossName.enableAutoSizing = true;
+            bossName.fontSizeMin = 22f;
+            bossName.fontSizeMax = 34f;
+            TextMeshProUGUI bossWave = OutlinedLabel("Wave", bossRoot, topRight, topRight, new Vector2(-22f, -10f), new Vector2(170f, 40f),
+                "ВОЛНА 10", 28f, TextAlignmentOptions.Right, Color.white, outline);
+            RectTransform hpBar = UiFactory.Rect("Health", bossRoot, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(textLeft, 12f),
+                new Vector2(textWidth, 44f));
+            UiFactory.Image(hpBar, UiFactory.Sprite("UI_BarTrack"), Color.white, true);
+            RectTransform lane = Inset(UiFactory.Stretch("Lane", hpBar), 5f);
+            Image trail = UiFactory.Fill(UiFactory.Stretch("Trail", lane), UiFactory.Sprite("UI_BarFillRed"), new Color(1f, 0.92f, 0.82f, 0.9f), 1f);
+            Image hpFill = UiFactory.Fill(UiFactory.Stretch("Fill", lane), UiFactory.Sprite("UI_BarFillRed"), Color.white, 1f);
+            TextMeshProUGUI hpValue = OutlinedLabel("Value", hpBar, center, center, Vector2.zero, new Vector2(textWidth, 44f), "1000 / 1000",
+                28f, TextAlignmentOptions.Center, Color.white, outline);
+            bossRoot.gameObject.SetActive(false);
+
+            var view = root.gameObject.AddComponent<WaveProgressView>();
+            PrefabBuilder.Wire(view, ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)), ("m_Fill", fill),
+                ("m_WaveGroup", waveGroup), ("m_BossGroup", bossGroup), ("m_BossIcon", disc), ("m_BossDisc", discImage),
+                ("m_BossName", bossName), ("m_BossWave", bossWave), ("m_BossValue", hpValue), ("m_BossFill", hpFill), ("m_BossTrail", trail));
+            CharacterBuilder.SetProps(view, ("m_Marks", marks.Cast<Object>().ToArray()), ("m_FinalBossColor", s_FinalBossColor));
+            var so = new SerializedObject(view);
+            SerializedProperty list = so.FindProperty("m_BossWaves");
+            list.arraySize = bossWaves.Length;
+            for (int i = 0; i < bossWaves.Length; i++)
+                list.GetArrayElementAtIndex(i).intValue = bossWaves[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // ------------------------------------------------------------------ perks taken
+        private const float c_PerkIcon = 60f;
+
+        /// <summary>Left, under the scrap / kill counters: the level-up cards the run took, icon + level (a template row).</summary>
+        private static void BuildPerkTray(RectTransform safe, Material outline, float top)
+        {
+            var topLeft = new Vector2(0f, 1f);
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform root = UiFactory.Rect("PerkTray", safe, topLeft, topLeft, new Vector2(24f, -top), new Vector2(c_PerkIcon * 6f + 40f, 300f));
+            var grid = root.gameObject.AddComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(c_PerkIcon, c_PerkIcon);
+            grid.spacing = new Vector2(8f, 8f);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 6;
+            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
+            grid.childAlignment = TextAnchor.UpperLeft;
+
+            RectTransform item = UiFactory.Rect("ItemTemplate", root, center, center, Vector2.zero, new Vector2(c_PerkIcon, c_PerkIcon));
+            Image disc = UiFactory.Image(item, UiFactory.Sprite("UI_StickKnob"), Color.white, false);
+            RectTransform iconRt = UiFactory.Rect("Icon", item, center, center, Vector2.zero, new Vector2(c_PerkIcon * 0.72f, c_PerkIcon * 0.72f));
+            Image icon = UiFactory.Image(iconRt, null, Color.white, false);
+            icon.preserveAspect = true;
+            var bottomRight = new Vector2(1f, 0f);
+            RectTransform badge = UiFactory.Rect("Badge", item, bottomRight, bottomRight, new Vector2(8f, -6f), new Vector2(40f, 28f));
+            UiFactory.Image(badge, UiFactory.Sprite("UI_Panel"), new Color(0.05f, 0.06f, 0.08f, 0.92f), true);
+            TextMeshProUGUI level = OutlinedLabel("Level", badge, center, center, Vector2.zero, new Vector2(40f, 28f), "1", 22f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            level.enableAutoSizing = true;
+            level.fontSizeMin = 14f;
+            level.fontSizeMax = 22f;
+            item.gameObject.SetActive(false);
+
+            var tray = root.gameObject.AddComponent<PerkTrayView>();
+            PrefabBuilder.Wire(tray, ("m_Run", Run), ("m_Pool", DataAssetsBuilder.Load<PerkPool>(DataAssetsBuilder.c_PerkPool)),
+                ("m_Template", item), ("m_Disc", disc), ("m_Icon", icon), ("m_Level", level));
+        }
+
         // ------------------------------------------------------------------ tutorial hint
         /// <summary>First-run hints: a pill above the interaction prompt, "ОБУЧЕНИЕ n/5" over the hint.</summary>
         private static void BuildTutorialHint(RectTransform safe, Material outline)
@@ -204,6 +351,142 @@ namespace ZombiCar.EditorTools
                 ("m_Step", step), ("m_Text", text));
         }
 
+        // ------------------------------------------------------------------ tutorial intro cards
+        private static readonly Vector2 s_TutorialWindow = new Vector2(1200f, 900f);
+
+        /// <summary>
+        /// The tutorial's intro cards (hidden until <see cref="TutorialState.CardsOpen"/>): a dimmed screen with a card
+        /// window — picture with one or two icons and a caption, title, text — dots, "ПРОПУСТИТЬ" and "ДАЛЕЕ".
+        /// </summary>
+        private static void BuildTutorialCards(Transform parent, Material outline)
+        {
+            RectTransform root = UiFactory.Stretch("TutorialCards", parent);
+            UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.72f), false, true);        // blocks the game behind
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = group.interactable = false;
+            var center = new Vector2(0.5f, 0.5f);
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+            var topRight = new Vector2(1f, 1f);
+            var bottomLeft = new Vector2(0f, 0f);
+            var bottomRight = new Vector2(1f, 0f);
+
+            RectTransform card = UiFactory.Rect("Card", root, center, center, Vector2.zero, s_TutorialWindow);
+            UiFactory.Image(card, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
+            TextMeshProUGUI counter = OutlinedLabel("Counter", card, topRight, topRight, new Vector2(-40f, -26f), new Vector2(200f, 44f),
+                "1 / 6", 30f, TextAlignmentOptions.Right, s_SubtitleColor, outline);
+            OutlinedLabel("Header", card, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -26f), new Vector2(400f, 44f),
+                "ОБУЧЕНИЕ", 30f, TextAlignmentOptions.Left, s_SubtitleColor, outline);
+
+            RectTransform picture = UiFactory.Rect("Picture", card, top, top, new Vector2(0f, -80f), new Vector2(s_TutorialWindow.x - 120f, 290f));
+            Image pictureBack = UiFactory.Image(picture, UiFactory.Sprite("UI_Panel"), new Color(0.3f, 0.15f, 0.05f, 0.9f), true);
+            const float icon = 200f;
+            RectTransform icon1 = UiFactory.Rect("Icon", picture, center, center, new Vector2(-150f, 22f), new Vector2(icon, icon));
+            Image iconImage = UiFactory.Image(icon1, UiFactory.Sprite("UI_Icon_Boss"), Color.white, false);
+            iconImage.preserveAspect = true;
+            RectTransform icon2 = UiFactory.Rect("Icon2", picture, center, center, new Vector2(150f, 22f), new Vector2(icon, icon));
+            Image icon2Image = UiFactory.Image(icon2, UiFactory.Sprite("UI_Icon_Skull"), Color.white, false);
+            icon2Image.preserveAspect = true;
+            TextMeshProUGUI caption = OutlinedLabel("Caption", picture, bottom, bottom, new Vector2(0f, 10f), new Vector2(s_TutorialWindow.x - 160f, 56f),
+                "30 ВОЛН · 3 БОССА", 40f, TextAlignmentOptions.Center, Color.white, outline);
+
+            TextMeshProUGUI title = OutlinedLabel("Title", card, top, top, new Vector2(0f, -390f), new Vector2(s_TutorialWindow.x - 100f, 80f),
+                "ЦЕЛЬ", 62f, TextAlignmentOptions.Center, s_TitleColor, outline);
+            TextMeshProUGUI text = OutlinedLabel("Text", card, top, top, new Vector2(0f, -474f), new Vector2(s_TutorialWindow.x - 140f, 190f),
+                "Продержись 30 волн и убей 3 боссов.", 40f, TextAlignmentOptions.Center, Color.white, outline);
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 26f;
+            text.fontSizeMax = 40f;
+            text.fontStyle = FontStyles.Normal;
+
+            int count = s_TutorialCards.Length;
+            const float dot = 22f, dotGap = 20f;
+            var dots = new Image[count];
+            for (int i = 0; i < count; i++)
+            {
+                float x = (i - (count - 1) * 0.5f) * (dot + dotGap);
+                RectTransform d = UiFactory.Rect($"Dot{i + 1}", card, bottom, center, new Vector2(x, 190f), new Vector2(dot, dot));
+                dots[i] = UiFactory.Image(d, UiFactory.Sprite("UI_StickKnob"), Color.white, false);
+            }
+            Button skip = HudButton("SkipButton", card, bottomLeft, new Vector2(50f, 40f), new Vector2(360f, 104f), "ПРОПУСТИТЬ", 40f,
+                Color.white, outline);
+            Button next = HudButton("NextButton", card, bottomRight, new Vector2(-50f, 40f), new Vector2(400f, 112f), "ДАЛЕЕ", 48f,
+                s_PlayColor, outline);
+
+            var view = root.gameObject.AddComponent<TutorialCardsView>();
+            PrefabBuilder.Wire(view, ("m_State", DataAssetsBuilder.Load<TutorialState>(DataAssetsBuilder.c_TutorialState)), ("m_Group", group),
+                ("m_Card", card), ("m_PictureBack", pictureBack), ("m_Icon", iconImage), ("m_Icon2", icon2Image), ("m_Caption", caption),
+                ("m_Title", title), ("m_Text", text), ("m_Counter", counter), ("m_NextButton", next),
+                ("m_NextLabel", next.GetComponentInChildren<TMP_Text>()), ("m_SkipButton", skip));
+            CharacterBuilder.SetProps(view, ("m_Dots", dots.Cast<Object>().ToArray()));
+            var so = new SerializedObject(view);
+            SerializedProperty cards = so.FindProperty("m_Cards");
+            cards.arraySize = count;
+            for (int i = 0; i < count; i++)
+            {
+                TutorialCard c = s_TutorialCards[i];
+                SerializedProperty p = cards.GetArrayElementAtIndex(i);
+                p.FindPropertyRelative("Title").stringValue = c.Title;
+                p.FindPropertyRelative("Text").stringValue = c.Text;
+                p.FindPropertyRelative("TouchText").stringValue = c.TouchText ?? string.Empty;
+                p.FindPropertyRelative("Icon").objectReferenceValue = UiFactory.Sprite(c.Icon);
+                p.FindPropertyRelative("Icon2").objectReferenceValue = c.Icon2 != null ? UiFactory.Sprite(c.Icon2) : null;
+                p.FindPropertyRelative("TouchIcon").objectReferenceValue = c.TouchIcon != null ? UiFactory.Sprite(c.TouchIcon) : null;
+                p.FindPropertyRelative("Caption").stringValue = c.Caption ?? string.Empty;
+                p.FindPropertyRelative("TouchCaption").stringValue = c.TouchCaption ?? string.Empty;
+                p.FindPropertyRelative("Accent").colorValue = c.Accent;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private struct TutorialCard
+        {
+            public string Title, Text, TouchText, Icon, Icon2, TouchIcon, Caption, TouchCaption;
+            public Color Accent;
+        }
+
+        private static readonly TutorialCard[] s_TutorialCards =
+        {
+            new TutorialCard
+            {
+                Title = "ЦЕЛЬ", Icon = "UI_Icon_Skull", Icon2 = "UI_Icon_Boss", Caption = "30 ВОЛН · 3 БОССА",
+                Text = "Продержись 30 волн и убей 3 боссов.", Accent = new Color(1f, 0.8f, 0.3f, 1f),
+            },
+            new TutorialCard
+            {
+                Title = "УПРАВЛЕНИЕ", Icon = "UI_Icon_Speed", Icon2 = "UI_Icon_Rifle", TouchIcon = "UI_StickRing",
+                Caption = "WASD · МЫШЬ · 1 / 2", TouchCaption = "ДЖОЙСТИКИ · КНОПКИ",
+                Text = "WASD — идти, мышь — целиться, левая кнопка — атака.\n1 / 2 или колесо мыши — сменить оружие.",
+                TouchText = "Левый джойстик — идти, правый — целиться и стрелять.\nКнопки рядом — автомат и топор.",
+                Accent = new Color(0.45f, 0.78f, 1f, 1f),
+            },
+            new TutorialCard
+            {
+                Title = "ОРУЖИЕ", Icon = "UI_Icon_Rifle", Icon2 = "UI_Icon_Axe", Caption = "АВТОМАТ · ТОПОР",
+                Text = "Автомат тратит патроны. Топор бьёт вблизи и бесплатно.\nПатроны пополняются у машины.",
+                Accent = new Color(0.93f, 0.47f, 0.13f, 1f),
+            },
+            new TutorialCard
+            {
+                Title = "МАШИНА И МАСТЕРСКАЯ", Icon = "UI_IconCar", Icon2 = "UI_Icon_Repair", Caption = "ЗАЩИЩАЙ МАШИНУ",
+                Text = "Защищай машину: зомби идут и к ней.\nМежду волнами улучшай её в мастерской за металлолом.",
+                Accent = new Color(0.55f, 0.9f, 0.45f, 1f),
+            },
+            new TutorialCard
+            {
+                Title = "УРОВНИ И КАРТОЧКИ", Icon = "UI_Icon_Xp", Icon2 = "UI_Icon_Damage", Caption = "«НОВОЕ» — ЕЩЁ НЕ БРАЛ",
+                Text = "За опыт выбираешь улучшение. «НОВОЕ» — такую карточку\nты ещё не брал. Взятые видны слева.",
+                Accent = new Color(0.62f, 0.5f, 1f, 1f),
+            },
+            new TutorialCard
+            {
+                Title = "БОССЫ И НАГРАДА", Icon = "UI_Icon_Boss", Icon2 = "UI_Icon_Scrap", Caption = "ВОЛНЫ 10 · 20 · 30",
+                Text = "Боссы приходят на 10, 20 и 30 волне — метки на полосе сверху.\nЗа победу — монеты на кейсы и скины.",
+                Accent = new Color(1f, 0.35f, 0.3f, 1f),
+            },
+        };
+
         // ------------------------------------------------------------------ level-up cards
         private const int c_CardCount = 3;
         private static readonly Vector2 s_CardSize = new Vector2(430f, 560f);
@@ -226,11 +509,17 @@ namespace ZombiCar.EditorTools
             for (int i = 0; i < c_CardCount; i++)
                 cards[i] = BuildPerkCard(root, i, outline);
 
+            // Reroll: bottom left, clear of the cards, the weapon column (bottom right) and the tutorial hint (centre).
+            var bottomLeft = new Vector2(0f, 0f);
+            Button reroll = HudButton("RerollButton", root, bottomLeft, new Vector2(30f, 36f), new Vector2(370f, 96f), "ПЕРЕБРОСИТЬ • 50",
+                34f, new Color(0.3f, 0.56f, 0.9f, 1f), outline);
+
             var screen = host.gameObject.AddComponent<LevelUpScreen>();
             PrefabBuilder.Wire(screen, ("m_Run", Run), ("m_Pool", DataAssetsBuilder.Load<PerkPool>(DataAssetsBuilder.c_PerkPool)),
                 ("m_Config", DataAssetsBuilder.Load<ProgressionConfig>(DataAssetsBuilder.c_ProgressionConfig)),
                 ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
-                ("m_Root", group), ("m_Title", title), ("m_Subtitle", subtitle));
+                ("m_Root", group), ("m_Title", title), ("m_Subtitle", subtitle), ("m_RerollButton", reroll),
+                ("m_RerollLabel", reroll.GetComponentInChildren<TMP_Text>()), ("m_RerollPlate", reroll.targetGraphic));
             CharacterBuilder.SetProps(screen, ("m_Cards", cards));
             group.alpha = 0f;
             root.gameObject.SetActive(false);
@@ -295,78 +584,427 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ game over
-        private static readonly Vector2 s_GameOverWindow = new Vector2(1060f, 860f);
+        private static readonly Vector2 s_GameOverWindow = new Vector2(1160f, 960f);
+        private static readonly Color s_Gold = new Color(1f, 0.82f, 0.3f, 1f);
+        private const float c_EndButtonStep = 390f;
+        private const float c_CoinLineStep = 54f;
 
+        /// <summary>
+        /// The end-of-run window with two panels: victory (medal, the run's lines 2x2, the coins step by step with
+        /// the total, "К КЕЙСАМ") and defeat (the wave reached over the wave line with the boss marks, waves to the next
+        /// boss, the run in one line, "ВОСКРЕСНУТЬ ЗА РЕКЛАМУ"); "ЗАНОВО" and "В МЕНЮ" in both.
+        /// </summary>
         private static GameOverScreen BuildGameOverScreen(RectTransform parent, Material outline)
         {
             RectTransform host = UiFactory.Stretch("GameOverScreen", parent);
             RectTransform root = UiFactory.Stretch("Root", host);
             var group = root.gameObject.AddComponent<CanvasGroup>();
-            UiFactory.Image(UiFactory.Stretch("Dim", root), null, new Color(0.02f, 0.01f, 0.01f, 0.78f), false, true);
+            UiFactory.Image(UiFactory.Stretch("Dim", root), null, new Color(0.02f, 0.01f, 0.01f, 0.72f), false, true);
             var center = new Vector2(0.5f, 0.5f);
             var top = new Vector2(0.5f, 1f);
             var bottom = new Vector2(0.5f, 0f);
-            RectTransform window = UiFactory.Rect("Window", root, center, center, new Vector2(0f, -20f), s_GameOverWindow);
+            RectTransform window = UiFactory.Rect("Window", root, center, center, new Vector2(0f, -10f), s_GameOverWindow);
             UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
-            TextMeshProUGUI title = OutlinedLabel("Title", window, top, top, new Vector2(0f, -30f), new Vector2(980f, 100f), "ИГРА ОКОНЧЕНА",
+            TextMeshProUGUI title = OutlinedLabel("Title", window, top, top, new Vector2(0f, -28f), new Vector2(700f, 100f), "ИГРА ОКОНЧЕНА",
                 84f, TextAlignmentOptions.Center, new Color(1f, 0.38f, 0.3f, 1f), outline);
             title.enableAutoSizing = true;
             title.fontSizeMin = 50f;
             title.fontSizeMax = 84f;
-            TextMeshProUGUI reason = OutlinedLabel("Reason", window, top, top, new Vector2(0f, -132f), new Vector2(980f, 52f),
-                "МАШИНА УНИЧТОЖЕНА", 38f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            TextMeshProUGUI reason = OutlinedLabel("Reason", window, top, top, new Vector2(0f, -130f), new Vector2(620f, 50f),
+                "МАШИНА УНИЧТОЖЕНА", 36f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
             reason.enableAutoSizing = true;
             reason.fontSizeMin = 24f;
-            reason.fontSizeMax = 38f;
+            reason.fontSizeMax = 36f;
 
-            TextMeshProUGUI money = StatRow(window, 0, "UI_Icon_Scrap", "ЗАРАБОТАНО", outline, new Color(1f, 0.82f, 0.35f, 1f));
-            TextMeshProUGUI level = StatRow(window, 1, "UI_Icon_Xp", "УРОВЕНЬ", outline, Color.white);
-            TextMeshProUGUI kills = StatRow(window, 2, "UI_Icon_Skull", "УБИТО ЗОМБИ", outline, Color.white);
-            TextMeshProUGUI wave = StatRow(window, 3, "UI_Icon_Boss", "ВОЛНА", outline, Color.white);
-            TextMeshProUGUI coins = OutlinedLabel("Coins", window, top, top, new Vector2(0f, -640f), new Vector2(980f, 52f),
-                "+0 МОНЕТ", 36f, TextAlignmentOptions.Center, new Color(1f, 0.82f, 0.35f, 1f), outline);
-            coins.enableAutoSizing = true;
-            coins.fontSizeMin = 24f;
-            coins.fontSizeMax = 36f;
+            // ---- victory
+            RectTransform victory = UiFactory.Stretch("Victory", window);
+            RectTransform medal = BuildMedal(victory, outline);
+            var statLines = new CanvasGroup[4];
+            statLines[0] = EndStat(victory, 0, "UI_Icon_Speed", "ВРЕМЯ", outline, out TextMeshProUGUI time);
+            statLines[1] = EndStat(victory, 1, "UI_Icon_Skull", "ЗОМБИ", outline, out TextMeshProUGUI kills);
+            statLines[2] = EndStat(victory, 2, "UI_Icon_Boss", "БОССЫ", outline, out TextMeshProUGUI bosses);
+            statLines[3] = EndStat(victory, 3, "UI_Icon_Xp", "УРОВЕНЬ", outline, out TextMeshProUGUI level);
+            string[] coinLabels = { "МОНЕТЫ ЗА ЗОМБИ", "МОНЕТЫ ЗА ВОЛНЫ", "ОСТАТОК ДЕТАЛЕЙ 0 →", "НАГРАДА ЗА ПОБЕДУ", "ИТОГО" };
+            var coinLines = new CanvasGroup[coinLabels.Length];
+            var coinValues = new TMP_Text[coinLabels.Length];
+            for (int i = 0; i < coinLabels.Length; i++)
+                coinLines[i] = CoinLine(victory, i, coinLabels[i], i == coinLabels.Length - 1, outline, out coinValues[i]);
+            TMP_Text scrapLabel = coinLines[2].transform.Find("Label").GetComponent<TMP_Text>();
+            var flying = new RectTransform[12];
+            for (int i = 0; i < flying.Length; i++)
+            {
+                int line = i % 4;
+                var home = new Vector2(360f - (i / 4) * 34f, -436f - line * c_CoinLineStep);
+                flying[i] = CoinPicture($"FlyingCoin{i + 1}", victory, top, home, 40f);
+                flying[i].gameObject.SetActive(false);
+            }
+            Button cases = HudButton("CasesButton", victory, bottom, new Vector2(-c_EndButtonStep, 40f), new Vector2(360f, 116f), "К КЕЙСАМ",
+                46f, s_Gold, outline);
+            var topRight = new Vector2(1f, 1f);
+            Button leaderboard = HudButton("LeaderboardButton", victory, topRight, new Vector2(-36f, -36f), new Vector2(300f, 84f),
+                "ТАБЛИЦА ЛИДЕРОВ", 26f, new Color(0.3f, 0.56f, 0.9f, 1f), outline);
 
-            Button restart = HudButton("RestartButton", window, bottom, new Vector2(-220f, 40f), new Vector2(380f, 116f), "ЗАНОВО", 50f,
+            // ---- defeat
+            RectTransform defeat = UiFactory.Stretch("Defeat", window);
+            TextMeshProUGUI reached = OutlinedLabel("Reached", defeat, top, top, new Vector2(0f, -210f), new Vector2(1060f, 76f),
+                "ДОШЁЛ ДО ВОЛНЫ 17 ИЗ 30", 58f, TextAlignmentOptions.Center, Color.white, outline);
+            reached.enableAutoSizing = true;
+            reached.fontSizeMin = 34f;
+            reached.fontSizeMax = 58f;
+            const float lineWidth = 960f;
+            RectTransform waveLine = UiFactory.Rect("WaveLine", defeat, top, top, new Vector2(0f, -330f), new Vector2(lineWidth, 34f));
+            UiFactory.Image(waveLine, UiFactory.Sprite("UI_BarTrack"), Color.white, true);
+            Image waveFill = UiFactory.Fill(Inset(UiFactory.Stretch("Fill", waveLine), 5f), UiFactory.Sprite("UI_BarFillRed"),
+                new Color(1f, 0.72f, 0.35f, 1f), 0.5f);
+            var waves = DataAssetsBuilder.Load<WaveConfig>(DataAssetsBuilder.c_WaveConfig);
+            int count = Mathf.Max(1, waves.WaveCount);
+            int[] bossWaves = waves.Bosses.Where(b => b != null && b.Boss != null).Select(b => b.Wave).OrderBy(w => w).ToArray();
+            var marks = new RectTransform[bossWaves.Length];
+            for (int i = 0; i < bossWaves.Length; i++)
+            {
+                bool final = i == bossWaves.Length - 1;
+                float size = final ? 88f : 66f;
+                float x = -lineWidth * 0.5f + lineWidth * bossWaves[i] / count;
+                RectTransform mark = UiFactory.Rect($"Boss{bossWaves[i]}", waveLine, center, center, new Vector2(x, 0f), new Vector2(size, size));
+                mark.gameObject.AddComponent<CanvasGroup>();
+                UiFactory.Image(mark, UiFactory.Sprite("UI_StickKnob"), final ? s_FinalBossColor : new Color(0.75f, 0.12f, 0.1f, 1f), false);
+                RectTransform face = UiFactory.Rect("Icon", mark, center, center, Vector2.zero, new Vector2(size * 0.78f, size * 0.78f));
+                UiFactory.Image(face, UiFactory.Sprite("UI_Icon_Boss"), Color.white, false).preserveAspect = true;
+                OutlinedLabel("Wave", mark, bottom, top, new Vector2(0f, -6f), new Vector2(90f, 34f), bossWaves[i].ToString(), 28f,
+                    TextAlignmentOptions.Center, Color.white, outline);
+                marks[i] = mark;
+            }
+            TextMeshProUGUI toBoss = OutlinedLabel("ToBoss", defeat, top, top, new Vector2(0f, -432f), new Vector2(1060f, 62f),
+                "ДО БОССА: 3 ВОЛНЫ", 46f, TextAlignmentOptions.Center, s_TitleColor, outline);
+            TextMeshProUGUI defeatStats = OutlinedLabel("Stats", defeat, top, top, new Vector2(0f, -506f), new Vector2(1060f, 50f),
+                "ЗОМБИ: 0    УРОВЕНЬ: 1    МОНЕТЫ: +0", 34f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            TextMeshProUGUI defeatScrap = OutlinedLabel("Scrap", defeat, top, top, new Vector2(0f, -560f), new Vector2(1060f, 46f),
+                "ОСТАТОК ДЕТАЛЕЙ 0 → +0 МОНЕТ", 32f, TextAlignmentOptions.Center, s_Gold, outline);
+            // Revive for a rewarded ad: the shared gold ad button in the left bottom slot (the victory's cases slot).
+            Button revive = AdButton("ReviveButton", defeat, bottom, new Vector2(-c_EndButtonStep, 40f), new Vector2(360f, 116f),
+                "ВОСКРЕСНУТЬ", 40f, outline);
+
+            // ---- ×2 coins for an ad (by the total / under the coins, placed by the screen) and the coin balance
+            Button twice = AdButton("DoubleButton", window, top, new Vector2(380f, -636f), new Vector2(240f, 84f), "×2", 44f, outline);
+            TMP_Text twiceLabel = twice.transform.Find("Label").GetComponent<TMP_Text>();
+            GameObject twiceIcon = twice.transform.Find("AdIcon").gameObject;
+            TextMeshProUGUI balance = CoinCounter("Balance", window, bottom, bottom, new Vector2(0f, 172f), 56f, 240f, "0", 44f, outline);
+            TextMeshProUGUI gain = OutlinedLabel("BalanceGain", window, bottom, bottom, new Vector2(190f, 176f), new Vector2(200f, 50f), "+0",
+                40f, TextAlignmentOptions.Left, s_Gold, outline);
+
+            // ---- shared buttons
+            Button restart = HudButton("RestartButton", window, bottom, new Vector2(0f, 40f), new Vector2(360f, 116f), "ЗАНОВО", 50f,
                 s_PlayColor, outline);
-            Button menu = HudButton("MenuButton", window, bottom, new Vector2(220f, 40f), new Vector2(380f, 116f), "В МЕНЮ", 50f,
+            Button menu = HudButton("MenuButton", window, bottom, new Vector2(c_EndButtonStep, 40f), new Vector2(360f, 116f), "В МЕНЮ", 50f,
                 Color.white, outline);
 
             var screen = host.gameObject.AddComponent<GameOverScreen>();
             PrefabBuilder.Wire(screen, ("m_Run", Run), ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
-                ("m_Root", group), ("m_Window", window), ("m_Title", title), ("m_Reason", reason), ("m_Money", money), ("m_Level", level),
-                ("m_Kills", kills), ("m_Wave", wave), ("m_Coins", coins), ("m_RestartButton", restart), ("m_MenuButton", menu));
+                ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Root", group), ("m_Window", window), ("m_Title", title), ("m_Reason", reason),
+                ("m_RestartButton", restart), ("m_MenuButton", menu),
+                ("m_VictoryPanel", victory.gameObject), ("m_Medal", medal), ("m_TimeValue", time), ("m_KillsValue", kills),
+                ("m_BossesValue", bosses), ("m_LevelValue", level), ("m_CasesButton", cases), ("m_LeaderboardButton", leaderboard),
+                ("m_DefeatPanel", defeat.gameObject), ("m_Reached", reached), ("m_WaveFill", waveFill), ("m_ToBoss", toBoss),
+                ("m_DefeatStats", defeatStats), ("m_ReviveButton", revive), ("m_ScrapLabel", scrapLabel), ("m_DefeatScrap", defeatScrap),
+                ("m_DoubleButton", twice), ("m_DoubleLabel", twiceLabel), ("m_DoubleIcon", twiceIcon), ("m_Balance", balance),
+                ("m_BalanceGain", gain));
+            CharacterBuilder.SetProps(screen, ("m_StatLines", statLines.Cast<Object>().ToArray()),
+                ("m_CoinLines", coinLines.Cast<Object>().ToArray()), ("m_CoinValues", coinValues.Cast<Object>().ToArray()),
+                ("m_FlyingCoins", flying.Cast<Object>().ToArray()), ("m_BossMarks", marks.Cast<Object>().ToArray()));
+            var so = new SerializedObject(screen);
+            SerializedProperty list = so.FindProperty("m_BossWaves");
+            list.arraySize = bossWaves.Length;
+            for (int i = 0; i < bossWaves.Length; i++)
+                list.GetArrayElementAtIndex(i).intValue = bossWaves[i];
+            so.ApplyModifiedPropertiesWithoutUndo();
+            defeat.gameObject.SetActive(false);
             group.alpha = 0f;
             root.gameObject.SetActive(false);
             return screen;
         }
 
-        /// <summary>One result line of the game-over window: icon, label, value (right-aligned).</summary>
-        private static TextMeshProUGUI StatRow(RectTransform window, int index, string icon, string label, Material outline, Color valueColor)
+        /// <summary>The victory medal: a gold disc with "30 ВОЛН" and two ribbon tails, top left of the window.</summary>
+        private static RectTransform BuildMedal(RectTransform parent, Material outline)
+        {
+            var topLeft = new Vector2(0f, 1f);
+            var center = new Vector2(0.5f, 0.5f);
+            const float size = 170f;
+            RectTransform medal = UiFactory.Rect("Medal", parent, topLeft, center, new Vector2(60f + size * 0.5f, -30f - size * 0.5f),
+                new Vector2(size, size));
+            for (int side = -1; side <= 1; side += 2)
+            {
+                RectTransform tail = UiFactory.Rect(side < 0 ? "RibbonL" : "RibbonR", medal, center, new Vector2(0.5f, 1f),
+                    new Vector2(side * 34f, -40f), new Vector2(48f, 110f));
+                tail.localRotation = Quaternion.Euler(0f, 0f, side * 18f);
+                UiFactory.Image(tail, UiFactory.Sprite("UI_Panel"), side < 0 ? new Color(0.85f, 0.2f, 0.18f, 1f) : new Color(0.2f, 0.45f, 0.9f, 1f), true);
+            }
+            UiFactory.Image(UiFactory.Stretch("Disc", medal), UiFactory.Sprite("UI_StickKnob"), s_Gold, false);
+            RectTransform inner = UiFactory.Rect("Inner", medal, center, center, Vector2.zero, new Vector2(size * 0.76f, size * 0.76f));
+            UiFactory.Image(inner, UiFactory.Sprite("UI_StickKnob"), new Color(0.85f, 0.55f, 0.12f, 1f), false);
+            OutlinedLabel("Number", medal, center, center, new Vector2(0f, 14f), new Vector2(size, 80f), "30", 72f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            OutlinedLabel("Caption", medal, center, center, new Vector2(0f, -38f), new Vector2(size, 34f), "ВОЛН", 28f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            return medal;
+        }
+
+        /// <summary>One of the victory's 2x2 run lines: icon, label and value on a dark plate.</summary>
+        private static CanvasGroup EndStat(RectTransform parent, int index, string icon, string label, Material outline, out TextMeshProUGUI value)
         {
             var top = new Vector2(0.5f, 1f);
             var midLeft = new Vector2(0f, 0.5f);
             var midRight = new Vector2(1f, 0.5f);
-            RectTransform row = UiFactory.Rect($"Stat{index + 1}", window, top, top, new Vector2(0f, -210f - index * 108f), new Vector2(900f, 96f));
-            UiFactory.Image(row, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.55f), true);
-            RectTransform iconRt = UiFactory.Rect("Icon", row, midLeft, midLeft, new Vector2(18f, 0f), new Vector2(72f, 72f));
+            float x = index % 2 == 0 ? -272f : 272f;
+            float y = -222f - (index / 2) * 98f;
+            RectTransform row = UiFactory.Rect($"Stat{index + 1}", parent, top, top, new Vector2(x, y), new Vector2(528f, 86f));
+            var group = row.gameObject.AddComponent<CanvasGroup>();
+            UiFactory.Image(row, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.6f), true);
+            RectTransform iconRt = UiFactory.Rect("Icon", row, midLeft, midLeft, new Vector2(14f, 0f), new Vector2(62f, 62f));
             UiFactory.Image(iconRt, UiFactory.Sprite(icon), Color.white, false).preserveAspect = true;
-            OutlinedLabel("Label", row, midLeft, midLeft, new Vector2(108f, 0f), new Vector2(420f, 80f), label, 40f,
+            OutlinedLabel("Label", row, midLeft, midLeft, new Vector2(88f, 0f), new Vector2(200f, 70f), label, 32f,
                 TextAlignmentOptions.Left, s_SubtitleColor, outline);
-            TextMeshProUGUI value = OutlinedLabel("Value", row, midRight, midRight, new Vector2(-28f, 0f), new Vector2(440f, 80f), "0", 52f,
-                TextAlignmentOptions.Right, valueColor, outline);
+            value = OutlinedLabel("Value", row, midRight, midRight, new Vector2(-20f, 0f), new Vector2(240f, 70f), "0", 44f,
+                TextAlignmentOptions.Right, Color.white, outline);
             value.enableAutoSizing = true;
-            value.fontSizeMin = 30f;
-            value.fontSizeMax = 52f;
-            return value;
+            value.fontSizeMin = 22f;
+            value.fontSizeMax = 44f;
+            return group;
+        }
+
+        /// <summary>A coin line of the victory: label left, "+N" with a coin right; the total is bigger and gold.</summary>
+        private static CanvasGroup CoinLine(RectTransform parent, int index, string label, bool total, Material outline, out TMP_Text value)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var midLeft = new Vector2(0f, 0.5f);
+            var midRight = new Vector2(1f, 0.5f);
+            float height = total ? 84f : 48f;
+            float y = total ? -636f : -412f - index * c_CoinLineStep;
+            // The total is shorter: the ×2 button sits to its right.
+            RectTransform row = UiFactory.Rect(total ? "Total" : $"Coins{index + 1}", parent, top, top, new Vector2(total ? -130f : 0f, y),
+                new Vector2(total ? 740f : 1000f, height));
+            var group = row.gameObject.AddComponent<CanvasGroup>();
+            if (total)
+                UiFactory.Image(row, UiFactory.Sprite("UI_Panel"), new Color(0.3f, 0.2f, 0.04f, 0.75f), true);
+            OutlinedLabel("Label", row, midLeft, midLeft, new Vector2(24f, 0f), new Vector2(600f, height), label, total ? 48f : 34f,
+                TextAlignmentOptions.Left, total ? s_Gold : s_SubtitleColor, outline);
+            TextMeshProUGUI text = OutlinedLabel("Value", row, midRight, midRight, new Vector2(-84f, 0f), new Vector2(360f, height), "+0",
+                total ? 60f : 38f, TextAlignmentOptions.Right, s_Gold, outline);
+            CoinPicture("Coin", row, midRight, new Vector2(-40f, 0f), total ? 56f : 40f);
+            value = text;
+            return group;
+        }
+
+        /// <summary>A coin: the shared gold coin icon (UI_Icon_Coin).</summary>
+        private static RectTransform CoinPicture(string name, RectTransform parent, Vector2 anchor, Vector2 pos, float size)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform coin = UiFactory.Rect(name, parent, anchor, center, pos, new Vector2(size, size));
+            UiFactory.Image(coin, UiFactory.Sprite("UI_Icon_Coin"), Color.white, false).preserveAspect = true;
+            return coin;
+        }
+
+        // ------------------------------------------------------------------ boss intro card
+        private struct BossIntro
+        {
+            public string Name, Sheet, Tip;
+            public Color Accent;
+        }
+
+        private static readonly BossIntro[] s_BossIntros =
+        {
+            new BossIntro
+            {
+                Name = "МАТКА", Sheet = "Boss1", Accent = new Color(0.55f, 0.95f, 0.35f, 1f),
+                Tip = "Зовёт выводок и плюётся кислотой, идёт к машине.\nСначала руби мелочь, не стой в зелёных лужах,\nстреляй в Матку, пока она призывает.",
+            },
+            new BossIntro
+            {
+                Name = "ТАРАН", Sheet = "Boss2", Accent = new Color(0.8f, 0.5f, 1f, 1f),
+                Tip = "Перед рывком рисует линию — отходи в сторону.\nПосле рывка он оглушён и получает больше урона: бей!\nКислотный дождь — уходи из кругов.",
+            },
+            new BossIntro
+            {
+                Name = "ЖНЕЦ", Sheet = "Boss3", Accent = new Color(1f, 0.55f, 0.2f, 1f),
+                Tip = "Коса бьёт дугой перед ним — держи дистанцию.\nОгненные трещины: уходи с линий, пока они горят.\nВо второй фазе прыгает к тебе — беги от метки!",
+            },
+        };
+
+        /// <summary>The card before every boss fight: portrait on the boss's colour, header, name, how to beat it, "В БОЙ!".</summary>
+        private static void BuildBossIntro(RectTransform parent, Material outline)
+        {
+            RectTransform root = UiFactory.Stretch("BossIntro", parent);
+            UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.6f), false, true);
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = group.interactable = false;
+            var center = new Vector2(0.5f, 0.5f);
+            var topLeft = new Vector2(0f, 1f);
+            var midLeft = new Vector2(0f, 0.5f);
+            var bottomRight = new Vector2(1f, 0f);
+            RectTransform card = UiFactory.Rect("Card", root, center, center, Vector2.zero, new Vector2(1320f, 600f));
+            UiFactory.Image(card, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
+            RectTransform back = UiFactory.Rect("PortraitBack", card, midLeft, midLeft, new Vector2(34f, 0f), new Vector2(430f, 530f));
+            Image backImage = UiFactory.Image(back, UiFactory.Sprite("UI_Panel"), new Color(0.35f, 0.08f, 0.06f, 0.95f), true);
+            back.gameObject.AddComponent<RectMask2D>();
+            RectTransform portrait = UiFactory.Rect("Portrait", back, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 10f),
+                new Vector2(420f, 510f));
+            Image portraitImage = UiFactory.Image(portrait, null, Color.white, false);
+            portraitImage.preserveAspect = true;
+            const float textX = 500f;
+            TextMeshProUGUI header = OutlinedLabel("Header", card, topLeft, topLeft, new Vector2(textX, -40f), new Vector2(780f, 50f),
+                "БОСС  •  ВОЛНА 10", 36f, TextAlignmentOptions.Left, s_SubtitleColor, outline);
+            TextMeshProUGUI name = OutlinedLabel("Name", card, topLeft, topLeft, new Vector2(textX, -92f), new Vector2(780f, 120f), "МАТКА",
+                110f, TextAlignmentOptions.Left, Color.white, outline);
+            TextMeshProUGUI tip = OutlinedLabel("Tip", card, topLeft, topLeft, new Vector2(textX, -226f), new Vector2(780f, 210f),
+                "Как бороться", 36f, TextAlignmentOptions.TopLeft, Color.white, outline);
+            tip.enableAutoSizing = true;
+            tip.fontSizeMin = 22f;
+            tip.fontSizeMax = 36f;
+            tip.fontStyle = FontStyles.Normal;
+            Button fight = HudButton("FightButton", card, bottomRight, new Vector2(-40f, 36f), new Vector2(380f, 112f), "В БОЙ!", 54f,
+                s_PlayColor, outline);
+
+            var view = root.gameObject.AddComponent<BossIntroView>();
+            PrefabBuilder.Wire(view, ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)), ("m_Group", group),
+                ("m_Card", card), ("m_PortraitBack", backImage), ("m_Portrait", portraitImage), ("m_Header", header), ("m_Title", name),
+                ("m_Tip", tip), ("m_FightButton", fight));
+            var so = new SerializedObject(view);
+            SerializedProperty list = so.FindProperty("m_Bosses");
+            list.arraySize = s_BossIntros.Length;
+            for (int i = 0; i < s_BossIntros.Length; i++)
+            {
+                BossIntro b = s_BossIntros[i];
+                var sheet = AssetDatabase.LoadAssetAtPath<ZombiCar.Characters.CharacterSprites>(
+                    $"{EditorPaths.c_DataCharacters}/{b.Sheet}_Sprites.asset");
+                Sprite[] frames = sheet != null ? sheet.Get(ZombiCar.Characters.CharacterAnim.Idle)?.Frames : null;
+                SerializedProperty e = list.GetArrayElementAtIndex(i);
+                e.FindPropertyRelative("Name").stringValue = b.Name;
+                e.FindPropertyRelative("Portrait").objectReferenceValue = frames != null && frames.Length > 0 ? frames[0] : null;
+                e.FindPropertyRelative("Tip").stringValue = b.Tip;
+                e.FindPropertyRelative("Accent").colorValue = b.Accent;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        // ------------------------------------------------------------------ leaderboard
+        private const int c_LeaderboardRows = 10;
+        private static readonly Vector2 s_LeaderboardWindow = new Vector2(1100f, 1000f);
+        private const float c_LeaderboardRowHeight = 56f;
+
+        /// <summary>
+        /// "ТАБЛИЦА ЛИДЕРОВ" (hidden until opened): a window with the top-10 rows (place, avatar, name, time), the
+        /// player's own row under them, a status line (loading / nothing to show) and "ЗАКРЫТЬ". Main menu and HUD.
+        /// </summary>
+        private static LeaderboardPanel BuildLeaderboardPanel(Transform parent, Material outline)
+        {
+            RectTransform root = UiFactory.Stretch("LeaderboardPanel", parent);
+            UiFactory.Image(root, null, new Color(0f, 0f, 0f, 0.7f), false, true);            // dims and blocks clicks behind
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            var center = new Vector2(0.5f, 0.5f);
+            var top = new Vector2(0.5f, 1f);
+            var bottom = new Vector2(0.5f, 0f);
+            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, s_LeaderboardWindow);
+            UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
+            OutlinedLabel("Title", window, top, top, new Vector2(0f, -24f), new Vector2(1000f, 76f), "ТАБЛИЦА ЛИДЕРОВ", 60f,
+                TextAlignmentOptions.Center, s_TitleColor, outline);
+            OutlinedLabel("Subtitle", window, top, top, new Vector2(0f, -98f), new Vector2(1000f, 40f), "ЛУЧШЕЕ ВРЕМЯ ПРОХОЖДЕНИЯ 30 ВОЛН", 30f,
+                TextAlignmentOptions.Center, s_SubtitleColor, outline);
+
+            var rows = new LeaderboardPanel.Row[c_LeaderboardRows];
+            for (int i = 0; i < c_LeaderboardRows; i++)
+                rows[i] = LeaderboardRow(window, $"Row{i + 1}", -146f - i * (c_LeaderboardRowHeight + 6f), outline);
+            LeaderboardPanel.Row player = LeaderboardRow(window, "PlayerRow", -146f - c_LeaderboardRows * (c_LeaderboardRowHeight + 6f) - 14f,
+                outline);
+            TextMeshProUGUI status = OutlinedLabel("Status", window, center, center, new Vector2(0f, 20f), new Vector2(960f, 220f), "ЗАГРУЗКА…",
+                44f, TextAlignmentOptions.Center, Color.white, outline);
+            status.enableAutoSizing = true;
+            status.fontSizeMin = 26f;
+            status.fontSizeMax = 44f;
+            Button close = HudButton("CloseButton", window, bottom, new Vector2(0f, 24f), new Vector2(360f, 96f), "ЗАКРЫТЬ", 44f,
+                s_PlayColor, outline);
+
+            var panel = root.gameObject.AddComponent<LeaderboardPanel>();
+            PrefabBuilder.Wire(panel, ("m_Group", group), ("m_Window", window), ("m_Status", status), ("m_CloseButton", close),
+                ("m_AvatarPlaceholder", UiFactory.Sprite("UI_Icon_Skull")));
+            var so = new SerializedObject(panel);
+            SerializedProperty list = so.FindProperty("m_Rows");
+            list.arraySize = rows.Length;
+            for (int i = 0; i < rows.Length; i++)
+                WriteRow(list.GetArrayElementAtIndex(i), rows[i]);
+            WriteRow(so.FindProperty("m_PlayerRow"), player);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            foreach (LeaderboardPanel.Row row in rows)
+                row.Root.SetActive(false);
+            player.Root.SetActive(false);
+            root.gameObject.SetActive(false);
+            return panel;
+        }
+
+        private static LeaderboardPanel.Row LeaderboardRow(RectTransform window, string name, float y, Material outline)
+        {
+            var top = new Vector2(0.5f, 1f);
+            var midLeft = new Vector2(0f, 0.5f);
+            var midRight = new Vector2(1f, 0.5f);
+            RectTransform rt = UiFactory.Rect(name, window, top, top, new Vector2(0f, y), new Vector2(s_LeaderboardWindow.x - 100f, c_LeaderboardRowHeight));
+            var row = new LeaderboardPanel.Row { Root = rt.gameObject };
+            row.Plate = UiFactory.Image(rt, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.6f), true);
+            row.Rank = OutlinedLabel("Rank", rt, midLeft, midLeft, new Vector2(12f, 0f), new Vector2(76f, 52f), "1", 36f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            RectTransform avatar = UiFactory.Rect("Avatar", rt, midLeft, midLeft, new Vector2(98f, 0f), new Vector2(46f, 46f));
+            row.Avatar = UiFactory.Image(avatar, UiFactory.Sprite("UI_Icon_Skull"), Color.white, false);
+            row.Avatar.preserveAspect = true;
+            TextMeshProUGUI playerName = OutlinedLabel("Name", rt, midLeft, midLeft, new Vector2(160f, 0f), new Vector2(560f, 52f), "ИГРОК", 32f,
+                TextAlignmentOptions.Left, Color.white, outline);
+            playerName.enableAutoSizing = true;
+            playerName.fontSizeMin = 20f;
+            playerName.fontSizeMax = 32f;
+            row.Name = playerName;
+            row.Time = OutlinedLabel("Time", rt, midRight, midRight, new Vector2(-20f, 0f), new Vector2(200f, 52f), "00:00", 36f,
+                TextAlignmentOptions.Right, s_Gold, outline);
+            return row;
+        }
+
+        private static void WriteRow(SerializedProperty p, LeaderboardPanel.Row row)
+        {
+            p.FindPropertyRelative("Root").objectReferenceValue = row.Root;
+            p.FindPropertyRelative("Plate").objectReferenceValue = row.Plate;
+            p.FindPropertyRelative("Rank").objectReferenceValue = row.Rank;
+            p.FindPropertyRelative("Avatar").objectReferenceValue = row.Avatar;
+            p.FindPropertyRelative("Name").objectReferenceValue = row.Name;
+            p.FindPropertyRelative("Time").objectReferenceValue = row.Time;
+        }
+
+        // ------------------------------------------------------------------ victory finale
+        /// <summary>"ГОРОД СПАСЁН!" huge in the middle with the run in a line under it, and the fireworks layer.</summary>
+        private static void BuildVictoryFinale(RectTransform parent, Material outline)
+        {
+            RectTransform host = UiFactory.Stretch("VictoryFinale", parent);
+            RectTransform sky = UiFactory.Stretch("Fireworks", host);
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform spark = UiFactory.Rect("Spark", sky, center, center, Vector2.zero, new Vector2(16f, 16f));
+            Image sparkImage = UiFactory.Image(spark, UiFactory.Sprite("UI_StickKnob"), Color.white, false);
+            RectTransform textRoot = UiFactory.Stretch("Text", host);
+            var group = textRoot.gameObject.AddComponent<CanvasGroup>();
+            group.blocksRaycasts = group.interactable = false;
+            TextMeshProUGUI big = OutlinedLabel("Saved", textRoot, center, center, new Vector2(0f, 90f), new Vector2(1700f, 200f), "ГОРОД СПАСЁН!",
+                150f, TextAlignmentOptions.Center, s_Gold, outline);
+            big.enableAutoSizing = true;
+            big.fontSizeMin = 80f;
+            big.fontSizeMax = 150f;
+            TextMeshProUGUI subtitle = OutlinedLabel("Subtitle", textRoot, center, center, new Vector2(0f, -40f), new Vector2(1500f, 64f),
+                "30 ВОЛН  •  3 БОССА", 46f, TextAlignmentOptions.Center, Color.white, outline);
+            PrefabBuilder.Wire(host.gameObject.AddComponent<VictoryFinaleView>(), ("m_Run", Run), ("m_Group", group),
+                ("m_Text", big.rectTransform), ("m_Subtitle", subtitle), ("m_Sky", sky), ("m_SparkTemplate", sparkImage));
         }
 
         // ------------------------------------------------------------------ workshop
-        private const int c_WorkshopRows = 6;
-        private static readonly Vector2 s_WorkshopWindow = new Vector2(1600f, 900f);
-        private static readonly Vector2 s_WorkshopRow = new Vector2(740f, 176f);
+        private const int c_WorkshopRows = 5;            // car upgrades (left column)
+        private const int c_SupplyRows = 4;              // supplies (right column)
+        private static readonly Vector2 s_WorkshopWindow = new Vector2(1600f, 1000f);
+        private static readonly Vector2 s_WorkshopRow = new Vector2(740f, 118f);
+        private const float c_WorkshopRowsTop = -236f;
 
         private static WorkshopScreen BuildWorkshopScreen(RectTransform parent, Material outline)
         {
@@ -378,7 +1016,7 @@ namespace ZombiCar.EditorTools
             var top = new Vector2(0.5f, 1f);
             var topRight = new Vector2(1f, 1f);
             var bottom = new Vector2(0.5f, 0f);
-            RectTransform window = UiFactory.Rect("Window", root, center, center, new Vector2(0f, -50f), s_WorkshopWindow);
+            RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero, s_WorkshopWindow);
             UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
             OutlinedLabel("Title", window, top, top, new Vector2(0f, -22f), new Vector2(900f, 80f), "МАСТЕРСКАЯ", 64f,
                 TextAlignmentOptions.Center, s_TitleColor, outline);
@@ -397,13 +1035,19 @@ namespace ZombiCar.EditorTools
             TextMeshProUGUI status = OutlinedLabel("CarStatus", window, top, top, new Vector2(0f, -142f), new Vector2(1400f, 42f),
                 "ПРОЧНОСТЬ 400 / 400", 30f, TextAlignmentOptions.Center, new Color(0.62f, 0.86f, 1f, 1f), outline);
 
+            // Left: the car upgrades (master levels after the last); right: the supplies, bought again and again.
+            float leftX = -0.5f * (s_WorkshopRow.x + 24f), rightX = -leftX;
+            OutlinedLabel("UpgradesHeader", window, top, top, new Vector2(leftX, -190f), new Vector2(s_WorkshopRow.x, 40f), "УЛУЧШЕНИЯ МАШИНЫ",
+                32f, TextAlignmentOptions.Center, s_TitleColor, outline);
+            OutlinedLabel("SuppliesHeader", window, top, top, new Vector2(rightX, -190f), new Vector2(s_WorkshopRow.x, 40f),
+                "РАСХОДНИКИ (МЕЖДУ ВОЛНАМИ)", 32f, TextAlignmentOptions.Center, s_TitleColor, outline);
             var rows = new WorkshopRowView[c_WorkshopRows];
             for (int i = 0; i < c_WorkshopRows; i++)
-            {
-                int column = i % 2, line = i / 2;
-                var pos = new Vector2((column - 0.5f) * (s_WorkshopRow.x + 24f), -196f - line * (s_WorkshopRow.y + 14f));
-                rows[i] = BuildWorkshopRow(window, i, pos, outline);
-            }
+                rows[i] = BuildWorkshopRow(window, $"Row{i + 1}", new Vector2(leftX, c_WorkshopRowsTop - i * (s_WorkshopRow.y + 8f)), outline);
+            var supplyRows = new WorkshopRowView[c_SupplyRows];
+            for (int i = 0; i < c_SupplyRows; i++)
+                supplyRows[i] = BuildWorkshopRow(window, $"Supply{i + 1}", new Vector2(rightX, c_WorkshopRowsTop - i * (s_WorkshopRow.y + 8f)),
+                    outline);
 
             Button close = HudButton("DoneButton", window, bottom, new Vector2(0f, 24f), new Vector2(360f, 96f), "ГОТОВО", 44f,
                 s_PlayColor, outline);
@@ -413,63 +1057,70 @@ namespace ZombiCar.EditorTools
             var screen = host.gameObject.AddComponent<WorkshopScreen>();
             PrefabBuilder.Wire(screen, ("m_Run", Run), ("m_Catalog", DataAssetsBuilder.Load<CarUpgradeCatalog>(DataAssetsBuilder.c_CarUpgrades)),
                 ("m_Car", DataAssetsBuilder.Load<CarState>(DataAssetsBuilder.c_CarState)), ("m_Root", group), ("m_Window", window),
-                ("m_Money", money), ("m_CarStatus", status), ("m_CloseButton", close));
-            CharacterBuilder.SetProps(screen, ("m_Rows", rows));
+                ("m_Money", money), ("m_CarStatus", status), ("m_CloseButton", close),
+                ("m_Player", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
+                ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)));
+            CharacterBuilder.SetProps(screen, ("m_Rows", rows), ("m_SupplyRows", supplyRows));
             group.alpha = 0f;
             root.gameObject.SetActive(false);
             return screen;
         }
 
-        private static WorkshopRowView BuildWorkshopRow(RectTransform window, int index, Vector2 pos, Material outline)
+        private static WorkshopRowView BuildWorkshopRow(RectTransform window, string name, Vector2 pos, Material outline)
         {
             var top = new Vector2(0.5f, 1f);
             var topLeft = new Vector2(0f, 1f);
             var midLeft = new Vector2(0f, 0.5f);
             var midRight = new Vector2(1f, 0.5f);
             var center = new Vector2(0.5f, 0.5f);
-            RectTransform row = UiFactory.Rect($"Row{index + 1}", window, top, top, pos, s_WorkshopRow);
+            RectTransform row = UiFactory.Rect(name, window, top, top, pos, s_WorkshopRow);
             RectTransform body = UiFactory.Stretch("Body", row);
             UiFactory.Image(body, UiFactory.Sprite("UI_Panel"), new Color(0.03f, 0.03f, 0.05f, 0.55f), true);
 
-            RectTransform disc = UiFactory.Rect("IconDisc", body, midLeft, midLeft, new Vector2(18f, 0f), new Vector2(132f, 132f));
+            RectTransform disc = UiFactory.Rect("IconDisc", body, midLeft, midLeft, new Vector2(12f, 0f), new Vector2(98f, 98f));
             UiFactory.Image(disc, UiFactory.Sprite("UI_StickKnob"), new Color(0.3f, 0.56f, 0.9f, 1f), false);
-            RectTransform iconRt = UiFactory.Rect("Icon", disc, center, center, Vector2.zero, new Vector2(106f, 106f));
+            RectTransform iconRt = UiFactory.Rect("Icon", disc, center, center, Vector2.zero, new Vector2(78f, 78f));
             Image icon = UiFactory.Image(iconRt, UiFactory.Sprite("UI_Icon_Armor"), Color.white, false);
             icon.preserveAspect = true;
 
-            TextMeshProUGUI title = OutlinedLabel("Title", body, topLeft, topLeft, new Vector2(168f, -10f), new Vector2(360f, 50f), "БРОНЯ",
-                38f, TextAlignmentOptions.Left, Color.white, outline);
+            TextMeshProUGUI title = OutlinedLabel("Title", body, topLeft, topLeft, new Vector2(124f, -6f), new Vector2(400f, 40f), "БРОНЯ",
+                32f, TextAlignmentOptions.Left, Color.white, outline);
             title.enableAutoSizing = true;
-            title.fontSizeMin = 26f;
-            title.fontSizeMax = 38f;
-            TextMeshProUGUI description = OutlinedLabel("Description", body, topLeft, topLeft, new Vector2(168f, -58f),
-                new Vector2(360f, 70f), "Описание", 26f, TextAlignmentOptions.TopLeft, s_SubtitleColor, outline);
+            title.fontSizeMin = 22f;
+            title.fontSizeMax = 32f;
+            TextMeshProUGUI description = OutlinedLabel("Description", body, topLeft, topLeft, new Vector2(124f, -44f),
+                new Vector2(420f, 40f), "Описание", 23f, TextAlignmentOptions.TopLeft, s_SubtitleColor, outline);
             description.textWrappingMode = TextWrappingModes.Normal;
             description.enableAutoSizing = true;
-            description.fontSizeMin = 20f;
-            description.fontSizeMax = 26f;
+            description.fontSizeMin = 16f;
+            description.fontSizeMax = 23f;
 
             const int pipCount = 5;
             var pips = new Image[pipCount];
             for (int i = 0; i < pipCount; i++)
             {
                 RectTransform pip = UiFactory.Rect($"Pip{i + 1}", body, new Vector2(0f, 0f), new Vector2(0f, 0f),
-                    new Vector2(170f + i * 34f, 14f), new Vector2(28f, 28f));
+                    new Vector2(126f + i * 30f, 8f), new Vector2(24f, 24f));
                 pips[i] = UiFactory.Image(pip, UiFactory.Sprite("UI_StickKnob"), Color.gray, false);
             }
-            TextMeshProUGUI count = OutlinedLabel("Count", body, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(168f, 10f),
-                new Vector2(340f, 36f), string.Empty, 26f, TextAlignmentOptions.Left, UiFactory.AccentColor, outline);
+            TextMeshProUGUI count = OutlinedLabel("Count", body, new Vector2(0f, 0f), new Vector2(0f, 0f), new Vector2(124f, 4f),
+                new Vector2(420f, 32f), string.Empty, 24f, TextAlignmentOptions.Left, UiFactory.AccentColor, outline);
 
             // Buy button: price with the scrap icon.
-            RectTransform buyRt = UiFactory.Rect("BuyButton", body, midRight, midRight, new Vector2(-16f, 0f), new Vector2(176f, 116f));
+            RectTransform buyRt = UiFactory.Rect("BuyButton", body, midRight, midRight, new Vector2(-12f, 0f), new Vector2(176f, 96f));
             Image plate = UiFactory.Image(buyRt, UiFactory.Sprite("UI_GearButton"), s_PlayColor, true, true);
             RectTransform priceIcon = UiFactory.Rect("ScrapIcon", buyRt, midLeft, midLeft, new Vector2(16f, 0f), new Vector2(46f, 46f));
             UiFactory.Image(priceIcon, UiFactory.Sprite("UI_Icon_Scrap"), Color.white, false).preserveAspect = true;
-            TextMeshProUGUI price = OutlinedLabel("Price", buyRt, midRight, midRight, new Vector2(-14f, 0f), new Vector2(110f, 70f), "100",
+            // Wide enough for "НЕ НУЖНО" (then the scrap icon hides); a number sits right of the icon.
+            TextMeshProUGUI price = OutlinedLabel("Price", buyRt, midRight, midRight, new Vector2(-12f, 0f), new Vector2(152f, 70f), "100",
                 38f, TextAlignmentOptions.Right, Color.white, outline);
             price.enableAutoSizing = true;
-            price.fontSizeMin = 24f;
+            price.fontSizeMin = 18f;
             price.fontSizeMax = 38f;
+            // A supply paid with a rewarded ad shows the shared gold ad icon instead of a price.
+            RectTransform adIcon = UiFactory.Rect("AdIcon", buyRt, center, center, Vector2.zero, new Vector2(78f, 78f));
+            UiFactory.Image(adIcon, UiFactory.Sprite("UI_Icon_Ad"), Color.white, false).preserveAspect = true;
+            adIcon.gameObject.SetActive(false);
             var buy = buyRt.gameObject.AddComponent<Button>();
             buy.targetGraphic = plate;
             ColorBlock colors = buy.colors;
@@ -482,7 +1133,8 @@ namespace ZombiCar.EditorTools
 
             var view = row.gameObject.AddComponent<WorkshopRowView>();
             PrefabBuilder.Wire(view, ("m_Icon", icon), ("m_Title", title), ("m_Description", description), ("m_Count", count),
-                ("m_BuyButton", buy), ("m_BuyPlate", plate), ("m_Price", price), ("m_PriceIcon", priceIcon.gameObject), ("m_Body", body));
+                ("m_BuyButton", buy), ("m_BuyPlate", plate), ("m_Price", price), ("m_PriceIcon", priceIcon.gameObject), ("m_Body", body),
+                ("m_AdIcon", adIcon.gameObject));
             CharacterBuilder.SetProps(view, ("m_Pips", pips));
             return view;
         }

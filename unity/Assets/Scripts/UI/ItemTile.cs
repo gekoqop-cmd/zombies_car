@@ -7,7 +7,8 @@ namespace ZombiCar.UI
 {
     /// <summary>
     /// One skin as a tile (case roulette strip, collection grid): rarity-coloured plate, the slot's pictogram in the
-    /// skin's colour, the name; dimmed with a question mark while not owned, outlined when equipped.
+    /// skin's colour, the name; dimmed with a question mark while not owned, outlined when equipped, a "НОВЫЙ" badge
+    /// while a won skin was not looked at yet.
     /// </summary>
     public sealed class ItemTile : MonoBehaviour
     {
@@ -17,12 +18,16 @@ namespace ZombiCar.UI
         [SerializeField] private Image m_Equipped;
         [SerializeField] private TMP_Text m_Locked;
         [SerializeField] private Button m_Button;
+        [Tooltip("\"НОВЫЙ\" badge: won but not yet seen in the collection.")]
+        [SerializeField, OptionalReference] private GameObject m_New;
 
         public Button Button => m_Button;
         public CosmeticItem Item { get; private set; }
 
-        public void Set(CosmeticItem item, Sprite icon, bool owned, bool equipped)
+        public void Set(CosmeticItem item, Sprite icon, bool owned, bool equipped, bool isNew = false)
         {
+            if (m_New != null)
+                m_New.SetActive(isNew);
             Item = item;
             Color rarity = CosmeticCatalog.RarityColor(item.Rarity);
             m_Plate.color = owned ? rarity * new Color(0.55f, 0.55f, 0.55f, 1f) : new Color(0.14f, 0.15f, 0.18f, 0.95f);

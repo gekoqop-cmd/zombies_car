@@ -124,6 +124,13 @@ namespace ZombiCar.Car
                 SetHealth(m_Health + amount);
         }
 
+        /// <summary>Fully repaired, even from destroyed (the revive for an ad).</summary>
+        public void Revive()
+        {
+            m_Destroyed = false;
+            SetHealth(MaxHealth);
+        }
+
         private void OnEffectApplied(StatEffect effect, float value)
         {
             switch (effect)

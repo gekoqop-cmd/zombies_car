@@ -30,6 +30,7 @@ namespace ZombiCar.Waves
         private float m_SpawnInterval;
         private float m_NextSpawnTime;
         private ZombieController m_Boss;
+        private BossBrain m_BossBrain;
         private bool m_BossWave;
 
         public int Wave => m_Wave;
@@ -38,6 +39,11 @@ namespace ZombiCar.Waves
 
         /// <summary>The boss of the running wave (null when there is none or it died).</summary>
         public ZombieController Boss => m_Boss != null && m_Boss.IsAlive ? m_Boss : null;
+
+        /// <summary>The boss of the last wave died (where): the victory finale starts.</summary>
+        public event System.Action<Vector3> FinalBossKilled;
+
+        public ZombieSpawner Spawner => m_Spawner;
 
         private void Start()
         {
@@ -78,7 +84,13 @@ namespace ZombiCar.Waves
             {
                 SpawnDue();
                 if (m_BossWave && m_Boss != null && !m_Boss.IsAlive)
+                {
                     BossDown();
+                    if (m_Phase == Phase.Finished)
+                        return;                                   // the last boss: the run is won and every wave done
+                }
+                else if (m_Boss != null && m_WaveState != null)
+                    m_WaveState.SetBossHealth(m_Boss.Health, m_Boss.MaxHealth, m_BossBrain != null && m_BossBrain.IsEnraged);
                 bool cleared = m_ToSpawn == 0 && m_Spawner.Alive == 0 && (!m_BossWave || m_Boss == null);
                 bool timeUp = !m_BossWave && m_TimeLeft <= 0f;
                 if (cleared || timeUp)
@@ -149,16 +161,33 @@ namespace ZombiCar.Waves
                 m_BossWave = false;
                 return;
             }
+            m_BossBrain = m_Boss.GetComponent<BossBrain>();
             if (m_WaveState != null)
+            {
+                m_WaveState.SetBossHealth(m_Boss.MaxHealth, m_Boss.MaxHealth, false);
                 m_WaveState.SetBoss(boss.DisplayName);
+            }
         }
 
         private void BossDown()
         {
             Debug.Log($"[WaveDirector] Boss {m_Boss.Config.DisplayName} killed in wave {m_Wave}.");
+            Vector3 where = m_Boss.transform.position;
             m_Boss = null;
+            if (m_Wave >= m_Config.WaveCount)
+            {
+                // The finale first (it ends the run as a victory), then the last wave is closed: all waves done.
+                FinalBossKilled?.Invoke(where);
+                m_BossWave = false;
+                m_ToSpawn = 0;
+                EndWave();
+                return;
+            }
             if (m_WaveState != null)
+            {
+                m_WaveState.SetBossHealth(0, 1, false);
                 m_WaveState.SetBoss(null);
+            }
         }
 
         private void SpawnDue()

@@ -51,8 +51,10 @@ namespace ZombiCar.EditorTools
                 At(t += 0.05f, () => Press(label));
                 At(t += 0.7f, () =>
                 {
-                    bool running = Time.timeScale > 0f || GamePause.Has(GamePause.Reason.LevelUp);
-                    Check(running && Time.time > gameTimeBefore || GamePause.Has(GamePause.Reason.LevelUp),
+                    // Pauses a cheat may bring on purpose: level-up cards, the tutorial's intro cards.
+                    bool expected = GamePause.Has(GamePause.Reason.LevelUp) || GamePause.Has(GamePause.Reason.Tutorial);
+                    bool running = Time.timeScale > 0f || expected;
+                    Check(running && Time.time > gameTimeBefore || expected,
                         $"'{label}': the game runs on (timeScale {Time.timeScale}, pauses {GamePause.Reasons})");
                     Check(ok(), $"'{label}': {what}");
                 });
@@ -81,12 +83,12 @@ namespace ZombiCar.EditorTools
 
             int moneyBefore = 0;
             At(t += 0.05f, () => moneyBefore = s_Run.Money);
-            CarUpgrade Up(string id) => catalog.Upgrades.First(u => u.Id == id);
+            CarUpgrade Up(string id) => catalog.Upgrades.Concat(catalog.Supplies).First(u => u.Id == id);
             PressedRow("БРОНЯ", "+1", () => s_Run.LevelOf(Up("armor")) == 1, "armour level 1");
-            PressedRow("ШИПЫ", "МАКС", () => s_Run.LevelOf(Up("spikes")) == Up("spikes").MaxLevel && s_Car.Spikes == 32, "spikes maxed");
+            PressedRow("ШИПЫ", "МАКС", () => s_Run.LevelOf(Up("spikes")) == Up("spikes").RegularLevels && s_Car.Spikes == 44, "spikes maxed (8 + 10 + 12 + 14)");
             PressedRow("РЕМОНТ", "СДЕЛАТЬ", () => s_Run.LevelOf(Up("repair")) == 1, "a repair");
             Pressed("ВСЯ МАШИНА НА МАКСИМУМ",
-                () => catalog.Upgrades.Where(u => !u.Repeatable).All(u => s_Run.LevelOf(u) == u.MaxLevel) && s_Run.Money == moneyBefore &&
+                () => catalog.Upgrades.Where(u => !u.Repeatable).All(u => s_Run.LevelOf(u) == u.RegularLevels) && s_Run.Money == moneyBefore &&
                       s_Car.Health == s_Car.MaxHealth, "every upgrade maxed for free, the car repaired");
             Pressed("+1000 МЕТАЛЛОЛОМА", () => s_Run.Money >= moneyBefore + 1000, "scrap +1000");
             At(t += 0.05f, () => { s_Weapon.Holstered = false; });
@@ -143,8 +145,9 @@ namespace ZombiCar.EditorTools
             });
             At(t += 0.05f, () =>
             {
-                MetaProgress.TutorialDone = true;
-                MetaProgress.TrySpend(1000);                           // leave the developer's coins as they were
+                MetaProgress.TutorialDone = MetaProgress.LiveHintsDone = true;
+                AssetDatabase.LoadAssetAtPath<TutorialState>(DataAssetsBuilder.c_TutorialState).CloseCards();   // the intro cards
+                MetaProgress.TrySpend(1000);                          // leave the developer's coins as they were
                 Press("ЗАКРЫТЬ");
             });
             At(t += 0.4f, () =>

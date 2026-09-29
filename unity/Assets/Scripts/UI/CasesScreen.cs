@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -102,7 +103,7 @@ namespace ZombiCar.UI
                 AudioManager.PlaySfx(Sound.UiBuy);
                 CloseRoulette();
             });
-            m_CollectionClose.onClick.AddListener(() => ShowGroup(m_Collection, false));
+            m_CollectionClose.onClick.AddListener(CloseCollection);
             m_StripTemplate.gameObject.SetActive(false);
             m_GridTemplate.gameObject.SetActive(false);
             ShowGroup(m_Roulette, false);
@@ -129,7 +130,8 @@ namespace ZombiCar.UI
                 return;
             m_Open = false;
             ShowGroup(m_Roulette, false);
-            ShowGroup(m_Collection, false);
+            if (m_Collection.gameObject.activeSelf)
+                CloseCollection();
             m_Root.interactable = m_Root.blocksRaycasts = false;
             AudioManager.PlaySfx(Sound.UiClose);
             Closed?.Invoke();
@@ -137,7 +139,7 @@ namespace ZombiCar.UI
 
         private string ChancesText()
         {
-            var parts = new List<string>();
+            var parts = new List<string> { "<size=80%>ШАНСЫ ВЫПАДЕНИЯ:</size>" };
             foreach (Rarity r in (Rarity[])Enum.GetValues(typeof(Rarity)))
             {
                 string hex = ColorUtility.ToHtmlStringRGB(CosmeticCatalog.RarityColor(r));
@@ -150,13 +152,16 @@ namespace ZombiCar.UI
 
         private void Refresh()
         {
-            m_Coins.SetText($"МОНЕТЫ: {MetaProgress.Coins}");
+            m_Coins.SetText(MetaProgress.Coins.ToString());
             for (int i = 0; i < m_Cards.Length && i < m_Catalog.Cases.Count; i++)
             {
                 CaseDef def = m_Catalog.Cases[i];
                 List<CosmeticItem> all = m_Catalog.Droppable(def.Slot);
                 int owned = all.FindAll(MetaProgress.Owns).Count;
-                m_Cards[i].CollectionLabel.SetText($"КОЛЛЕКЦИЯ {owned}/{all.Count}");
+                int fresh = all.FindAll(MetaProgress.IsNew).Count;
+                m_Cards[i].CollectionLabel.SetText(fresh > 0
+                    ? $"КОЛЛЕКЦИЯ {owned}/{all.Count}  <color=#FFB347>НОВЫХ: {fresh}</color>"
+                    : $"КОЛЛЕКЦИЯ {owned}/{all.Count}");
                 m_Cards[i].OpenButton.interactable = !m_Spinning;
                 m_Cards[i].AdButton.interactable = !m_Spinning;
             }
@@ -294,6 +299,13 @@ namespace ZombiCar.UI
             FillCollection(slot);
         }
 
+        // Leaving the collection: the new skins in it were seen.
+        private void CloseCollection()
+        {
+            ShowGroup(m_Collection, false);
+            MetaProgress.MarkSeen(m_Catalog.Items.Where(i => i.Slot == m_CollectionSlot));
+        }
+
         private void FillCollection(CosmeticSlot slot)
         {
             var items = new List<CosmeticItem>();
@@ -313,7 +325,7 @@ namespace ZombiCar.UI
                     continue;
                 CosmeticItem item = items[i];
                 bool owned = MetaProgress.Owns(item);
-                tile.Set(item, SlotIcon(slot), owned, item == equipped);
+                tile.Set(item, SlotIcon(slot), owned, item == equipped, MetaProgress.IsNew(item));
                 tile.Button.onClick.RemoveAllListeners();
                 tile.Button.interactable = owned;
                 tile.Button.onClick.AddListener(() =>

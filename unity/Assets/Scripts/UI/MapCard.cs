@@ -19,6 +19,8 @@ namespace ZombiCar.UI
         [SerializeField, OptionalReference] private Image m_DayButtonPlate;
         [SerializeField, OptionalReference] private Image m_NightButtonPlate;
         [SerializeField] private Button m_PlayButton;
+        [Tooltip("\"ПРОЙДЕНО\" stamp on the picture: the shown map (day or night) was beaten.")]
+        [SerializeField, OptionalReference] private GameObject m_BeatenBadge;
         [SerializeField] private Color m_OnColor = new Color(0.93f, 0.47f, 0.13f, 1f);
         [SerializeField] private Color m_OffColor = new Color(0.12f, 0.13f, 0.16f, 0.95f);
         [SerializeField, Min(0.01f)] private float m_CrossFade = 0.25f;
@@ -53,6 +55,18 @@ namespace ZombiCar.UI
                 m_DayButtonPlate.color = m_Night ? m_OffColor : m_OnColor;
             if (m_NightButtonPlate != null)
                 m_NightButtonPlate.color = m_Night ? m_OnColor : m_OffColor;
+            ShowProgress();
+        }
+
+        private void OnEnable() => ShowProgress();
+
+        /// <summary>The "ПРОЙДЕНО" stamp when the map shown (day or night) was beaten.</summary>
+        private void ShowProgress()
+        {
+            if (IsLocked || m_BeatenBadge == null)
+                return;
+            MapConfig shown = m_Night ? m_NightMap : m_DayMap;
+            m_BeatenBadge.SetActive(shown != null && MetaProgress.IsBeaten(shown.name));
         }
 
         private void Update()

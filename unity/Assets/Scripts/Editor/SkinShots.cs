@@ -256,7 +256,7 @@ namespace ZombiCar.EditorTools
                 var upgrades = AssetDatabase.LoadAssetAtPath<CarUpgradeCatalog>(DataAssetsBuilder.c_CarUpgrades);
                 CarUpgrade spikes = upgrades.Upgrades.First(u => u.Id == "spikes");
                 run.AddMoney(5000);
-                for (int i = 0; i < spikes.MaxLevel; i++)
+                for (int i = 0; i < spikes.RegularLevels; i++)
                     run.TryBuy(spikes);
                 Teleport(new Vector3(0f, 0f, -7f));
             });
@@ -265,7 +265,7 @@ namespace ZombiCar.EditorTools
                 var car = Object.FindAnyObjectByType<CarHealth>();
                 int shown = car.GetComponent<CarSpikesView>() != null
                     ? car.transform.Find("Spikes").Cast<Transform>().Count(c => c.gameObject.activeSelf) : 0;
-                Check(car.Spikes == 32 && shown == 4, $"spikes {car.Spikes} damage, {shown} sets on the car");
+                Check(car.Spikes == 44 && shown == 4, $"spikes {car.Spikes} damage, {shown} sets on the car");
                 CloseUp("10_Car_Spikes", 9f, car.transform.position);
             });
             At(t += 0.4f, () =>

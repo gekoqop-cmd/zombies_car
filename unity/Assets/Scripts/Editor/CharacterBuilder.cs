@@ -68,12 +68,13 @@ namespace ZombiCar.EditorTools
             public BossSpec Boss;
         }
 
-        /// <summary>Abilities of a boss (written once into its BossConfig asset) and where it comes.</summary>
+        /// <summary>Abilities of a boss (written into its BossConfig asset on every build) and where it comes.</summary>
         private sealed class BossSpec
         {
             public int Wave;
             public float RegularShare = 0.5f;
             public string[] Minions = Array.Empty<string>();
+            public string[] EnrageMinions = Array.Empty<string>();
             public (string field, object value)[] Abilities = Array.Empty<(string, object)>();
         }
 
@@ -196,7 +197,8 @@ namespace ZombiCar.EditorTools
         {
             new ZombieSpec
             {
-                // Brood mother: slow, goes for the car, keeps calling minions out of the ground.
+                // Brood mother: slow, goes for the car, hides behind her brood. 1 brood (summon), 2 acid puddles,
+                // 3 second phase "swarm": summons more often, with hounds among them.
                 Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BossClips("Boss1") },
                 AgentRadius = 1f, ColliderRadius = 1f, ColliderHeight = 3.4f,
                 Health = 1600, Speed = 0.85f, SpeedVariation = 0.02f, Damage = 25, AttackInterval = 2.2f, AttackRange = 1f,
@@ -204,18 +206,25 @@ namespace ZombiCar.EditorTools
                 DisplayName = "МАТКА",
                 Boss = new BossSpec
                 {
-                    Wave = 10, RegularShare = 0.5f, Minions = new[] { "Walker", "RedCap", "Hound" },
+                    Wave = 10, RegularShare = 0.5f, Minions = new[] { "Walker", "RedCap" }, EnrageMinions = new[] { "Hound" },
                     Abilities = new (string, object)[]
                     {
-                        ("m_Summon", true), ("m_SummonInterval", 7f), ("m_SummonWindup", 1f), ("m_SummonCount", 4),
-                        ("m_SummonRadius", 2.8f), ("m_MaxMinions", 12), ("m_VoicePitch", 1.1f),
-                        ("m_AuraColor", new Color(0.5f, 1f, 0.3f, 0.55f)),
+                        ("m_Summon", true), ("m_SummonInterval", 8f), ("m_SummonWindup", 1f), ("m_SummonCount", 4),
+                        ("m_SummonRadius", 2.8f), ("m_MaxMinions", 10),
+                        ("m_Spit", true), ("m_SpitInterval", 6f), ("m_SpitWindup", 0.6f), ("m_SpitVolley", 2), ("m_SpitDamage", 10),
+                        ("m_SpitRadius", 1.6f), ("m_SpitFlight", 1.1f), ("m_SpitSpread", 2f), ("m_SpitRange", 14f), ("m_SpitCadence", 0.3f),
+                        ("m_SpitPuddle", 4f), ("m_SpitPuddleDps", 8),
+                        ("m_Enrage", true), ("m_EnrageAt", 0.5f), ("m_EnrageSpeed", 1.15f), ("m_EnrageDamage", 1.1f),
+                        ("m_EnrageCooldowns", 0.5f), ("m_EnrageScale", 1.06f), ("m_EnrageTint", new Color(0.8f, 1f, 0.6f, 1f)),
+                        ("m_EnrageSummonBonus", 2),
+                        ("m_VoicePitch", 1.1f), ("m_AuraColor", new Color(0.5f, 1f, 0.3f, 0.55f)),
                     },
                 },
             },
             new ZombieSpec
             {
-                // Juggernaut: hunts the player, charges and spits acid; dazed after a charge.
+                // Ram: hunts the player. 1 charge (dazed after it), 2 acid rain (a dozen globs around the player,
+                // two dozen in the second phase), 3 second phase "quake": the ground slam.
                 Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = BossClips("Boss2") },
                 AgentRadius = 0.9f, ColliderRadius = 0.85f, ColliderHeight = 3.6f,
                 Health = 3200, Speed = 1.2f, SpeedVariation = 0.02f, Damage = 30, AttackInterval = 1.6f, AttackRange = 1f,
@@ -226,34 +235,41 @@ namespace ZombiCar.EditorTools
                     Wave = 20, RegularShare = 0.5f,
                     Abilities = new (string, object)[]
                     {
-                        ("m_Spit", true), ("m_SpitInterval", 5f), ("m_SpitVolley", 3), ("m_SpitDamage", 14), ("m_SpitRadius", 1.5f),
                         ("m_Charge", true), ("m_ChargeInterval", 8f), ("m_ChargeWindup", 1f), ("m_ChargeSpeed", 13f),
                         ("m_ChargeDistance", 12f), ("m_ChargeMinRange", 3.5f), ("m_ChargeDamage", 30), ("m_ChargeCarDamage", 40),
+                        ("m_Spit", true), ("m_SpitInterval", 9f), ("m_SpitWindup", 0.8f), ("m_SpitVolley", 13), ("m_SpitDamage", 11),
+                        ("m_SpitRadius", 1.2f), ("m_SpitFlight", 1f), ("m_SpitSpread", 5f), ("m_SpitRange", 16f), ("m_SpitCadence", 0.13f),
+                        ("m_SpitPuddle", 1.5f), ("m_SpitPuddleDps", 6), ("m_EnrageVolley", 1.7f),
+                        ("m_Enrage", true), ("m_EnrageAt", 0.5f), ("m_EnrageSpeed", 1.15f), ("m_EnrageDamage", 1.15f),
+                        ("m_EnrageCooldowns", 0.75f), ("m_EnrageScale", 1.06f), ("m_EnrageTint", new Color(1f, 0.75f, 0.9f, 1f)),
+                        ("m_Slam", true), ("m_SlamInterval", 7f), ("m_SlamWindup", 0.9f), ("m_SlamRadius", 4.8f), ("m_SlamDamage", 28),
+                        ("m_SlamCarDamage", 30),
                         ("m_VoicePitch", 0.9f), ("m_AuraColor", new Color(0.75f, 0.45f, 1f, 0.55f)),
                     },
                 },
             },
             new ZombieSpec
             {
-                // The reaper (final): everything the other two do, then a second phase with the ground slam.
-                Look = new Look { Name = "Boss3", Size = 2.3f, PixelScale = 2f, Shadow = new Vector2(2.5f, 1.2f), Clips = BruteClips() },
+                // The reaper (final): cuts and burns. 1 scythe sweep, 2 fire cracks, 3 second phase "reap": teleports to
+                // the player (a mark first) and cuts at once.
+                Look = new Look { Name = "Boss3", Size = 2.3f, PixelScale = 2f, Shadow = new Vector2(2.5f, 1.2f), Clips = BossClips("Boss3") },
                 AgentRadius = 1.15f, ColliderRadius = 1.15f, ColliderHeight = 4f,
-                Health = 6500, Speed = 1f, SpeedVariation = 0.02f, Damage = 40, AttackInterval = 1.8f, AttackRange = 1.2f,
-                AttackAnimSpeed = 0.9f, Aggro = 5f, Stagger = 0f, Knockback = 0f, Xp = 1000, Reward = 500,
+                Health = 6500, Speed = 1.1f, SpeedVariation = 0.02f, Damage = 40, AttackInterval = 1.8f, AttackRange = 1.2f,
+                Preference = ZombieTarget.Player, AttackAnimSpeed = 0.9f, Aggro = 30f, Stagger = 0f, Knockback = 0f,
+                Xp = 1000, Reward = 500,
                 DisplayName = "ЖНЕЦ",
                 Boss = new BossSpec
                 {
-                    Wave = 30, RegularShare = 0.4f, Minions = new[] { "Walker", "Worker", "RedCap", "Hoodie", "Hound" },
+                    Wave = 30, RegularShare = 0.4f,
                     Abilities = new (string, object)[]
                     {
-                        ("m_Summon", true), ("m_SummonInterval", 9f), ("m_SummonWindup", 1f), ("m_SummonCount", 5),
-                        ("m_SummonRadius", 3.2f), ("m_MaxMinions", 14),
-                        ("m_Spit", true), ("m_SpitInterval", 6f), ("m_SpitVolley", 5), ("m_SpitDamage", 16), ("m_SpitRadius", 1.6f),
-                        ("m_Charge", true), ("m_ChargeInterval", 10f), ("m_ChargeWindup", 0.9f), ("m_ChargeSpeed", 14f),
-                        ("m_ChargeDamage", 36), ("m_ChargeCarDamage", 45),
-                        ("m_Enrage", true), ("m_EnrageAt", 0.5f), ("m_EnrageSpeed", 1.35f), ("m_EnrageDamage", 1.3f),
-                        ("m_EnrageCooldowns", 0.6f), ("m_EnrageScale", 1.12f), ("m_EnrageTint", new Color(1f, 0.6f, 0.5f, 1f)),
-                        ("m_Slam", true), ("m_SlamInterval", 6f), ("m_SlamRadius", 4.8f), ("m_SlamDamage", 30), ("m_SlamCarDamage", 25),
+                        ("m_Sweep", true), ("m_SweepInterval", 3.5f), ("m_SweepWindup", 0.75f), ("m_SweepRange", 4.6f),
+                        ("m_SweepArc", 170f), ("m_SweepDamage", 34), ("m_SweepCarDamage", 25), ("m_SweepKnockback", 5f),
+                        ("m_Cracks", true), ("m_CracksInterval", 8f), ("m_CracksWindup", 2f), ("m_CracksCount", 4),
+                        ("m_CracksSpread", 22f), ("m_CracksLength", 13f), ("m_CracksWidth", 1.3f), ("m_CracksDamage", 24),
+                        ("m_Enrage", true), ("m_EnrageAt", 0.5f), ("m_EnrageSpeed", 1.25f), ("m_EnrageDamage", 1.25f),
+                        ("m_EnrageCooldowns", 0.7f), ("m_EnrageScale", 1.1f), ("m_EnrageTint", new Color(1f, 0.7f, 0.45f, 1f)),
+                        ("m_Reap", true), ("m_ReapInterval", 7f), ("m_ReapWindup", 1.2f),
                         ("m_VoicePitch", 0.78f), ("m_AuraColor", new Color(1f, 0.55f, 0.2f, 0.6f)),
                     },
                 },
@@ -474,16 +490,31 @@ namespace ZombiCar.EditorTools
             AcidGlob glob, float height)
         {
             string abilitiesPath = $"{EditorPaths.c_DataZombies}/{spec.Look.Name}_Abilities.asset";
+            // Rewritten on every build from the spec (the abilities are designed here, not in the Inspector).
             var abilities = AssetDatabase.LoadAssetAtPath<BossConfig>(abilitiesPath);
             if (abilities == null)
             {
                 abilities = ScriptableObject.CreateInstance<BossConfig>();
                 AssetDatabase.CreateAsset(abilities, abilitiesPath);
-                SetProps(abilities, spec.Boss.Abilities);
-                ZombieConfig[] minionConfigs = spec.Boss.Minions
-                    .Select(n => minions?.FirstOrDefault(c => c != null && c.name == "Zombie_" + n)).Where(c => c != null).ToArray();
-                SetProps(abilities, ("m_Minions", minionConfigs.Cast<Object>().ToArray()));
             }
+            else
+            {
+                BossConfig fresh = ScriptableObject.CreateInstance<BossConfig>();
+                EditorUtility.CopySerialized(fresh, abilities);
+                Object.DestroyImmediate(fresh);
+                abilities.name = System.IO.Path.GetFileNameWithoutExtension(abilitiesPath);
+            }
+            SetProps(abilities, spec.Boss.Abilities);
+            // The boss's own voice.
+            BossVoiceSynth.Build(false);
+            int bossNumber = spec.Look.Name[spec.Look.Name.Length - 1] - '0';
+            SetProps(abilities, ("m_RoarClip", BossVoiceSynth.Clip(bossNumber, "Roar")), ("m_AttackClip", BossVoiceSynth.Clip(bossNumber, "Attack")),
+                ("m_DeathClip", BossVoiceSynth.Clip(bossNumber, "Death")), ("m_SpecialClip", BossVoiceSynth.Clip(bossNumber, "Special")));
+            ZombieConfig[] Configs(string[] names) => (names ?? Array.Empty<string>())
+                .Select(n => minions?.FirstOrDefault(c => c != null && c.name == "Zombie_" + n)).Where(c => c != null).ToArray();
+            SetProps(abilities, ("m_Minions", Configs(spec.Boss.Minions).Cast<Object>().ToArray()),
+                ("m_EnrageMinions", Configs(spec.Boss.EnrageMinions).Cast<Object>().ToArray()));
+            EditorUtility.SetDirty(abilities);
 
             Material aura = FxBuilder.Material("M_FX_BossAura", "FX_Aura", Color.white, true);
             Material ring = FxBuilder.Material("M_FX_BossTelegraph", "FX_TargetRing", Color.white, false);

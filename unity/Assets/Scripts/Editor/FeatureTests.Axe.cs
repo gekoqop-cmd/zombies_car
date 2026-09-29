@@ -48,11 +48,10 @@ namespace ZombiCar.EditorTools
                 melee.Hit += n => landed = n;
                 Check(switcher.Current == WeaponSlot.Gun && !s_Weapon.Holstered && !melee.Active && !blade.enabled,
                     "the run starts with the gun in hand, the axe hidden");
-                var slots = Find<WeaponSlotsView>();
-                var button = Find<WeaponButtonView>();
-                Check(DeviceInfo.IsMobile ? button != null && button.isActiveAndEnabled && !slots.gameObject.activeInHierarchy
-                        : slots != null && slots.gameObject.activeInHierarchy,
-                    DeviceInfo.IsMobile ? "touch screen: the weapon button" : "desktop: weapon slots in the HUD");
+                WeaponSlotsView[] shown = Object.FindObjectsByType<WeaponSlotsView>(FindObjectsInactive.Exclude);
+                bool inTouch = shown.Length == 1 && shown[0].GetComponentInParent<MobileControlsLayout>(true) != null;
+                Check(shown.Length == 1 && inTouch == DeviceInfo.IsMobile,
+                    DeviceInfo.IsMobile ? "touch screen: the weapon column by the fire stick" : "desktop: the weapon column in the HUD");
                 s_Bot.AimActive = true;
                 s_Bot.AimDirection = Vector3.right;
                 s_Bot.PressSwitch();
@@ -135,11 +134,11 @@ namespace ZombiCar.EditorTools
             At(10.9f, () =>
             {
                 Check(!barrel.IsAlive, "the axe breaks an explosive barrel (it blows up)");
-                s_Bot.PressSwitch();
+                state.Request(WeaponSlot.Gun);                              // a click / tap on the gun slot
             });
             At(11.2f, () =>
             {
-                Check(switcher.Current == WeaponSlot.Gun && !s_Weapon.Holstered && !melee.Active, "switch back: the gun in hand");
+                Check(switcher.Current == WeaponSlot.Gun && !s_Weapon.Holstered && !melee.Active, "gun slot clicked: the gun in hand");
                 // Empty gun: no rounds in the magazine nor in reserve.
                 const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
                 typeof(PlayerWeapon).GetField("m_InMagazine", flags).SetValue(s_Weapon, 0);
@@ -150,9 +149,10 @@ namespace ZombiCar.EditorTools
             At(11.6f, () =>
             {
                 Check(switcher.Current == WeaponSlot.Axe && state.Automatic, "out of ammo: attacking takes the axe out by itself");
-                var slots = Find<WeaponSlotsView>();
-                if (slots != null && slots.gameObject.activeInHierarchy)
-                    Check(slots.transform.Find("Hint").GetComponent<TMPro.TMP_Text>().text.Contains("ПАТРОНЫ КОНЧИЛИСЬ"), "HUD says the gun is empty");
+                var slots = Object.FindAnyObjectByType<WeaponSlotsView>(FindObjectsInactive.Exclude);
+                Transform hint = slots != null ? slots.transform.Find("EmptyHint") : null;
+                if (hint != null)
+                    Check(hint.gameObject.activeSelf && hint.GetComponent<TMPro.TMP_Text>().text.Contains("ПАТРОНЫ КОНЧИЛИСЬ"), "HUD says the gun is empty");
                 Shot("6_Axe_Empty");
                 s_Bot.FireHeld = false;
                 s_Weapon.Refill();

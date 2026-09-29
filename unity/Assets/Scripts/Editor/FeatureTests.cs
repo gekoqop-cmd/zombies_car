@@ -131,12 +131,18 @@ namespace ZombiCar.EditorTools
         [MenuItem("Tools/Diagnostics/Feature Tests/9 Shot hit box")] private static void MenuHitbox() => Run("hitbox");
         [MenuItem("Tools/Diagnostics/Feature Tests/10 Cheats")] private static void MenuCheats() => Run("cheats");
         [MenuItem("Tools/Diagnostics/Feature Tests/11 Zombie motion")] private static void MenuMotion() => Run("motion");
+        [MenuItem("Tools/Diagnostics/Feature Tests/12 Boss bar, boss card, revive")] private static void MenuScreens() => Run("screens");
+        [MenuItem("Tools/Diagnostics/Feature Tests/13 Tutorial")] private static void MenuTutorial() => Run("tutorial");
+        [MenuItem("Tools/Diagnostics/Feature Tests/14 Parts economy")] private static void MenuEconomy() => Run("economy");
+        [MenuItem("Tools/Diagnostics/Feature Tests/15 Leaderboard")] private static void MenuLeaderboard() => Run("leaderboard");
 
         public static void Run(string scenario)
         {
             if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
                 return;                                              // the user kept the unsaved scene open
             s_Started = false;                                       // statics survive between plays (no domain reload)
+            MetaProgress.TutorialDone = MetaProgress.LiveHintsDone = true;   // no intro cards pausing the scenario
+            BossIntroView.Suppressed = scenario != "screens";                 // nor boss cards (scenarios time the bosses)
             string scene = Argument(c_MapArgument) == "night" ? SceneBuilder.c_NightMapScene : SceneBuilder.c_MapScene;
             EditorSceneManager.OpenScene(scene, OpenSceneMode.Single);
             SessionState.SetString(c_ScenarioKey, scenario);
@@ -167,6 +173,7 @@ namespace ZombiCar.EditorTools
                     return;
                 EditorApplication.update -= Tick;
                 SessionState.SetInt(c_StateKey, 0);
+                BossIntroView.Suppressed = false;                    // statics outlive the play session
                 int result = SessionState.GetInt(c_ResultKey, 1);
                 Debug.Log($"[FeatureTests] Finished, exit code {result}.");
                 if (Application.isBatchMode)

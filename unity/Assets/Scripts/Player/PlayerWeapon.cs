@@ -189,6 +189,10 @@ namespace ZombiCar.Player
         {
             if (effect == StatEffect.MaxReserve)
                 Resupply(Mathf.RoundToInt(value));                // a bigger ammo bag comes filled
+            else if (effect == StatEffect.RefillAmmo)
+                Refill();                                         // the workshop's ammo box
+            else if (effect == StatEffect.MagazineSize)
+                Publish();                                        // no longer full
         }
 
         private void StartReload()
@@ -211,7 +215,7 @@ namespace ZombiCar.Player
         private void Publish()
         {
             if (m_Ammo != null)
-                m_Ammo.Set(m_InMagazine, m_Reserve, m_IsReloading, ReloadTime);
+                m_Ammo.Set(m_InMagazine, m_Reserve, m_IsReloading, ReloadTime, IsFull);
         }
     }
 }

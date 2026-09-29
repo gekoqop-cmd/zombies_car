@@ -20,14 +20,39 @@ MonoBehaviour:
   m_MaxMinions: 12
   m_Minions: []
   m_Spit: 1
-  m_SpitInterval: 5
-  m_SpitWindup: 0.5
-  m_SpitVolley: 3
-  m_SpitDamage: 14
-  m_SpitRadius: 1.5
-  m_SpitFlight: 1.1
-  m_SpitSpread: 2.6
-  m_SpitRange: 15
+  m_SpitInterval: 9
+  m_SpitWindup: 0.8
+  m_SpitVolley: 13
+  m_SpitDamage: 11
+  m_SpitRadius: 1.2
+  m_SpitFlight: 1
+  m_SpitSpread: 5
+  m_SpitRange: 16
+  m_SpitCadence: 0.13
+  m_SpitPuddle: 1.5
+  m_SpitPuddleDps: 6
+  m_EnrageVolley: 1.7
+  m_Sweep: 0
+  m_SweepInterval: 4
+  m_SweepWindup: 0.8
+  m_SweepRange: 4.5
+  m_SweepArc: 160
+  m_SweepDamage: 35
+  m_SweepCarDamage: 20
+  m_SweepKnockback: 5
+  m_Cracks: 0
+  m_CracksInterval: 7
+  m_CracksWindup: 1
+  m_CracksCount: 4
+  m_CracksSpread: 22
+  m_CracksLength: 12
+  m_CracksWidth: 1.3
+  m_CracksDamage: 26
+  m_Reap: 0
+  m_ReapInterval: 7
+  m_ReapWindup: 1
+  m_EnrageMinions: []
+  m_EnrageSummonBonus: 0
   m_Charge: 1
   m_ChargeInterval: 8
   m_ChargeWindup: 1
@@ -41,19 +66,23 @@ MonoBehaviour:
   m_ChargeKnockback: 7
   m_ChargeStun: 1.3
   m_StunDamageTaken: 1.5
-  m_Enrage: 0
+  m_Enrage: 1
   m_EnrageAt: 0.5
-  m_EnrageSpeed: 1.4
-  m_EnrageDamage: 1.3
-  m_EnrageCooldowns: 0.6
-  m_EnrageScale: 1.12
-  m_EnrageTint: {r: 1, g: 0.55, b: 0.5, a: 1}
-  m_Slam: 0
-  m_SlamInterval: 6
-  m_SlamWindup: 0.8
-  m_SlamRadius: 4.5
+  m_EnrageSpeed: 1.15
+  m_EnrageDamage: 1.15
+  m_EnrageCooldowns: 0.75
+  m_EnrageScale: 1.06
+  m_EnrageTint: {r: 1, g: 0.75, b: 0.9, a: 1}
+  m_Slam: 1
+  m_SlamInterval: 7
+  m_SlamWindup: 0.9
+  m_SlamRadius: 4.8
   m_SlamDamage: 28
-  m_SlamCarDamage: 25
+  m_SlamCarDamage: 30
   m_SlamKnockback: 6
   m_VoicePitch: 0.9
   m_AuraColor: {r: 0.75, g: 0.45, b: 1, a: 0.55}
+  m_RoarClip: {fileID: 8300000, guid: d63fecedd9c8b024f89020edb2c047e0, type: 3}
+  m_AttackClip: {fileID: 8300000, guid: 81d73b9d6b3735e448e14ff1cfe7e3f0, type: 3}
+  m_DeathClip: {fileID: 8300000, guid: e3650c3431f889b48b460aa0bf881d29, type: 3}
+  m_SpecialClip: {fileID: 8300000, guid: 0dc98535645c6a042817117ebe3ec474, type: 3}

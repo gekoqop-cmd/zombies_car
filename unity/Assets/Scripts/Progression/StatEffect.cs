@@ -42,5 +42,7 @@ namespace ZombiCar.Progression
         // Instant.
         HealPlayerFull,
         RepairCar,         // durability points
+        RefillAmmo,        // the magazine and the reserve full
+        PlaceMines,        // mines put around the car (count)
     }
 }

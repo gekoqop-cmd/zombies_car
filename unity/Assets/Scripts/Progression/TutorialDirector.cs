@@ -1,147 +1,195 @@
 using UnityEngine;
 using ZombiCar.Core;
+using ZombiCar.Enemies;
 using ZombiCar.Player;
+using ZombiCar.Waves;
 
 namespace ZombiCar.Progression
 {
     /// <summary>
-    /// The short tutorial of the player's first run: a few hints on the HUD, each gone as soon as the player does it
-    /// (or after a few seconds): move, shoot, the axe, what to do between waves, the red barrels. Seen once per device
-    /// (<see cref="MetaProgress.TutorialDone"/>); the texts follow the device (keyboard and mouse or touch controls).
-    /// Timers run on game time, so a level-up card or the settings pause them.
+    /// The tutorial of the first run. First the intro cards (the HUD's <c>TutorialCardsView</c>: goal, controls,
+    /// weapons, the car, level-up cards, bosses; the game waits while they are open), then live hints on the HUD at the
+    /// moment they matter: the first zombie, the gun running dry, the workshop opening after the first wave, the first
+    /// level-up card. Every live hint shows once and goes as soon as the player did it (or after a few seconds). The
+    /// cards are seen once per device (<see cref="MetaProgress.TutorialDone"/>), the live hints until all were shown
+    /// (<see cref="MetaProgress.LiveHintsDone"/>); the settings' "Обучение" button replays both. Texts follow the
+    /// device (keyboard and mouse or touch controls).
     /// </summary>
     public sealed class TutorialDirector : MonoBehaviour
     {
+        private enum Live { FirstZombie, NoAmmo, Workshop, FirstCard, Count }
+
         private struct Hint
         {
             public string Desktop;
             public string Touch;
-            public float Timeout;
-            public int Done;       // 0 timeout only, 1 moved, 2 fired, 3 switched weapons
+            public float Timeout;      // seconds of game time; 0 = until done
         }
 
         private static readonly Hint[] s_Hints =
         {
-            new Hint { Desktop = "WASD — ДВИЖЕНИЕ", Touch = "ЛЕВЫЙ ДЖОЙСТИК — ДВИЖЕНИЕ", Timeout = 9f, Done = 1 },
-            new Hint { Desktop = "МЫШЬ — ПРИЦЕЛ, ЛЕВАЯ КНОПКА — ОГОНЬ", Touch = "ПРАВЫЙ ДЖОЙСТИК — ПРИЦЕЛ И ОГОНЬ", Timeout = 9f, Done = 2 },
-            new Hint { Desktop = "Q — ТОПОР. ПАТРОНОВ МАЛО, БЕРЕГИТЕ ИХ", Touch = "КНОПКА ОРУЖИЯ — ТОПОР. ПАТРОНОВ МАЛО", Timeout = 9f, Done = 3 },
-            new Hint { Desktop = "ЗАЩИЩАЙТЕ МАШИНУ! МЕЖДУ ВОЛНАМИ: E У МАШИНЫ — ПАТРОНЫ, E У ГАРАЖА — МАСТЕРСКАЯ",
-                Touch = "ЗАЩИЩАЙТЕ МАШИНУ! МЕЖДУ ВОЛНАМИ У МАШИНЫ — ПАТРОНЫ, У ГАРАЖА — МАСТЕРСКАЯ", Timeout = 7f },
-            new Hint { Desktop = "КРАСНЫЕ БОЧКИ ВЗРЫВАЮТСЯ — СТРЕЛЯЙТЕ ПО НИМ, КОГДА РЯДОМ ЗОМБИ",
-                Touch = "КРАСНЫЕ БОЧКИ ВЗРЫВАЮТСЯ — СТРЕЛЯЙТЕ ПО НИМ, КОГДА РЯДОМ ЗОМБИ", Timeout = 6f },
+            new Hint { Desktop = "ЗОМБИ! ЦЕЛЬСЯ МЫШЬЮ, ЛЕВАЯ КНОПКА — ОГОНЬ",
+                Touch = "ЗОМБИ! ТЯНИ ПРАВЫЙ ДЖОЙСТИК — ПРИЦЕЛ И ОГОНЬ", Timeout = 7f },
+            new Hint { Desktop = "ПАТРОНЫ КОНЧИЛИСЬ! ТОПОР — КЛАВИША 2. ПАТРОНЫ — У МАШИНЫ (E)",
+                Touch = "ПАТРОНЫ КОНЧИЛИСЬ! БЕЙ ТОПОРОМ. ПАТРОНЫ — У МАШИНЫ", Timeout = 8f },
+            new Hint { Desktop = "МАСТЕРСКАЯ ОТКРЫТА! У ГАРАЖА НАЖМИ E — УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ",
+                Touch = "МАСТЕРСКАЯ ОТКРЫТА! ПОДОЙДИ К ГАРАЖУ — УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ", Timeout = 9f },
+            new Hint { Desktop = "ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ» — ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА",
+                Touch = "ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ» — ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА", Timeout = 0f },
         };
 
         [SerializeField] private TutorialState m_State;
         [SerializeField] private PlayerInputProvider m_Input;
-        [SerializeField] private WeaponState m_Weapons;
         [SerializeField] private RunState m_Run;
-        [Tooltip("Seconds after the map starts before the first hint.")]
-        [SerializeField, Min(0f)] private float m_StartDelay = 1f;
+        [SerializeField] private WaveState m_Waves;
+        [SerializeField] private AmmoState m_Ammo;
+        [SerializeField] private ZombieSpawner m_Spawner;
         [Tooltip("Seconds a hint stays after the player did it (so it is read).")]
         [SerializeField, Min(0f)] private float m_Linger = 0.8f;
-        [Tooltip("Metres the player has to walk to finish the movement hint.")]
-        [SerializeField, Min(0f)] private float m_MoveDistance = 2f;
 
-        private int m_Index = -1;
+        private bool m_Live;
+        private int m_Shown;                  // bit per Live hint
+        private int m_Current = -1;
         private float m_Time;
         private float m_DoneAt = -1f;
-        private Vector3 m_Start;
-        private WeaponSlot m_Weapon;
+        private bool m_WaveCleared;
 
-        /// <summary>The tutorial runs in this map (tests).</summary>
-        public bool Running => m_Index >= 0 && m_Index < s_Hints.Length;
+        /// <summary>The tutorial runs in this map: the cards are open or live hints are still to come (tests).</summary>
+        public bool Running => m_State != null && (m_State.CardsOpen || m_Live);
 
         private void Start()
         {
-            if (m_State != null)
-                m_State.Hide();
-            if (MetaProgress.TutorialDone || m_State == null)
+            if (m_State == null)
             {
                 enabled = false;
                 return;
             }
-            m_Index = -1;
-            m_Time = -m_StartDelay;
+            m_State.Hide();
+            m_State.CardsClosed += OnCardsClosed;
+            if (m_Waves != null)
+                m_Waves.WaveEnded += OnWaveEnded;
+            if (!MetaProgress.TutorialDone)
+                OpenCards();
+            else
+                m_Live = !MetaProgress.LiveHintsDone;
         }
 
-        /// <summary>Starts the tutorial again even if it was seen (tests).</summary>
+        private void OnDestroy()
+        {
+            if (m_State != null)
+            {
+                m_State.CardsClosed -= OnCardsClosed;
+                m_State.CloseCards();
+                m_State.Hide();
+            }
+            if (m_Waves != null)
+                m_Waves.WaveEnded -= OnWaveEnded;
+            GamePause.Set(GamePause.Reason.Tutorial, false);
+        }
+
+        /// <summary>Starts the tutorial again from the cards even if it was seen (cheats, tests).</summary>
         public void Restart()
         {
-            enabled = true;
-            m_Index = -1;
-            m_Time = 0f;
+            MetaProgress.TutorialDone = false;
+            MetaProgress.LiveHintsDone = false;
+            OpenCards();
         }
+
+        private void OpenCards()
+        {
+            m_Live = false;
+            m_Current = -1;
+            m_State.OpenCards();
+            GamePause.Set(GamePause.Reason.Tutorial, true);
+        }
+
+        // Also after the settings' "Обучение" (it clears LiveHintsDone first): the live hints start over.
+        private void OnCardsClosed()
+        {
+            MetaProgress.TutorialDone = true;
+            m_Live = !MetaProgress.LiveHintsDone;
+            m_Shown = 0;
+            m_Current = -1;
+        }
+
+        private void OnWaveEnded(int wave) => m_WaveCleared = true;
 
         private void Update()
         {
-            if (m_Run != null && m_Run.IsOver)
+            bool over = m_Run != null && m_Run.IsOver;
+            // The game waits while the cards are open (opened here or by the settings' button).
+            GamePause.Set(GamePause.Reason.Tutorial, m_State.CardsOpen && !over);
+            if (!m_Live || m_State.CardsOpen)
+                return;
+            if (over)
             {
-                Finish();
+                m_Current = -1;
+                m_State.Hide();
                 return;
             }
-            m_Time += Time.deltaTime;
-            if (m_Index < 0)
+            // The first level-up card takes over whatever hint is on.
+            if (GamePause.Has(GamePause.Reason.LevelUp) && !Shown(Live.FirstCard) && m_Current != (int)Live.FirstCard)
+                Begin(Live.FirstCard);
+            if (m_Current >= 0)
             {
-                if (m_Time >= 0f)
-                    Next();
+                Tick();
                 return;
             }
-            Hint hint = s_Hints[m_Index];
-            if (m_DoneAt < 0f && IsDone(hint))
-                m_DoneAt = m_Time;
-            if ((m_DoneAt >= 0f && m_Time - m_DoneAt >= m_Linger) || m_Time >= hint.Timeout)
-                Next();
-        }
-
-        private bool IsDone(Hint hint)
-        {
-            IPlayerInput input = m_Input != null ? m_Input.Input : null;
-            switch (hint.Done)
+            if (!Shown(Live.NoAmmo) && m_Ammo != null && m_Ammo.InMagazine + m_Ammo.Reserve == 0)
+                Begin(Live.NoAmmo);
+            else if (!Shown(Live.FirstZombie) && m_Spawner != null && m_Spawner.Alive > 0)
+                Begin(Live.FirstZombie);
+            else if (!Shown(Live.Workshop) && m_WaveCleared && m_Waves != null && !m_Waves.IsWaveRunning)
+                Begin(Live.Workshop);
+            else if (m_Shown == (1 << (int)Live.Count) - 1)
             {
-                case 1:
-                    Vector3 d = m_Input.transform.position - m_Start;
-                    d.y = 0f;
-                    return d.magnitude >= m_MoveDistance;
-                case 2:
-                    return input != null && (input.FireHeld || input.FirePressed || input.QuickTap);
-                case 3:
-                    return m_Weapons != null && m_Weapons.Current != m_Weapon;
-                default:
-                    return false;
+                MetaProgress.LiveHintsDone = true;
+                m_Live = false;
             }
         }
 
-        private void Next()
+        private bool Shown(Live hint) => (m_Shown & (1 << (int)hint)) != 0;
+
+        private void Begin(Live hint)
         {
-            m_Index++;
+            m_Current = (int)hint;
+            m_Shown |= 1 << m_Current;
             m_Time = 0f;
             m_DoneAt = -1f;
-            if (m_Index >= s_Hints.Length)
+            Hint h = s_Hints[m_Current];
+            m_State.Show(DeviceInfo.IsMobile ? h.Touch : h.Desktop);
+        }
+
+        private void Tick()
+        {
+            m_Time += Time.deltaTime;
+            Hint hint = s_Hints[m_Current];
+            if (m_DoneAt < 0f && IsDone((Live)m_Current))
+                m_DoneAt = m_Time;
+            bool lingered = m_DoneAt >= 0f && (m_Time - m_DoneAt >= m_Linger || m_Current == (int)Live.FirstCard);
+            if (lingered || (hint.Timeout > 0f && m_Time >= hint.Timeout))
             {
-                Finish();
-                return;
+                m_Current = -1;
+                m_State.Hide();
             }
-            if (m_Input != null)
-                m_Start = m_Input.transform.position;
-            if (m_Weapons != null)
-                m_Weapon = m_Weapons.Current;
-            Hint hint = s_Hints[m_Index];
-            m_State.Show(DeviceInfo.IsMobile ? hint.Touch : hint.Desktop, m_Index + 1, s_Hints.Length);
         }
 
-        private void Finish()
+        private bool IsDone(Live hint)
         {
-            MetaProgress.TutorialDone = true;
-            m_Index = s_Hints.Length;
-            if (m_State != null)
-                m_State.Hide();
-            enabled = false;
-        }
-
-        private void OnDisable()
-        {
-            if (m_State != null && Running)
-                m_State.Hide();
+            IPlayerInput input = m_Input != null ? m_Input.Input : null;
+            switch (hint)
+            {
+                case Live.FirstZombie:
+                    return input != null && (input.FireHeld || input.FirePressed || input.QuickTap);
+                case Live.NoAmmo:
+                    return m_Ammo == null || m_Ammo.InMagazine + m_Ammo.Reserve > 0;
+                case Live.Workshop:
+                    return m_Waves == null || m_Waves.IsWaveRunning || (m_Run != null && m_Run.WorkshopOpen);
+                case Live.FirstCard:
+                    return !GamePause.Has(GamePause.Reason.LevelUp);
+                default:
+                    return true;
+            }
         }
     }
 }

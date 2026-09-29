@@ -56,7 +56,7 @@ namespace ZombiCar.UI
         [SerializeField] private string m_WaveFormat = "ВОЛНА {0}";
         [SerializeField] private string m_ValueFormat = "{0} / {1}";
         [SerializeField] private string m_TimerFormat = "{0:00}:{1:00}";
-        [SerializeField] private string m_BossTimer = "БОСС";
+        [SerializeField] private string m_BossTimer = string.Empty;
 
         private int m_ShownMoney = -1;
         private float m_MoneyPunch = float.NegativeInfinity;

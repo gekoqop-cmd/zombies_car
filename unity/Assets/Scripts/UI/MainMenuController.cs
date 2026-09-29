@@ -25,6 +25,9 @@ namespace ZombiCar.UI
         [SerializeField] private CasesScreen m_Cases;
         [Tooltip("Coins the player has, next to the cases button.")]
         [SerializeField] private TMPro.TMP_Text m_CoinsLabel;
+        [Tooltip("\"ТАБЛИЦА ЛИДЕРОВ\": the Yandex Games best-time table.")]
+        [SerializeField] private Button m_LeaderboardButton;
+        [SerializeField] private LeaderboardPanel m_Leaderboard;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.3f;
         [Tooltip("Calm menu track (cross-fades from the map's music when coming back).")]
         [SerializeField] private AudioClip m_Music;
@@ -34,6 +37,7 @@ namespace ZombiCar.UI
         public bool IsMapSelectionOpen => m_MapOpen;
         public SettingsPanel Settings => m_Settings;
         public CasesScreen Cases => m_Cases;
+        public LeaderboardPanel Leaderboard => m_Leaderboard;
 
         private void Awake()
         {
@@ -44,6 +48,7 @@ namespace ZombiCar.UI
                 m_BackButton.onClick.AddListener(() => ShowMapSelection(false));
             if (m_CasesButton != null && m_Cases != null)
                 m_CasesButton.onClick.AddListener(m_Cases.Show);
+            m_LeaderboardButton.onClick.AddListener(m_Leaderboard.Open);
             Apply(1f, true);
         }
 
@@ -58,7 +63,7 @@ namespace ZombiCar.UI
         private void ShowCoins()
         {
             if (m_CoinsLabel != null)
-                m_CoinsLabel.SetText($"МОНЕТЫ: {MetaProgress.Coins}");
+                m_CoinsLabel.SetText(MetaProgress.Coins.ToString());
         }
 
         // The menu is the first screen the player can use: the game is loaded for the platform.
@@ -66,6 +71,11 @@ namespace ZombiCar.UI
         {
             YandexSdk.NotifyGameReady();
             AudioManager.PlayMusic(m_Music);
+            if (MetaProgress.OpenCasesOnMenu && m_Cases != null)
+            {
+                MetaProgress.OpenCasesOnMenu = false;                     // the victory screen's "К КЕЙСАМ"
+                m_Cases.Show();
+            }
         }
 
         public void ShowMapSelection(bool open)
