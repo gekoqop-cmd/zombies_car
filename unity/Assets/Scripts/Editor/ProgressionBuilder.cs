@@ -72,47 +72,44 @@ namespace ZombiCar.EditorTools
         };
 
         // Car upgrades. Every level gives more than the one before (value + step × level; the tile shows the next
-        // level's gain), and so do the endless master levels after the last one (price: last level × 1.35^n). The last
+        // level's gain); the last level is the top (МАКС). The last
         // two levels cost ~1.5x of what they used to (scrap piled up by wave 30).
         private static CarUpgrade[] CarUpgrades() => new[]
         {
-            // 6 / 7 / 8 / 9 / 10% (40% in all, as before), master 1.5 / 2 / 2.5% ... (capped at 75% by CarHealth).
+            // 6 / 7 / 8 / 9 / 10% (40% in all).
             new CarUpgrade("armor", "БРОНЯ", "Машина получает на {1}% меньше урона", Icon("Armor"), StatEffect.CarArmor, 0.06f,
-                new[] { 60, 110, 180, 405, 600 }, masterValue: 0.015f, masterDescription: "Ещё −{1}% урона машине",
-                valueStep: 0.01f, masterStep: 0.005f),
-            // +40 / 50 / 60 / 70 / 80 (300 in all, as before), master +12 / 14 / 16 ...
+                new[] { 60, 110, 180, 405, 600 }, valueStep: 0.01f),
+            // +40 / 50 / 60 / 70 / 80 (300 in all)
             new CarUpgrade("hull", "УСИЛЕННЫЙ КОРПУС", "+{0} к прочности машины (и ремонт)", Icon("Hull"), StatEffect.CarMaxHealth, 40f,
-                new[] { 50, 100, 160, 360, 525 }, masterValue: 12f, masterDescription: "Ещё +{0} к прочности",
-                valueStep: 10f, masterStep: 2f),
-            // 8 / 10 / 12 / 14 damage (44 in all), master +2 / 3 / 4 ...
+                new[] { 50, 100, 160, 360, 525 }, valueStep: 10f),
+            // 8 / 10 / 12 / 14 damage (44 in all)
             new CarUpgrade("spikes", "ШИПЫ", "Зомби, бьющий машину, получает +{0} урона", Icon("Spikes"), StatEffect.CarSpikes, 8f,
-                new[] { 70, 140, 345, 525 }, masterValue: 2f, masterDescription: "Ещё +{0} урона шипов",
-                valueStep: 2f, masterStep: 1f),
-            // +20 / 25 / 30 (75 in all), master +3 / 4 / 5 ...
+                new[] { 70, 140, 345, 525 }, valueStep: 2f),
+            // +20 / 25 / 30 (75 in all)
             new CarUpgrade("shock", "ЭЛЕКТРОРАЗРЯД", "Раз в 6 с бьёт током зомби рядом: +{0} урона", Icon("Shock"), StatEffect.CarShock, 20f,
-                new[] { 150, 420, 675 }, masterValue: 3f, masterDescription: "Ещё +{0} урона разряда",
-                valueStep: 5f, masterStep: 1f),
-            // +30 / 40 / 50 / 60 rounds (180 in all), master +5 / 6 / 7 ...
+                new[] { 150, 420, 675 }, valueStep: 5f),
+            // +30 / 40 / 50 / 60 rounds (180 in all)
             new CarUpgrade("ammo", "ОРУЖЕЙНЫЙ ЯЩИК", "+{0} к запасу патронов (вместимость)", Icon("AmmoBox"), StatEffect.MaxReserve, 30f,
-                new[] { 60, 110, 270, 390 }, masterValue: 5f, masterDescription: "Ещё +{0} к запасу патронов",
-                valueStep: 10f, masterStep: 1f),
+                new[] { 60, 110, 270, 390 }, valueStep: 10f),
         };
 
-        /// <summary>The repair (the last supply) is paid with a rewarded ad only, this many times per run.</summary>
+        /// <summary>The full repair is paid with a rewarded ad only, this many times per run.</summary>
         public const int c_AdRepairsPerRun = 3;
+        /// <summary>The mines (all eight places round the car filled) for a rewarded ad, this many times per run.</summary>
+        public const int c_AdMinesPerRun = 4;
+        private const float c_FullRepair = 100000f;          // more than any car has: the repair fills it up
 
-        // Supplies: bought again and again between waves, the price grows with every purchase in the run. The repair is
-        // not for scrap: a rewarded ad gives +200 durability (up to the maximum), c_AdRepairsPerRun times a run.
+        // Supplies, between waves, all for a rewarded ad: the first-aid kit (into the inventory, up to 5, used with 3),
+        // the full repair (c_AdRepairsPerRun times a run) and the mines — every free place of the eight round the car
+        // filled (c_AdMinesPerRun times a run).
         private static CarUpgrade[] Supplies() => new[]
         {
-            new CarUpgrade("medkit", "АПТЕЧКА", "Полное здоровье героя", Icon("Medkit"), StatEffect.HealPlayerFull, 0f,
-                new[] { 60 }, true, 20),
-            new CarUpgrade("ammobox", "ЯЩИК ПАТРОНОВ", "Полный магазин и запас", Icon("Magazine"), StatEffect.RefillAmmo, 0f,
-                new[] { 40 }, true),
-            new CarUpgrade("mines", "МИНЫ", "{0} мины у машины на следующую волну", Icon("Bomb"), StatEffect.PlaceMines, 4f,
-                new[] { 120 }, true),
-            new CarUpgrade("repair", "РЕМОНТ +200", "Прочность машины +{0}", Icon("Repair"), StatEffect.RepairCar, 200f,
-                new[] { 0 }, true, adUsesPerRun: c_AdRepairsPerRun),
+            new CarUpgrade("medkit", "АПТЕЧКА", "В инвентарь (до 5), лечит полностью: клавиша 3", Icon("Medkit"), StatEffect.StoreMedkit, 1f,
+                new[] { 0 }, true, adUsesPerRun: CarUpgrade.UnlimitedAdUses),
+            new CarUpgrade("repair", "РЕМОНТ МАШИНЫ", "Полностью восстанавливает прочность машины", Icon("Repair"), StatEffect.RepairCar,
+                c_FullRepair, new[] { 0 }, true, adUsesPerRun: c_AdRepairsPerRun),
+            new CarUpgrade("mines", "МИНЫ", "Все 8 мин вокруг машины", Icon("Bomb"), StatEffect.PlaceMines, 8f,
+                new[] { 0 }, true, adUsesPerRun: c_AdMinesPerRun),
         };
     }
 }

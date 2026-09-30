@@ -186,9 +186,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -5946641016736059026, guid: 15c757952fe7f0948ab36e5a091115e2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4251970171470552574}
+    - targetCorrespondingSourceObject: {fileID: -5946641016736059026, guid: 15c757952fe7f0948ab36e5a091115e2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 88113581178740485}
     - targetCorrespondingSourceObject: {fileID: 6975531371975348633, guid: 15c757952fe7f0948ab36e5a091115e2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8062704292324542075}
+    - targetCorrespondingSourceObject: {fileID: 6975531371975348633, guid: 15c757952fe7f0948ab36e5a091115e2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8728476594001695447}
     - targetCorrespondingSourceObject: {fileID: -5499232568950488389, guid: 15c757952fe7f0948ab36e5a091115e2, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7318684306676906692}
@@ -309,6 +315,30 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.63, y: 0.88, z: 0.63}
   m_Center: {x: 0, y: 0.44, z: 0}
+--- !u!114 &88113581178740485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4540537149529254749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa44210c139a35e4bb16f4507c4f39d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Props.ExplosiveProp
+  m_Health: 20
+  m_Radius: 4.5
+  m_Damage: 130
+  m_EdgeDamage: 0.35
+  m_Push: 1.4
+  m_FxSize: 1
+  m_ChainDelay: 0.15
+  m_HitboxPadding: 0.35
+  m_HitboxHeight: 1.7
+  m_Explosion: {fileID: 7514051702815746530, guid: 59a3b4c9afb143f439cf48e41f958485, type: 3}
+  m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
+  m_Waves: {fileID: 11400000, guid: 73ea086a7dd071e4a8eff0ddb603fb56, type: 2}
 --- !u!1 &5384935897351230340 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6395482351800191415, guid: 15c757952fe7f0948ab36e5a091115e2, type: 3}
@@ -413,3 +443,27 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.63, y: 0.88, z: 0.63}
   m_Center: {x: 0, y: 0.44, z: 0}
+--- !u!114 &8728476594001695447
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8265340241119087530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa44210c139a35e4bb16f4507c4f39d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Props.ExplosiveProp
+  m_Health: 20
+  m_Radius: 4.5
+  m_Damage: 130
+  m_EdgeDamage: 0.35
+  m_Push: 1.4
+  m_FxSize: 1
+  m_ChainDelay: 0.15
+  m_HitboxPadding: 0.35
+  m_HitboxHeight: 1.7
+  m_Explosion: {fileID: 7514051702815746530, guid: 59a3b4c9afb143f439cf48e41f958485, type: 3}
+  m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
+  m_Waves: {fileID: 11400000, guid: 73ea086a7dd071e4a8eff0ddb603fb56, type: 2}

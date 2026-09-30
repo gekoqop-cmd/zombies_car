@@ -40,6 +40,7 @@ namespace ZombiCar.Player
                 return;
             m_Run.ModifiersChanged += ApplyModifiers;
             m_Run.EffectApplied += OnEffectApplied;
+            m_Run.MedkitRequested += OnMedkitRequested;
         }
 
         private void OnDisable()
@@ -48,6 +49,7 @@ namespace ZombiCar.Player
                 return;
             m_Run.ModifiersChanged -= ApplyModifiers;
             m_Run.EffectApplied -= OnEffectApplied;
+            m_Run.MedkitRequested -= OnMedkitRequested;
         }
 
         private void Start() => ApplyModifiers();
@@ -125,6 +127,19 @@ namespace ZombiCar.Player
                     Heal(m_Stats.MaxHealth);
                     break;
             }
+        }
+
+        // A kit from the inventory (3 / the HUD slot): heals to full, only when alive and hurt, never while paused.
+        private void OnMedkitRequested()
+        {
+            if (m_Run == null || GamePause.IsPaused || m_Run.IsOver || !IsAlive || m_Run.Medkits <= 0 || m_Stats.Health >= m_Stats.MaxHealth)
+            {
+                AudioManager.PlaySfx(Sound.UiDenied);
+                return;
+            }
+            m_Run.ConsumeMedkit();
+            Heal(m_Stats.MaxHealth);
+            AudioManager.PlaySfx(Sound.SupplyMedkit);
         }
     }
 }

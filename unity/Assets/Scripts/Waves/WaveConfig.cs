@@ -51,9 +51,9 @@ namespace ZombiCar.Waves
 
         [SerializeField, Min(1)] private int m_WaveCount = 10;
         [SerializeField, Min(1f)] private float m_WaveDuration = 60f;
-        [SerializeField, Min(0f)] private float m_BreakBetweenWaves = 10f;
+        [SerializeField, Min(0f)] private float m_BreakBetweenWaves = 25f;
         [Tooltip("Countdown before the first wave.")]
-        [SerializeField, Min(0f)] private float m_FirstWaveDelay = 5f;
+        [SerializeField, Min(0f)] private float m_FirstWaveDelay = 8f;
         [SerializeField, Min(1)] private int m_EnemiesFirstWave = 8;
         [Tooltip("Additional enemies per next wave.")]
         [SerializeField, Min(0)] private int m_EnemiesGrowthPerWave = 4;

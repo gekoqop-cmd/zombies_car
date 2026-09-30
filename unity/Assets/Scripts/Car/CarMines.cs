@@ -8,8 +8,8 @@ using ZombiCar.Props;
 namespace ZombiCar.Car
 {
     /// <summary>
-    /// The workshop's mines (<see cref="StatEffect.PlaceMines"/>): bought between waves, they are laid in a ring around
-    /// the car (the corners first) and wait there; a zombie stepping close sets one off — the comic
+    /// The workshop's mines (<see cref="StatEffect.PlaceMines"/>, for a rewarded ad): taken between waves, they fill the
+    /// free places of a ring of eight around the car (the corners first) and wait there; a zombie stepping close sets one off — the comic
     /// explosion, heavy damage falling off to the edge of the blast and a push. Publishes how many lie there to
     /// <see cref="RunState.ArmedMines"/> (the workshop does not sell more while all are still armed).
     /// </summary>
@@ -33,7 +33,8 @@ namespace ZombiCar.Car
 
         private readonly List<GameObject> m_Mines = new List<GameObject>();
         private readonly HashSet<IDamageable> m_Hit = new HashSet<IDamageable>();
-        private int m_NextSlot;
+        private readonly List<int> m_Slots = new List<int>();          // the ring place of each mine in m_Mines
+        private const int c_Places = 8;
 
         public int Armed => m_Mines.Count;
 
@@ -47,13 +48,15 @@ namespace ZombiCar.Car
                 Place(Mathf.RoundToInt(value));
         }
 
-        /// <summary>Lays <paramref name="count"/> mines around the car (workshop, tests).</summary>
+        /// <summary>Lays up to <paramref name="count"/> mines on the free places around the car (workshop, tests).</summary>
         public void Place(int count)
         {
-            for (int i = 0; i < count; i++)
+            for (int slot = 0; slot < c_Places && count > 0; slot++)
             {
+                if (m_Slots.Contains(slot))
+                    continue;                                            // still armed there
+                count--;
                 // The four corners, then between them.
-                int slot = m_NextSlot++ % 8;
                 float angle = (slot < 4 ? 45f + slot * 90f : slot * 90f) * Mathf.Deg2Rad;
                 Vector3 at = transform.position + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * m_RingRadius;
                 at.y = transform.position.y;
@@ -61,6 +64,7 @@ namespace ZombiCar.Car
                 go.name = $"Mine{m_Mines.Count + 1}";
                 go.SetActive(true);
                 m_Mines.Add(go);
+                m_Slots.Add(slot);
             }
             m_Run.SetArmedMines(m_Mines.Count);
         }
@@ -91,6 +95,7 @@ namespace ZombiCar.Car
             Vector3 at = m_Mines[index].transform.position;
             Destroy(m_Mines[index]);
             m_Mines.RemoveAt(index);
+            m_Slots.RemoveAt(index);
             m_Run.SetArmedMines(m_Mines.Count);
             if (m_Explosion != null)
                 ComicExplosion.Spawn(m_Explosion, at, m_BlastRadius, 1f);

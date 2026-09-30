@@ -375,7 +375,7 @@ namespace ZombiCar.EditorTools
 
             // Collection page.
             RectTransform collection = UiFactory.Stretch("CollectionPage", window);
-            OutlinedLabel("Hint", collection, top, top, new Vector2(0f, -196f), new Vector2(1000f, 40f), "НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ  •  ЛЕГЕНДАРНЫЕ ДАЮТ БОНУС В ЗАБЕГЕ", 26f,
+            OutlinedLabel("Hint", collection, top, top, new Vector2(0f, -196f), new Vector2(1000f, 40f), "НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ", 28f,
                 TextAlignmentOptions.Center, s_SubtitleColor, outline);
             RectTransform grid = UiFactory.Rect("Grid", collection, top, top, new Vector2(0f, -248f), new Vector2(1220f, 460f));
             var layout = grid.gameObject.AddComponent<GridLayoutGroup>();
@@ -760,9 +760,10 @@ namespace ZombiCar.EditorTools
             RectTransform healthTrack = PartRect(hp, "HealthBar", 706, 277, 2022, 420, s_HpRef);
             UiFactory.Image(healthTrack, UiFactory.Sprite("UI_BarTrack"), Color.white, true);
             RectTransform healthFillRt = Inset(UiFactory.Stretch("Fill", healthTrack), 7f);
-            Image healthFill = UiFactory.Fill(healthFillRt, UiFactory.Sprite("UI_BarFillRed"), Color.white, 1f);
-            TextMeshProUGUI healthValue = OutlinedLabel("HealthValue", healthTrack, new Vector2(1f, 0.5f), new Vector2(1f, 0.5f),
-                new Vector2(-14f, 0f), new Vector2(220f, 46f), string.Empty, 34f, TextAlignmentOptions.Right, Color.white, outline);
+            Image healthFill = SceneBuilder.DamageTrail(healthTrack, UiFactory.Fill(healthFillRt, UiFactory.Sprite("UI_BarFillRed"), Color.white, 1f));
+            // The numbers sit above the bar's right end, on the "ЗДОРОВЬЕ" line: the bar itself stays clear.
+            TextMeshProUGUI healthValue = OutlinedLabel("HealthValue", healthTrack, new Vector2(1f, 1f), new Vector2(1f, 0f),
+                new Vector2(-6f, -2f), new Vector2(240f, 42f), string.Empty, 32f, TextAlignmentOptions.BottomRight, Color.white, outline);
             TextMeshProUGUI levelLabel = PartLabel(hp, "LevelLabel", 720, 448, 1160, 552, s_HpRef, string.Empty, 26f, TextAlignmentOptions.Left, outline);
             RectTransform levelTrack = PartRect(hp, "LevelBar", 1178, 461, 2020, 556, s_HpRef);
             UiFactory.Image(levelTrack, UiFactory.Sprite("UI_BarTrack"), Color.white, true);
@@ -813,6 +814,7 @@ namespace ZombiCar.EditorTools
             RectTransform moneyPanel = BuildRunCounters(safe, outline, margin + hpHeight + 12f, out TextMeshProUGUI moneyValue);
             BuildPerkTray(safe, outline, margin + hpHeight + 12f + 58f + 14f);
             BuildInteractionPrompt(safe, outline);
+            BuildBreakSkip(safe, outline);
             WaveBanner banner = BuildWaveBanner(safe, outline);
             BuildCarAttackAlert(safe, outline, banner);
             BuildWeaponSlots(safe, outline);
@@ -909,6 +911,10 @@ namespace ZombiCar.EditorTools
                 new Vector2(c_TouchSlot, c_TouchSlot * 2f + c_WeaponSlotGap));
             Image gunSlot = WeaponSlotPlate("Gun", weapon, c_TouchSlot, c_TouchSlot + c_WeaponSlotGap, "UI_Icon_Rifle", null, outline);
             Image axeSlot = WeaponSlotPlate("Axe", weapon, c_TouchSlot, 0f, "UI_Icon_Axe", null, outline);
+            // First-aid kits: a slot left of the gun slot (its own control: it moves on its own).
+            RectTransform medkit = MedkitSlot("MedkitSlot", area, bottomRight,
+                new Vector2(-c_StickTouch - 16f - c_TouchSlot * 1.5f - 14f, c_StickTouch * 0.5f + (c_TouchSlot + c_WeaponSlotGap) * 0.5f),
+                c_TouchSlot, null, outline);
             var slots = weapon.gameObject.AddComponent<WeaponSlotsView>();
             PrefabBuilder.Wire(slots, ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)),
                 ("m_GunPlate", gunSlot), ("m_AxePlate", axeSlot), ("m_Layout", layout));
@@ -932,7 +938,8 @@ namespace ZombiCar.EditorTools
             var so = new SerializedObject(layout);
             so.FindProperty("m_Area").objectReferenceValue = area;
             SerializedProperty controls = so.FindProperty("m_Controls");
-            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload), ("action", action), ("weapons", weapon) };
+            (string id, RectTransform rect)[] list = { ("move", move), ("aim", aim), ("reload", reload), ("action", action), ("weapons", weapon),
+                ("medkit", medkit) };
             controls.arraySize = list.Length;
             for (int i = 0; i < list.Length; i++)
             {

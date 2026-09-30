@@ -96,28 +96,28 @@ namespace ZombiCar.EditorTools
             new ZombieSpec
             {
                 Look = new Look { Name = "Walker", Clips = HumanoidClips(new[] { 2, 1 }, 3.5f) },
-                Health = 30, Speed = 1.3f, Damage = 4, AttackInterval = 1.3f, Xp = 5, Reward = 2, FromWave = 1, Weight = 5f,
+                Health = 30, Speed = 1.3f, Damage = 4, AttackInterval = 1.3f, Xp = 5, Reward = 4, FromWave = 1, Weight = 5f,
             },
             new ZombieSpec
             {
                 // Hard hat: takes twice the bullets, barely flinches.
                 Look = new Look { Name = "Worker", Clips = HumanoidClips(new[] { 2, 1 }, 3.2f) },
                 Health = 60, Speed = 1.15f, SpeedVariation = 0.1f, Damage = 5, AttackInterval = 1.4f,
-                Stagger = 0.12f, Knockback = 0.1f, Xp = 10, Reward = 3, FromWave = 2, Weight = 2f,
+                Stagger = 0.12f, Knockback = 0.1f, Xp = 10, Reward = 6, FromWave = 2, Weight = 2f,
             },
             new ZombieSpec
             {
                 // Runner.
                 Look = new Look { Name = "RedCap", Clips = HumanoidClips(new[] { 2, 3 }, 5f) },
                 Health = 25, Speed = 2.1f, Damage = 4, AttackInterval = 1.1f, AttackAnimSpeed = 1.2f, Aggro = 6f,
-                Knockback = 0.25f, Xp = 5, Reward = 3, FromWave = 2, Weight = 2f,
+                Knockback = 0.25f, Xp = 5, Reward = 6, FromWave = 2, Weight = 2f,
             },
             new ZombieSpec
             {
                 // Stalker: hunts the player instead of the car.
                 Look = new Look { Name = "Hoodie", Clips = HumanoidClips(new[] { 2, 3 }, 4f) },
                 Health = 40, Speed = 1.6f, Damage = 6, AttackInterval = 1.2f, Preference = ZombieTarget.Player,
-                Xp = 7, Reward = 3, FromWave = 3, Weight = 1.5f,
+                Xp = 7, Reward = 6, FromWave = 3, Weight = 1.5f,
             },
             new ZombieSpec
             {
@@ -135,7 +135,7 @@ namespace ZombiCar.EditorTools
                 },
                 AgentRadius = 0.5f, ColliderRadius = 0.5f, ColliderHeight = 1.6f,
                 Health = 18, Speed = 3.6f, SpeedVariation = 0.1f, Damage = 3, AttackInterval = 0.8f, AttackRange = 0.5f,
-                Preference = ZombieTarget.Player, Stagger = 0.15f, Knockback = 0.35f, Xp = 4, Reward = 2, FromWave = 4, Weight = 1.2f,
+                Preference = ZombieTarget.Player, Stagger = 0.15f, Knockback = 0.35f, Xp = 4, Reward = 4, FromWave = 4, Weight = 1.2f,
             },
             new ZombieSpec
             {
@@ -153,7 +153,7 @@ namespace ZombiCar.EditorTools
                 },
                 AgentRadius = 0.75f, ColliderRadius = 0.75f, ColliderHeight = 2.6f,
                 Health = 250, Speed = 0.95f, SpeedVariation = 0.05f, Damage = 20, AttackInterval = 2f, AttackRange = 0.8f,
-                Aggro = 3f, Stagger = 0f, Knockback = 0f, Xp = 40, Reward = 15, FromWave = 5, Weight = 0.5f,
+                Aggro = 3f, Stagger = 0f, Knockback = 0f, Xp = 40, Reward = 30, FromWave = 5, Weight = 0.5f,
             },
         };
 
@@ -202,7 +202,7 @@ namespace ZombiCar.EditorTools
                 Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BossClips("Boss1") },
                 AgentRadius = 1f, ColliderRadius = 1f, ColliderHeight = 3.4f,
                 Health = 1600, Speed = 0.85f, SpeedVariation = 0.02f, Damage = 25, AttackInterval = 2.2f, AttackRange = 1f,
-                AttackAnimSpeed = 0.9f, Aggro = 7f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 150,
+                AttackAnimSpeed = 0.9f, Aggro = 7f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 300,
                 DisplayName = "МАТКА",
                 Boss = new BossSpec
                 {
@@ -228,7 +228,7 @@ namespace ZombiCar.EditorTools
                 Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = BossClips("Boss2") },
                 AgentRadius = 0.9f, ColliderRadius = 0.85f, ColliderHeight = 3.6f,
                 Health = 3200, Speed = 1.2f, SpeedVariation = 0.02f, Damage = 30, AttackInterval = 1.6f, AttackRange = 1f,
-                Aggro = 9f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 300,
+                Aggro = 9f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 600,
                 DisplayName = "ТАРАН",
                 Boss = new BossSpec
                 {
@@ -256,7 +256,7 @@ namespace ZombiCar.EditorTools
                 AgentRadius = 1.15f, ColliderRadius = 1.15f, ColliderHeight = 4f,
                 Health = 6500, Speed = 1.1f, SpeedVariation = 0.02f, Damage = 40, AttackInterval = 1.8f, AttackRange = 1.2f,
                 AttackAnimSpeed = 0.9f, Aggro = 8f, Stagger = 0f, Knockback = 0f,
-                Xp = 1000, Reward = 500,
+                Xp = 1000, Reward = 1000,
                 DisplayName = "ЖНЕЦ",
                 Boss = new BossSpec
                 {

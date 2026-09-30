@@ -103,7 +103,7 @@ namespace ZombiCar.UI
         [Tooltip("The reward for beating all 30 waves (on top of the kills and waves): about two cases.")]
         [SerializeField, Min(0)] private int m_VictoryCoins = 250;
         [Tooltip("Scrap left at the end is exchanged: this many parts give one coin (win or lose).")]
-        [SerializeField, Min(1)] private int m_ScrapPerCoin = 25;
+        [SerializeField, Min(1)] private int m_ScrapPerCoin = 50;
 
         [Header("Look")]
         [SerializeField] private Color m_DefeatColor = new Color(1f, 0.38f, 0.3f, 1f);

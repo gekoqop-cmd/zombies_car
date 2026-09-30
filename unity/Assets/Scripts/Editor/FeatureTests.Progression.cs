@@ -88,11 +88,11 @@ namespace ZombiCar.EditorTools
                 Check(workshop.Buy(3), "bought the electric discharge");
                 money = s_Run.Money;
                 Check(money == 700 - 60 - 50 - 70 - 150, $"scrap left {money}");
-                Check(!workshop.BuySupply(3), "a repair of an intact car is not offered (НЕ НУЖНО)");
+                Check(!workshop.BuySupply(1), "a repair of an intact car is not offered (НЕ НУЖНО)");
                 s_Car.TakeDamage(120, Vector3.right);
                 int damaged = s_Car.Health;
-                Check(workshop.BuySupply(3) && s_Car.Health == Mathf.Min(damaged + 200, s_Car.MaxHealth) && s_Run.Money == money,
-                    "the repair (+200, up to the maximum) comes for an ad, not for scrap");
+                Check(workshop.BuySupply(1) && s_Car.Health == s_Car.MaxHealth && s_Run.Money == money,
+                    $"the repair (back to full from {damaged}) comes for an ad, not for scrap");
                 Check(!workshop.Buy(3), $"the second discharge level (420) is refused with {s_Run.Money} scrap");
             });
             At(3.4f, () => Shot("1_Workshop_Bought"));

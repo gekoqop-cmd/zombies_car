@@ -99,6 +99,27 @@ namespace ZombiCar.Waves
             Publish();
         }
 
+        private void OnEnable()
+        {
+            if (m_WaveState != null)
+                m_WaveState.SkipBreakRequested += SkipBreak;
+        }
+
+        private void OnDisable()
+        {
+            if (m_WaveState != null)
+                m_WaveState.SkipBreakRequested -= SkipBreak;
+        }
+
+        /// <summary>The break is cut short: the next wave comes at once (the HUD's "ПРОПУСТИТЬ ПЕРЕРЫВ", E).</summary>
+        public void SkipBreak()
+        {
+            if (m_Phase != Phase.Countdown || m_TimeLeft <= 0.5f)
+                return;
+            m_TimeLeft = 0.5f;                                       // a beat, so the skip is seen before the horn
+            Publish();
+        }
+
         private void StartCountdown(float seconds)
         {
             m_Phase = Phase.Countdown;

@@ -44,5 +44,6 @@ namespace ZombiCar.Progression
         RepairCar,         // durability points
         RefillAmmo,        // the magazine and the reserve full
         PlaceMines,        // mines put around the car (count)
+        StoreMedkit,       // a first-aid kit into the inventory (used with 3 / the HUD slot)
     }
 }

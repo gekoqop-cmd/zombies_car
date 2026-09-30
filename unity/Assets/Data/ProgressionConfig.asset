@@ -15,8 +15,8 @@ MonoBehaviour:
   m_XpBase: 30
   m_XpLinear: 20
   m_XpQuadratic: 2
-  m_WaveMoneyBase: 10
-  m_WaveMoneyPerWave: 3
+  m_WaveMoneyBase: 20
+  m_WaveMoneyPerWave: 6
   m_WaveXpBase: 10
   m_WaveXpPerWave: 2
   m_CardsPerLevelUp: 3

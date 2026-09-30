@@ -37,6 +37,7 @@ namespace ZombiCar.Progression
         [NonSerialized] private bool m_Revived;
         [NonSerialized] private int m_Rerolls;
         [NonSerialized] private int m_ArmedMines;
+        [NonSerialized] private int m_Medkits;
         [NonSerialized] private float m_StartTime;
         [NonSerialized] private float m_PlayTime = -1f;
 
@@ -103,7 +104,7 @@ namespace ZombiCar.Progression
             m_WorkshopOpen = false;
             m_Outcome = RunOutcome.None;
             m_Revived = false;
-            m_Rerolls = m_ArmedMines = 0;
+            m_Rerolls = m_ArmedMines = m_Medkits = 0;
             CoinsPaid = 0;
             CoinsDoubled = false;
             m_StartTime = Time.time;
@@ -211,18 +212,45 @@ namespace ZombiCar.Progression
         public bool GrantUpgrade(CarUpgrade upgrade)
         {
             int level = LevelOf(upgrade);
-            if (level >= (upgrade.Repeatable ? upgrade.MaxLevel : upgrade.RegularLevels))       // no master levels for free
+            if (level >= upgrade.MaxLevel)
                 return false;
             Levels["car:" + upgrade.Id] = level + 1;
             Apply(upgrade.Effect, upgrade.ValueAt(level));
             return true;
         }
 
-        private static bool IsInstant(StatEffect effect) => effect == StatEffect.HealPlayerFull || effect == StatEffect.RepairCar ||
+        // ---------------------------------------------------------------- first-aid kits in the inventory
+        public const int MaxMedkits = 5;
+
+        /// <summary>First-aid kits carried (bought in the workshop, used with 3 or the HUD slot).</summary>
+        public int Medkits => m_Medkits;
+
+        /// <summary>A kit used from the inventory is asked for (the HUD slot, the key): the player heals if it helps.</summary>
+        public event Action MedkitRequested;
+
+        public void RequestMedkit() => MedkitRequested?.Invoke();
+
+        /// <summary>Takes one kit out of the inventory; false when there is none.</summary>
+        public bool ConsumeMedkit()
+        {
+            if (m_Medkits <= 0)
+                return false;
+            m_Medkits--;
+            Changed?.Invoke();
+            return true;
+        }
+
+        private static bool IsInstant(StatEffect effect) => effect == StatEffect.StoreMedkit || effect == StatEffect.HealPlayerFull ||
+                                                           effect == StatEffect.RepairCar ||
                                                            effect == StatEffect.RefillAmmo || effect == StatEffect.PlaceMines;
 
         private void Apply(StatEffect effect, float value)
         {
+            if (effect == StatEffect.StoreMedkit)
+            {
+                m_Medkits = Mathf.Min(MaxMedkits, m_Medkits + Mathf.Max(1, Mathf.RoundToInt(value)));
+                Changed?.Invoke();
+            }
             if (!IsInstant(effect))
             {
                 Modifiers.Add(effect, value);

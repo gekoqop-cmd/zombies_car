@@ -36,13 +36,10 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_BossWave;
         [SerializeField] private TMP_Text m_BossValue;
         [SerializeField] private Image m_BossFill;
-        [SerializeField] private Image m_BossTrail;
         [SerializeField] private string m_BossWaveFormat = "ВОЛНА {0}";
         [SerializeField] private Color m_BossColor = new Color(0.86f, 0.18f, 0.16f, 1f);
         [SerializeField] private Color m_EnragedColor = new Color(1f, 0.45f, 0.12f, 1f);
         [SerializeField, Min(0.01f)] private float m_HealthTime = 0.15f;
-        [SerializeField, Min(0f)] private float m_TrailDelay = 0.3f;
-        [SerializeField, Min(0.01f)] private float m_TrailTime = 0.4f;
 
         private float m_Shown = -1f;
         private float m_BossShow;
@@ -50,9 +47,6 @@ namespace ZombiCar.UI
         private bool m_HadBoss;
         private float m_Health = 1f;
         private float m_HealthVelocity;
-        private float m_Trail = 1f;
-        private float m_TrailVelocity;
-        private float m_TrailStart;
         private float m_HitAt = float.NegativeInfinity;
         private int m_LastHealth = -1;
 
@@ -111,19 +105,13 @@ namespace ZombiCar.UI
             if (health != m_LastHealth)
             {
                 if (m_LastHealth >= 0 && health < m_LastHealth)
-                {
-                    m_HitAt = Time.time;
-                    m_TrailStart = Time.time + m_TrailDelay;
-                }
+                    m_HitAt = Time.time;                                     // the grey damage trail: DamageTrailBar
                 m_LastHealth = health;
                 m_BossValue.SetText(boss ? $"{health} / {max}" : "0");
             }
             float target = (float)health / max;
             m_Health = Mathf.SmoothDamp(m_Health, target, ref m_HealthVelocity, m_HealthTime);
-            if (m_Trail < m_Health || Time.time >= m_TrailStart)
-                m_Trail = Mathf.SmoothDamp(m_Trail, m_Health, ref m_TrailVelocity, m_TrailTime);
             m_BossFill.fillAmount = m_Health;
-            m_BossTrail.fillAmount = Mathf.Max(m_Trail, m_Health);
             m_BossFill.color = m_Waves.BossEnraged ? m_EnragedColor : m_BossColor;
             // The icon jolts on every hit.
             float hit = 1f - Mathf.Clamp01((Time.time - m_HitAt) / 0.2f);
@@ -133,8 +121,8 @@ namespace ZombiCar.UI
 
         private void OnBossAppeared(int wave)
         {
-            m_Health = m_Trail = 1f;
-            m_HealthVelocity = m_TrailVelocity = 0f;
+            m_Health = 1f;
+            m_HealthVelocity = 0f;
             m_LastHealth = -1;
             m_BossName.SetText(m_Waves.BossName);
             if (m_BossWave != null)

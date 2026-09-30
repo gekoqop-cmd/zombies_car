@@ -5,6 +5,7 @@ using ZombiCar.Core;
 using ZombiCar.Enemies;
 using ZombiCar.Progression;
 using ZombiCar.UI;
+using ZombiCar.Waves;
 
 namespace ZombiCar.EditorTools
 {
@@ -31,6 +32,15 @@ namespace ZombiCar.EditorTools
                 Check(ShotSized("12_HUD_Narrow", 1528, 1040), "HUD at 1528x1040 (browser fullscreen): the top panels do not overlap");
                 Check(ShotSized("12_HUD_4x3", 1440, 1080), "HUD at 4:3: the top panels do not overlap");
                 Check(ShotSized("12_HUD_Wide", 2400, 1080), "HUD at 20:9: the top panels do not overlap");
+                // The break before a wave: "ПРОПУСТИТЬ ПЕРЕРЫВ [E]" is offered and starts the wave.
+                var skip = Find<BreakSkipView>();
+                Check(skip.Offered && s_Waves.Phase == WavePhase.Countdown, $"the break offers ПРОПУСТИТЬ ПЕРЕРЫВ ({s_Waves.SecondsLeft} s left)");
+                Shot("12_Break_Skip");
+                skip.Skip();
+            });
+            At(1.8f, () =>
+            {
+                Check(s_Waves.Phase == WavePhase.Running, "skipped: the wave runs");
                 s_Director.SkipTo(10, 0.3f);
             });
             for (float t = 1.5f; t < 21.5f; t += 0.5f)
@@ -39,7 +49,21 @@ namespace ZombiCar.EditorTools
                     s_PlayerHealth.Heal(1000);
                     s_Car.Repair(1000);
                 });
-            At(2.4f, () =>
+            // The player's bar: a hit leaves the grey damage trail over the lost part, which then drains.
+            DamageTrailBar playerTrail = null;
+            At(2.2f, () =>
+            {
+                playerTrail = Find<HudController>().GetComponentsInChildren<DamageTrailBar>(true)
+                    .FirstOrDefault(t => t.GetComponentInParent<WaveProgressView>() == null);
+                s_PlayerHealth.TakeDamage(s_Stats.MaxHealth / 3, Vector3.right);
+            });
+            At(2.35f, () =>
+            {
+                float fill = (float)s_Stats.Health / s_Stats.MaxHealth;
+                Check(playerTrail != null && playerTrail.Value > fill + 0.2f, $"the player's bar keeps the grey trail ({playerTrail?.Value:0.00} over {fill:0.00})");
+                Shot("12_Player_DamageTrail");
+            });
+            At(3.2f, () =>
             {
                 boss = s_Director.Boss;
                 Check(boss != null && intro.IsOpen && GamePause.Has(GamePause.Reason.BossIntro) && Time.timeScale == 0f,
@@ -64,6 +88,9 @@ namespace ZombiCar.EditorTools
                 Check(bossBar.gameObject.activeInHierarchy && bossBar.alpha > 0.95f, "the wave pill shows the boss's health");
                 Check(s_Waves.BossMaxHealth > 1 && s_Waves.BossHealth <= s_Waves.BossMaxHealth / 2 + 1,
                     $"the boss bar follows the damage ({s_Waves.BossHealth} / {s_Waves.BossMaxHealth})");
+                var bossTrail = bossBar.GetComponentInChildren<DamageTrailBar>(true);
+                float bossFill = (float)s_Waves.BossHealth / s_Waves.BossMaxHealth;
+                Check(bossTrail != null && bossTrail.Value > bossFill + 0.2f, $"the boss bar keeps the grey trail ({bossTrail?.Value:0.00} over {bossFill:0.00})");
                 Shot("12_Boss_Bar");
                 if (boss != null)
                     boss.TakeDamage(1000000, Vector3.right);

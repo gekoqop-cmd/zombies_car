@@ -6,6 +6,12 @@
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8080", "--bind", "0.0.0.0", "--directory", "unity/Builds/WebGL"],
       "port": 8080
+    },
+    {
+      "name": "webgl-cheats",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8081", "--bind", "0.0.0.0", "--directory", "unity/Builds/WebGL_Cheats"],
+      "port": 8081
     }
   ]
 }

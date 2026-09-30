@@ -31,7 +31,7 @@ namespace ZombiCar.UI
         [SerializeField] private PlayerStats m_Player;
         [SerializeField] private AmmoState m_Ammo;
         [Tooltip("Mines are not sold while this many still lie around the car.")]
-        [SerializeField, Min(1)] private int m_MaxArmedMines = 4;
+        [SerializeField, Min(1)] private int m_MaxArmedMines = 8;
         [SerializeField] private Button m_CloseButton;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.18f;
 
@@ -179,7 +179,7 @@ namespace ZombiCar.UI
             StatEffect.CarSpikes => Sound.UpgradeSpikes,
             StatEffect.CarShock => Sound.UpgradeShock,
             StatEffect.MaxReserve => Sound.UpgradeAmmoCase,
-            StatEffect.HealPlayerFull => Sound.SupplyMedkit,
+            StatEffect.HealPlayerFull or StatEffect.StoreMedkit => Sound.SupplyMedkit,
             StatEffect.RefillAmmo => Sound.SupplyAmmoBox,
             StatEffect.PlaceMines => Sound.SupplyMines,
             StatEffect.RepairCar => Sound.SupplyRepair,
@@ -193,12 +193,14 @@ namespace ZombiCar.UI
             {
                 case StatEffect.HealPlayerFull:
                     return m_Player == null || m_Player.Health < m_Player.MaxHealth;
+                case StatEffect.StoreMedkit:
+                    return m_Run.Medkits < RunState.MaxMedkits;
                 case StatEffect.RepairCar:
                     return m_Car == null || m_Car.Health < m_Car.MaxHealth;
                 case StatEffect.RefillAmmo:
                     return m_Ammo == null || !m_Ammo.IsFull;
                 case StatEffect.PlaceMines:
-                    return m_Run.ArmedMines < m_MaxArmedMines;
+                    return m_Run.ArmedMines < m_MaxArmedMines;                // a free place round the car
                 default:
                     return true;
             }
@@ -225,7 +227,8 @@ namespace ZombiCar.UI
                 bool used = i < supplies.Length;
                 m_SupplyRows[i].gameObject.SetActive(used);
                 if (used)
-                    m_SupplyRows[i].Bind(supplies[i], m_Run.LevelOf(supplies[i]), m_Run.Money, IsUseful(supplies[i]));
+                    m_SupplyRows[i].Bind(supplies[i], m_Run.LevelOf(supplies[i]), m_Run.Money, IsUseful(supplies[i]),
+                        supplies[i].Effect == StatEffect.StoreMedkit ? $"В ЗАПАСЕ: {m_Run.Medkits}/{RunState.MaxMedkits}" : null);
             }
             if (m_Car != null && m_CarStatus != null)
             {

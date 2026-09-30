@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Waves.WaveConfig
   m_WaveCount: 30
   m_WaveDuration: 60
-  m_BreakBetweenWaves: 10
-  m_FirstWaveDelay: 5
+  m_BreakBetweenWaves: 25
+  m_FirstWaveDelay: 8
   m_EnemiesFirstWave: 8
   m_EnemiesGrowthPerWave: 4
   m_SpawnWindow: 0.6

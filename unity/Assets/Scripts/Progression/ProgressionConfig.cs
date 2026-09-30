@@ -15,8 +15,8 @@ namespace ZombiCar.Progression
         [SerializeField, Min(0)] private int m_XpQuadratic = 2;
 
         [Header("Wave cleared")]
-        [SerializeField, Min(0)] private int m_WaveMoneyBase = 10;
-        [SerializeField, Min(0)] private int m_WaveMoneyPerWave = 3;
+        [SerializeField, Min(0)] private int m_WaveMoneyBase = 20;
+        [SerializeField, Min(0)] private int m_WaveMoneyPerWave = 6;
         [SerializeField, Min(0)] private int m_WaveXpBase = 10;
         [SerializeField, Min(0)] private int m_WaveXpPerWave = 2;
 

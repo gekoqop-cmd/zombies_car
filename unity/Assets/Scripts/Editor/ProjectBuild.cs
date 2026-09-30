@@ -87,6 +87,32 @@ namespace ZombiCar.EditorTools
                 throw new InvalidOperationException($"WebGL development build {summary.result}");
         }
 
+        private const string c_WebCheatsBuildFolder = "Builds/WebGL_Cheats";
+
+        /// <summary>
+        /// Release WebGL build with the cheat panel (Insert / F8) compiled in through ZOMBICAR_CHEATS, no "Development
+        /// Build" mark: for recording store videos in the browser. Builds/WebGL_Cheats — never upload it to Yandex Games.
+        /// </summary>
+        [MenuItem("Tools/Build WebGL Player (Release + cheats, for recording)")]
+        public static void BuildWebGLCheats()
+        {
+            WebOptimizer.Optimize();
+            var options = new BuildPlayerOptions
+            {
+                scenes = Array.ConvertAll(EditorBuildSettings.scenes, s => s.path),
+                locationPathName = c_WebCheatsBuildFolder,
+                target = BuildTarget.WebGL,
+                options = BuildOptions.None,
+                extraScriptingDefines = new[] { "ZOMBICAR_CHEATS" },
+            };
+            BuildReport report = BuildPipeline.BuildPlayer(options);
+            BuildSummary summary = report.summary;
+            Debug.Log($"[ProjectBuild] WebGL cheats build {summary.result}: {summary.totalSize / (1024f * 1024f):F1} MB, " +
+                      $"{summary.totalTime.TotalMinutes:F1} min, errors {summary.totalErrors}");
+            if (summary.result != BuildResult.Succeeded)
+                throw new InvalidOperationException($"WebGL cheats build {summary.result}");
+        }
+
         private static void Step(string name, Action action)
         {
             var timer = Stopwatch.StartNew();

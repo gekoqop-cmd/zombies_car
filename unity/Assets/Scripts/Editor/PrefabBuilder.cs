@@ -51,10 +51,13 @@ namespace ZombiCar.EditorTools
 
         private static ZombiCar.Props.ComicExplosion s_Explosion;
 
-        // Explosive props: red barrels (big blast) and red canisters (small blast).
+        // Explosive props: red barrels (big blast) and red canisters (small blast). Every barrel that looks red explodes,
+        // the workshop set's red barrels too (a player shoots what looks explosive).
         private static readonly (string prefab, int health, float radius, int damage, float fxSize)[] s_Explosives =
         {
             ("Barrel_RedWhite", 20, 4.5f, 130, 1f),
+            ("Prop_Barrel", 20, 4.5f, 130, 1f),
+            ("Prop_Barrel_Back", 20, 4.5f, 130, 1f),
             ("Jerrycan_Red", 10, 3.2f, 80, 0.7f),
         };
 
@@ -190,13 +193,17 @@ namespace ZombiCar.EditorTools
                 SetStaticRecursively(go, StaticEditorFlags.BatchingStatic);
             foreach ((string prefab, int health, float radius, int damage, float fxSize) in s_Explosives)
             {
-                if (name != prefab)
-                    continue;
-                var explosive = go.AddComponent<ZombiCar.Props.ExplosiveProp>();
-                Wire(explosive, ("m_Explosion", s_Explosion), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
-                    ("m_Waves", DataAssetsBuilder.Load<ZombiCar.Waves.WaveState>(DataAssetsBuilder.c_WaveState)));
-                CharacterBuilder.SetProps(explosive, ("m_Health", health), ("m_Radius", radius), ("m_Damage", damage), ("m_FxSize", fxSize));
+                if (name == prefab)
+                    MakeExplosive(go, health, radius, damage, fxSize);
             }
+        }
+
+        private static void MakeExplosive(GameObject go, int health, float radius, int damage, float fxSize)
+        {
+            var explosive = go.AddComponent<ZombiCar.Props.ExplosiveProp>();
+            Wire(explosive, ("m_Explosion", s_Explosion), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Waves", DataAssetsBuilder.Load<ZombiCar.Waves.WaveState>(DataAssetsBuilder.c_WaveState)));
+            CharacterBuilder.SetProps(explosive, ("m_Health", health), ("m_Radius", radius), ("m_Damage", damage), ("m_FxSize", fxSize));
         }
 
         private static void AddSignColliders(GameObject go, string name)
@@ -522,11 +529,14 @@ namespace ZombiCar.EditorTools
                 if (!child.name.StartsWith("Prop_") || !child.TryGetComponent(out MeshFilter mf) || mf.sharedMesh == null)
                     continue;
                 Vector3 p = child.localPosition;
-                if (Mathf.Abs(p.x) <= halfWidth && Mathf.Abs(p.z) <= halfDepth)
+                bool barrel = child.name.StartsWith("Prop_Barrel");
+                if (!barrel && Mathf.Abs(p.x) <= halfWidth && Mathf.Abs(p.z) <= halfDepth)
                     continue;   // inside the building: covered by the wall box
                 var box = child.gameObject.AddComponent<BoxCollider>();
                 box.center = mf.sharedMesh.bounds.center;
                 box.size = mf.sharedMesh.bounds.size;
+                if (barrel)
+                    MakeExplosive(child.gameObject, 20, 4.5f, 130, 1f);      // the red barrels by the garage blow up like the lot's
             }
             Transform vegetation = go.transform.Find("Workshop_Vegetation");
             if (vegetation != null)

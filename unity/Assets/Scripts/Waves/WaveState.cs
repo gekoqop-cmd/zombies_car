@@ -39,6 +39,15 @@ namespace ZombiCar.Waves
         /// <summary>A boss came out (its name).</summary>
         public event Action<string> BossAppeared;
 
+        /// <summary>"ПРОПУСТИТЬ ПЕРЕРЫВ": the player wants the next wave now (the HUD asks, the map's director starts it).</summary>
+        public event Action SkipBreakRequested;
+
+        public void RequestSkipBreak()
+        {
+            if (m_Phase == WavePhase.Countdown)
+                SkipBreakRequested?.Invoke();
+        }
+
         public int Wave => m_Wave;
         public int SecondsLeft => m_SecondsLeft;
         public WavePhase Phase => m_Phase;

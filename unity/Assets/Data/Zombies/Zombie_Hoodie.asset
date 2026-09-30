@@ -25,6 +25,6 @@ MonoBehaviour:
   m_StaggerTime: 0.2
   m_Knockback: 0.2
   m_Xp: 7
-  m_Reward: 3
+  m_Reward: 6
   m_IsBoss: 0
   m_DisplayName: 

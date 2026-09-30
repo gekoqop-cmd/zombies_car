@@ -25,6 +25,12 @@ namespace ZombiCar.EditorTools
             {
                 s_Director.enabled = false;
                 ExplosiveProp.Exploded += _ => exploded++;
+                // Every barrel that looks red explodes (the workshop set's red barrels too).
+                var redBarrels = Object.FindObjectsByType<Transform>(FindObjectsSortMode.None)
+                    .Where(t => t.name.StartsWith("Prop_Barrel") || t.name.StartsWith("Barrel_RedWhite")).ToArray();
+                Check(redBarrels.Length > 0 && redBarrels.All(t => t.GetComponentInParent<ExplosiveProp>() != null),
+                    $"all {redBarrels.Length} red barrels on the map explode; not: " +
+                    string.Join(", ", redBarrels.Where(t => t.GetComponentInParent<ExplosiveProp>() == null).Select(t => $"{t.name} under {(t.parent ? t.parent.name : "-")}").Distinct()));
                 var shaker = Object.FindAnyObjectByType<CameraShake>();
                 Check(CameraShake.IsReady, $"screen shake on the game camera (component {(shaker != null ? "found" : "missing")}, " +
                     $"follow {(shaker != null && shaker.ComponentOwner != null && shaker.ComponentOwner.Follow != null)})");

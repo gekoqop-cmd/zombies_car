@@ -25,6 +25,25 @@ namespace ZombiCar.EditorTools
         private static RunState Run => DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState);
 
         // ------------------------------------------------------------------ counters
+        /// <summary>
+        /// The grey damage trail behind a health fill (<see cref="DamageTrailBar"/> on <paramref name="host"/>): a
+        /// translucent strip over the fill's rect, drawn under it. Returns the fill.
+        /// </summary>
+        internal static Image DamageTrail(RectTransform host, Image fill)
+        {
+            RectTransform fillRt = fill.rectTransform;
+            RectTransform trail = UiFactory.Stretch("DamageTrail", fillRt.parent);
+            trail.anchorMin = fillRt.anchorMin;
+            trail.anchorMax = fillRt.anchorMax;
+            trail.offsetMin = fillRt.offsetMin;
+            trail.offsetMax = fillRt.offsetMax;
+            trail.SetSiblingIndex(fillRt.GetSiblingIndex());
+            RectTransform strip = UiFactory.Stretch("Strip", trail);             // 0..fill of the same lane as the fill
+            UiFactory.Image(strip, null, new Color(0.9f, 0.9f, 0.92f, 0.55f), false);
+            CharacterBuilder.SetProps(host.gameObject.AddComponent<DamageTrailBar>(), ("m_Fill", fill), ("m_Trail", strip));
+            return fill;
+        }
+
         /// <summary>Scrap under the health panel (the kills are counted up on the end screen only). Returns its panel: it pops when scrap comes in.</summary>
         private static RectTransform BuildRunCounters(RectTransform safe, Material outline, float top, out TextMeshProUGUI money) =>
             CounterPill("ScrapCounter", safe, new Vector2(24f, top), 200f, "UI_Icon_Scrap", outline, out money);
@@ -50,24 +69,57 @@ namespace ZombiCar.EditorTools
         private const float c_WeaponSlotGap = 14f;
 
         /// <summary>
-        /// Bottom right (desktop): a column with the gun [1] on top and the axe [2] under it, the one in hand lit
-        /// orange; a click on a slot takes it. The "out of ammo: axe" notice shows left of the column when needed.
+        /// Bottom right (desktop): a column with the first-aid kits [3] on top, the gun [1] and the axe [2] under it,
+        /// the weapon in hand lit orange; a click on a slot takes it (or uses a kit). The "out of ammo: axe" notice shows
+        /// left of the column when needed.
         /// </summary>
         private static void BuildWeaponSlots(RectTransform safe, Material outline)
         {
             var bottomRight = new Vector2(1f, 0f);
             RectTransform root = UiFactory.Rect("WeaponSlots", safe, bottomRight, bottomRight, new Vector2(-24f, 24f),
-                new Vector2(c_WeaponSlot, c_WeaponSlot * 2f + c_WeaponSlotGap));
-            Image gun = WeaponSlotPlate("Gun", root, c_WeaponSlot, c_WeaponSlot + c_WeaponSlotGap, "UI_Icon_Rifle", "1", outline);
-            Image axe = WeaponSlotPlate("Axe", root, c_WeaponSlot, 0f, "UI_Icon_Axe", "2", outline);
+                new Vector2(c_WeaponSlot, c_WeaponSlot * 3f + c_WeaponSlotGap * 2f));
+            // Top to bottom in the order of their keys: 1 the gun, 2 the axe, 3 the first-aid kit.
+            const float step = c_WeaponSlot + c_WeaponSlotGap;
+            Image gun = WeaponSlotPlate("Gun", root, c_WeaponSlot, step * 2f, "UI_Icon_Rifle", "1", outline);
+            Image axe = WeaponSlotPlate("Axe", root, c_WeaponSlot, step, "UI_Icon_Axe", "2", outline);
+            MedkitSlot("Medkit", root, new Vector2(0.5f, 0f), new Vector2(0f, c_WeaponSlot * 0.5f), c_WeaponSlot, "3", outline);
             var bottomLeft = new Vector2(0f, 0f);
             var hintPivot = new Vector2(1f, 0.5f);
-            TextMeshProUGUI hint = OutlinedLabel("EmptyHint", root, bottomLeft, hintPivot, new Vector2(-16f, c_WeaponSlot * 0.5f),
+            TextMeshProUGUI hint = OutlinedLabel("EmptyHint", root, bottomLeft, hintPivot, new Vector2(-16f, step + c_WeaponSlot * 0.5f),
                 new Vector2(520f, 38f), "ПАТРОНЫ КОНЧИЛИСЬ: ТОПОР", 26f, TextAlignmentOptions.Right, UiFactory.AccentColor, outline);
             hint.gameObject.SetActive(false);
             PrefabBuilder.Wire(root.gameObject.AddComponent<WeaponSlotsView>(),
                 ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)),
                 ("m_GunPlate", gun), ("m_AxePlate", axe), ("m_Hint", hint));
+        }
+
+        /// <summary>
+        /// The first-aid kits carried: a slot like the weapon ones with the kit and "n/5", red while there are kits;
+        /// <paramref name="key"/> null = no number (touch).
+        /// </summary>
+        private static RectTransform MedkitSlot(string name, RectTransform parent, Vector2 anchor, Vector2 pos, float size, string key,
+            Material outline)
+        {
+            var center = new Vector2(0.5f, 0.5f);
+            RectTransform slot = UiFactory.Rect(name, parent, anchor, center, pos, new Vector2(size, size));
+            Image plate = UiFactory.Image(slot, UiFactory.Sprite("UI_Panel"), s_PillColor, true, true);
+            RectTransform iconRt = UiFactory.Rect("Icon", slot, center, center, new Vector2(0f, 6f), new Vector2(size * 0.6f, size * 0.6f));
+            Image icon = UiFactory.Image(iconRt, UiFactory.Sprite("UI_Icon_Medkit"), Color.white, false);
+            icon.preserveAspect = true;
+            if (key != null)
+            {
+                var topLeft = new Vector2(0f, 1f);
+                OutlinedLabel("Key", slot, topLeft, topLeft, new Vector2(8f, -2f), new Vector2(40f, 40f), key, 30f,
+                    TextAlignmentOptions.TopLeft, Color.white, outline);
+            }
+            var bottom = new Vector2(0.5f, 0f);
+            TextMeshProUGUI count = OutlinedLabel("Count", slot, bottom, bottom, new Vector2(0f, 2f), new Vector2(size, 30f), "0/5", 24f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            var button = slot.gameObject.AddComponent<Button>();
+            button.targetGraphic = plate;
+            PrefabBuilder.Wire(slot.gameObject.AddComponent<MedkitSlotView>(), ("m_Run", Run), ("m_Button", button), ("m_Plate", plate),
+                ("m_Icon", icon), ("m_Count", count));
+            return slot;
         }
 
         /// <summary>A square slot at <paramref name="y"/> from the bottom of the column; <paramref name="key"/> null = no number.</summary>
@@ -87,6 +139,34 @@ namespace ZombiCar.EditorTools
                     TextAlignmentOptions.TopLeft, Color.white, outline);
             }
             return plate;
+        }
+
+        // ------------------------------------------------------------------ break skip
+        /// <summary>"ПРОПУСТИТЬ ПЕРЕРЫВ • 18 С" with an "E" key badge, bottom centre, under the interaction prompt.</summary>
+        private static void BuildBreakSkip(RectTransform safe, Material outline)
+        {
+            var bottom = new Vector2(0.5f, 0f);
+            var center = new Vector2(0.5f, 0.5f);
+            var midLeft = new Vector2(0f, 0.5f);
+            RectTransform root = UiFactory.Rect("BreakSkip", safe, bottom, bottom, new Vector2(0f, 40f), new Vector2(560f, 76f));
+            var group = root.gameObject.AddComponent<CanvasGroup>();
+            Image plate = UiFactory.Image(root, UiFactory.Sprite("UI_Panel"), s_PillColor, true, true);
+            RectTransform key = UiFactory.Rect("Key", root, midLeft, midLeft, new Vector2(12f, 0f), new Vector2(56f, 56f));
+            UiFactory.Image(key, UiFactory.Sprite("UI_Button"), new Color(1f, 0.93f, 0.8f, 1f), true);
+            UiFactory.Label("Letter", key, center, center, Vector2.zero, new Vector2(56f, 56f), "E", 36f,
+                TextAlignmentOptions.Center, new Color(0.18f, 0.12f, 0.08f, 1f));
+            TextMeshProUGUI label = OutlinedLabel("Label", root, center, center, new Vector2(30f, 0f), new Vector2(470f, 70f),
+                "ПРОПУСТИТЬ ПЕРЕРЫВ", 32f, TextAlignmentOptions.Center, Color.white, outline);
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 20f;
+            label.fontSizeMax = 32f;
+            var button = root.gameObject.AddComponent<Button>();
+            button.targetGraphic = plate;
+            root.gameObject.AddComponent<UIButtonFx>();
+            PrefabBuilder.Wire(root.gameObject.AddComponent<BreakSkipView>(),
+                ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)), ("m_Run", Run),
+                ("m_Interaction", DataAssetsBuilder.Load<ZombiCar.Progression.InteractionState>(DataAssetsBuilder.c_InteractionState)),
+                ("m_Group", group), ("m_Button", button), ("m_KeyBadge", key.gameObject), ("m_Label", label));
         }
 
         // ------------------------------------------------------------------ car under attack
@@ -266,8 +346,7 @@ namespace ZombiCar.EditorTools
                 new Vector2(textWidth, 44f));
             UiFactory.Image(hpBar, UiFactory.Sprite("UI_BarTrack"), Color.white, true);
             RectTransform lane = Inset(UiFactory.Stretch("Lane", hpBar), 5f);
-            Image trail = UiFactory.Fill(UiFactory.Stretch("Trail", lane), UiFactory.Sprite("UI_BarFillRed"), new Color(1f, 0.92f, 0.82f, 0.9f), 1f);
-            Image hpFill = UiFactory.Fill(UiFactory.Stretch("Fill", lane), UiFactory.Sprite("UI_BarFillRed"), Color.white, 1f);
+            Image hpFill = DamageTrail(lane, UiFactory.Fill(UiFactory.Stretch("Fill", lane), UiFactory.Sprite("UI_BarFillRed"), Color.white, 1f));
             TextMeshProUGUI hpValue = OutlinedLabel("Value", hpBar, center, center, Vector2.zero, new Vector2(textWidth, 44f), "1000 / 1000",
                 28f, TextAlignmentOptions.Center, Color.white, outline);
             bossRoot.gameObject.SetActive(false);
@@ -275,7 +354,7 @@ namespace ZombiCar.EditorTools
             var view = root.gameObject.AddComponent<WaveProgressView>();
             PrefabBuilder.Wire(view, ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)), ("m_Fill", fill),
                 ("m_WaveGroup", waveGroup), ("m_BossGroup", bossGroup), ("m_BossIcon", disc), ("m_BossDisc", discImage),
-                ("m_BossName", bossName), ("m_BossWave", bossWave), ("m_BossValue", hpValue), ("m_BossFill", hpFill), ("m_BossTrail", trail));
+                ("m_BossName", bossName), ("m_BossWave", bossWave), ("m_BossValue", hpValue), ("m_BossFill", hpFill));
             CharacterBuilder.SetProps(view, ("m_Marks", marks.Cast<Object>().ToArray()), ("m_FinalBossColor", s_FinalBossColor));
             var so = new SerializedObject(view);
             SerializedProperty list = so.FindProperty("m_BossWaves");
@@ -451,9 +530,9 @@ namespace ZombiCar.EditorTools
             new TutorialCard
             {
                 Title = "УПРАВЛЕНИЕ", Icon = "UI_Icon_Speed", Icon2 = "UI_Icon_Rifle", TouchIcon = "UI_StickRing",
-                Caption = "WASD · МЫШЬ · 1 / 2", TouchCaption = "ДЖОЙСТИКИ · КНОПКИ",
-                Text = "WASD — идти, мышь — целиться, левая кнопка — атака.\n1 / 2 или колесо мыши — сменить оружие.",
-                TouchText = "Левый джойстик — идти, правый — целиться и стрелять.\nКнопки рядом — автомат и топор.",
+                Caption = "WASD · МЫШЬ · 1 / 2 / 3", TouchCaption = "ДЖОЙСТИКИ · КНОПКИ",
+                Text = "WASD — идти, мышь — целиться, левая кнопка — атака.\n1 / 2 — автомат и топор, 3 — аптечка из запаса.",
+                TouchText = "Левый джойстик — идти, правый — целиться и стрелять.\nКнопки рядом — автомат, топор и аптечка.",
                 Accent = new Color(0.45f, 0.78f, 1f, 1f),
             },
             new TutorialCard
@@ -465,7 +544,7 @@ namespace ZombiCar.EditorTools
             new TutorialCard
             {
                 Title = "МАШИНА И МАСТЕРСКАЯ", Icon = "UI_IconCar", Icon2 = "UI_Icon_Repair", Caption = "ЗАЩИЩАЙ МАШИНУ",
-                Text = "Защищай машину: зомби идут и к ней.\nМежду волнами улучшай её в мастерской за металлолом.",
+                Text = "Защищай машину: зомби идут и к ней. Между волнами — мастерская\nи патроны у машины. Готов раньше? E — пропустить перерыв.",
                 Accent = new Color(0.55f, 0.9f, 0.45f, 1f),
             },
             new TutorialCard
@@ -1202,7 +1281,7 @@ namespace ZombiCar.EditorTools
 
         // ------------------------------------------------------------------ workshop
         private const int c_WorkshopRows = 5;            // car upgrades (left column)
-        private const int c_SupplyRows = 4;              // supplies (right column)
+        private const int c_SupplyRows = 3;              // supplies (right column)
         private static readonly Vector2 s_WorkshopWindow = new Vector2(1600f, 1000f);
         private static readonly Vector2 s_WorkshopRow = new Vector2(740f, 118f);
         private const float c_WorkshopRowsTop = -236f;
@@ -1312,8 +1391,8 @@ namespace ZombiCar.EditorTools
             Image plate = UiFactory.Image(buyRt, UiFactory.Sprite("UI_GearButton"), s_PlayColor, true, true);
             RectTransform priceIcon = UiFactory.Rect("ScrapIcon", buyRt, midLeft, midLeft, new Vector2(16f, 0f), new Vector2(46f, 46f));
             UiFactory.Image(priceIcon, UiFactory.Sprite("UI_Icon_Scrap"), Color.white, false).preserveAspect = true;
-            // Wide enough for "НЕ НУЖНО" (then the scrap icon hides); a number sits right of the icon.
-            TextMeshProUGUI price = OutlinedLabel("Price", buyRt, midRight, midRight, new Vector2(-12f, 0f), new Vector2(152f, 70f), "100",
+            // Over the whole button: a number right of the scrap icon (margins set by the row), a word alone centred.
+            TextMeshProUGUI price = OutlinedLabel("Price", buyRt, center, center, Vector2.zero, new Vector2(176f, 70f), "100",
                 38f, TextAlignmentOptions.Right, Color.white, outline);
             price.enableAutoSizing = true;
             price.fontSizeMin = 18f;
