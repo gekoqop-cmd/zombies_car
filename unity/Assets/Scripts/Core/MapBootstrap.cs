@@ -5,7 +5,8 @@ using ZombiCar.Progression;
 namespace ZombiCar.Core
 {
     /// <summary>
-    /// Lives in every map scene. Starts a fresh run (<see cref="RunState"/>, the player's stats) before anything else
+    /// Lives in every map scene. Starts a fresh run (<see cref="RunState"/>, the player's stats, the bonuses of the worn
+    /// legendary skins) before anything else
     /// of the map wakes up, starts the map's music, and makes the map playable when it is opened directly in the
     /// Editor: loads settings and adds the HUD scene if the normal Boot -> MainMenu flow was skipped.
     /// </summary>
@@ -15,6 +16,8 @@ namespace ZombiCar.Core
         [SerializeField] private MapConfig m_Map;
         [SerializeField] private RunState m_Run;
         [SerializeField] private PlayerStats m_PlayerStats;
+        [Tooltip("The skins: a worn legendary one gives its bonus to the run.")]
+        [SerializeField, OptionalReference] private CosmeticCatalog m_Cosmetics;
 
         public MapConfig Map => m_Map;
 
@@ -27,7 +30,25 @@ namespace ZombiCar.Core
             if (m_PlayerStats != null)
                 m_PlayerStats.ResetToDefaults();
             if (m_Run != null)
+            {
                 m_Run.BeginRun(m_Map);
+                ApplySkinBonuses();
+            }
+        }
+
+        private void ApplySkinBonuses()
+        {
+            if (m_Cosmetics == null)
+                return;
+            foreach (CosmeticSlot slot in new[] { CosmeticSlot.Gun, CosmeticSlot.Axe, CosmeticSlot.Bullet })
+            {
+                CosmeticItem skin = m_Cosmetics.Equipped(slot);
+                if (skin != null && skin.HasBonus)
+                {
+                    m_Run.AddSkinBonus(skin.Bonus, skin.BonusValue);
+                    Debug.Log($"[MapBootstrap] Skin {skin.Title}: {skin.BonusText}.");
+                }
+            }
         }
 
         private void Start()

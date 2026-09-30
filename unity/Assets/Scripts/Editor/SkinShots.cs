@@ -182,6 +182,8 @@ namespace ZombiCar.EditorTools
             At(t += 0.6f, () =>
             {
                 Check(Menu().Cases.IsOpen, "the cases screen opens from the menu");
+                Check(CaseChances(Menu()).Contains("???") && !CaseChances(Menu()).Contains("+15%"),
+                    "the legendary rifle's bonus is a secret on the case (???)");
                 Shot("02_Cases");
                 Check(Menu().Cases.BuyCase(catalog.Cases[0]), "the rifle case opens for 150 coins");
                 Check(MetaProgress.Coins <= 1000 - 150 + 60, $"coins after the case: {MetaProgress.Coins}");
@@ -206,6 +208,7 @@ namespace ZombiCar.EditorTools
             });
             At(t += 0.4f, () =>
             {
+                Check(CaseChances(Menu()).Contains("+15%"), "won: the case now tells the legendary rifle's bonus");
                 // The skins for the map: gold rifle, neon axe, fire bullets (new: counted on СКИНЫ).
                 foreach (string id in new[] { "gun_gold", "axe_neon", "bullet_fire" })
                     MetaProgress.Grant(catalog.Find(id));
@@ -236,6 +239,7 @@ namespace ZombiCar.EditorTools
                 SkinsPanel skins = Menu().Skins;
                 Check(skins.CurrentTab == 1 && skins.Tiles.Count(tile => tile.gameObject.activeSelf) == 10, "ОРУЖИЕ: the 10 rifle skins");
                 ItemTile gold = skins.Tiles.First(tile => tile.Item != null && tile.Item.Id == "gun_gold");
+                Check(gold.transform.Find("Bonus").gameObject.activeSelf, "the legendary rifle shows its bonus (+15% к скорострельности)");
                 gold.Button.onClick.Invoke();
             });
             At(t += 0.3f, () =>
@@ -289,6 +293,8 @@ namespace ZombiCar.EditorTools
             {
                 Check(Object.FindAnyObjectByType<PlayerView>().transform.Find("Body/GunSkin").GetComponent<SpriteRenderer>().enabled,
                     "the rifle skin overlay is drawn");
+                var run = AssetDatabase.LoadAssetAtPath<RunState>(DataAssetsBuilder.c_RunState);
+                Check(run.Modifiers[StatEffect.FireRate] >= 0.15f - 0.001f, $"the gold rifle's bonus is on in the run: fire rate +{run.Modifiers[StatEffect.FireRate]:P0}");
                 CloseUp("07_GoldRifle_FireBullets", 7f);
             });
             At(t += 0.3f, () =>
@@ -336,6 +342,10 @@ namespace ZombiCar.EditorTools
                 EditorApplication.ExitPlaymode();
             });
         }
+
+        // The legendary bonus plate of the rifle case.
+        private static string CaseChances(Component menu) =>
+            menu.GetComponentsInChildren<Transform>(true).First(t => t.name == "Case1").Find("Bonus/Text").GetComponent<TMPro.TMP_Text>().text;
 
         // The new-skins count on a button is showing.
         private static bool Badge(Component root, string button)

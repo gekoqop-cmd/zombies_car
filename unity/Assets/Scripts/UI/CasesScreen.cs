@@ -18,6 +18,10 @@ namespace ZombiCar.UI
         public Button OpenButton;
         public TMP_Text OpenLabel;
         public Button AdButton;
+        [Tooltip("The legendary skin's run bonus, on its own plate between the open and the ad buttons.")]
+        public TMP_Text Bonus;
+        [Tooltip("The bonus plate's frame: it breathes so the plate catches the eye.")]
+        public Image BonusGlow;
     }
 
     /// <summary>
@@ -138,6 +142,17 @@ namespace ZombiCar.UI
             return string.Join("\n", parts);
         }
 
+        // That the case's legendary skin gives a bonus in a run; what bonus stays a secret ("???") until it is won.
+        private string BonusText(CosmeticSlot slot)
+        {
+            foreach (CosmeticItem item in m_Catalog.Items)
+            {
+                if (item.Slot == slot && item.Rarity == Rarity.Legendary && item.HasBonus)
+                    return $"ЛЕГЕНДАРНЫЙ СКИН ДАЁТ БОНУС:\n<size=120%>{(MetaProgress.Owns(item) ? item.BonusText.ToUpperInvariant() : "???")}</size>";
+            }
+            return string.Empty;
+        }
+
         private Sprite SlotIcon(CosmeticSlot slot) => (int)slot < m_SlotIcons.Length ? m_SlotIcons[(int)slot] : null;
 
         private void Refresh()
@@ -146,6 +161,11 @@ namespace ZombiCar.UI
             if (m_Spinning)
                 return;
             m_Coins.SetText(MetaProgress.Coins.ToString());
+            for (int i = 0; i < m_Cards.Length && i < m_Catalog.Cases.Count; i++)
+            {
+                if (m_Cards[i].Bonus != null)
+                    m_Cards[i].Bonus.SetText(BonusText(m_Catalog.Cases[i].Slot));
+            }
         }
 
         // ---------------------------------------------------------------- opening
@@ -191,7 +211,7 @@ namespace ZombiCar.UI
             {
                 CosmeticItem item = i == c_PrizeIndex ? m_Prize : m_Catalog.Roll(def.Slot);
                 ItemTile tile = m_StripTiles[i];
-                tile.Set(item, SlotIcon(def.Slot), true, false);
+                tile.Set(item, SlotIcon(def.Slot), true, false, bonusKnown: false);     // the strip keeps the secret
                 ((RectTransform)tile.transform).anchoredPosition = new Vector2(i * m_TileStep, 0f);
             }
             // Stop somewhere on the prize tile, not always dead centre.
@@ -232,6 +252,14 @@ namespace ZombiCar.UI
                 m_Root.alpha = Mathf.MoveTowards(m_Root.alpha, m_Open ? 1f : 0f, Time.unscaledDeltaTime / 0.25f);
                 if (!m_Open && m_Root.alpha <= 0f)
                     m_Root.gameObject.SetActive(false);
+            }
+            foreach (CaseCardRefs card in m_Cards)
+            {
+                if (card.BonusGlow == null)
+                    continue;
+                Color glow = card.BonusGlow.color;
+                glow.a = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 3f);
+                card.BonusGlow.color = glow;
             }
             if (m_Coins != null)
                 m_Coins.color = Time.unscaledTime < m_CoinsFlashUntil ? new Color(1f, 0.35f, 0.3f, 1f) : new Color(1f, 0.85f, 0.4f, 1f);
@@ -288,7 +316,13 @@ namespace ZombiCar.UI
                 if (def.Slot == m_Prize.Slot)
                     refund = Mathf.RoundToInt(def.Price * m_Catalog.DuplicateRefund);
             }
-            m_ResultNote.SetText(m_PrizeNew ? "НОВЫЙ СКИН В КОЛЛЕКЦИИ!" : $"УЖЕ ЕСТЬ: +{refund} МОНЕТ");
+            string note = m_PrizeNew ? "НОВЫЙ СКИН В КОЛЛЕКЦИИ!" : $"УЖЕ ЕСТЬ: +{refund} МОНЕТ";
+            if (m_Prize.HasBonus)
+            {
+                string hex = ColorUtility.ToHtmlStringRGB(CosmeticCatalog.RarityColor(Rarity.Legendary));
+                note += $"  <color=#{hex}>БОНУС В ЗАБЕГЕ: {m_Prize.BonusText.ToUpperInvariant()}</color>";
+            }
+            m_ResultNote.SetText(note);
             bool equipped = MetaProgress.EquippedId(m_Prize.Slot) == m_Prize.Id;
             m_EquipButton.gameObject.SetActive(!equipped);
             m_ResultPanel.SetActive(true);

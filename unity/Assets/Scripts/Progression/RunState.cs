@@ -168,6 +168,9 @@ namespace ZombiCar.Progression
                 Apply(perk.Effect2, perk.Value2);
         }
 
+        /// <summary>A worn legendary skin's bonus for this run (map start).</summary>
+        public void AddSkinBonus(StatEffect effect, float value) => Apply(effect, value);
+
         /// <summary>Buys the next level of a car upgrade if there is one and the scrap is enough.</summary>
         public bool TryBuy(CarUpgrade upgrade)
         {

@@ -14,8 +14,8 @@ namespace ZombiCar.EditorTools
         /// <summary>
         /// Where the scrap goes: a master level after an upgrade's last level (+2%, price ×1.35 each), supplies bought
         /// again and again with growing prices and "НЕ НУЖНО" when useless (first-aid kit, repair, ammo, mines that
-        /// blow up a zombie), the level-up reroll (50 → 100 → 150), and the scrap left exchanged for coins at the end
-        /// (2000 → +400).
+        /// blow up a zombie), the level-up reroll (for an ad, no scrap), and the scrap left exchanged for coins at the end
+        /// (2000 → +80).
         /// </summary>
         private static void Economy()
         {
@@ -130,10 +130,10 @@ namespace ZombiCar.EditorTools
             });
             At(11.4f, () =>
             {
-                Check(screen.IsShown && screen.ScrapCoins == 400, $"the end exchanges the parts: 2000 → +{screen.ScrapCoins}");
+                Check(screen.IsShown && screen.ScrapCoins == 80, $"the end exchanges the parts: 2000 → +{screen.ScrapCoins}");
                 var line = screen.transform.GetComponentsInChildren<TMPro.TMP_Text>(true).FirstOrDefault(t => t.name == "Scrap");
-                Check(line != null && line.text.Contains("2000 → +400"), $"the defeat screen says so: '{line?.text}'");
-                Check(screen.CoinsEarned >= 400, $"the parts are in the coins earned ({screen.CoinsEarned})");
+                Check(line != null && line.text.Contains("2000 → +80"), $"the defeat screen says so: '{line?.text}'");
+                Check(screen.CoinsEarned >= 80, $"the parts are in the coins earned ({screen.CoinsEarned})");
                 Shot("14_Scrap_Exchange");
                 // ×2 for an ad (the stand-in rewards at once): the run's coins twice, the extra paid in, once a run.
                 int total = screen.CoinsEarned;

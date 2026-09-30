@@ -39,6 +39,12 @@ namespace ZombiCar.Core
         [SerializeField] private bool m_Trail;
         [Tooltip("The default look every player has (never in a case).")]
         [SerializeField] private bool m_Default;
+        [Tooltip("Legendary skins: a bonus for every run while the skin is on (shown in the skins, the cases, the prize).")]
+        [SerializeField] private bool m_HasBonus;
+        [SerializeField] private ZombiCar.Progression.StatEffect m_Bonus;
+        [SerializeField] private float m_BonusValue;
+        [Tooltip("The bonus in words: \"+15% к скорострельности\".")]
+        [SerializeField] private string m_BonusText;
 
         public CosmeticItem(string id, string title, CosmeticSlot slot, Rarity rarity, Color color, Color color2,
             float size = 1f, bool trail = false, bool isDefault = false)
@@ -63,6 +69,20 @@ namespace ZombiCar.Core
         public float Size => m_Size;
         public bool Trail => m_Trail;
         public bool IsDefault => m_Default;
+        public bool HasBonus => m_HasBonus;
+        public ZombiCar.Progression.StatEffect Bonus => m_Bonus;
+        public float BonusValue => m_BonusValue;
+        public string BonusText => m_BonusText;
+
+        /// <summary>Gives the skin a bonus for the runs it is worn in (builders).</summary>
+        public CosmeticItem WithBonus(ZombiCar.Progression.StatEffect effect, float value, string text)
+        {
+            m_HasBonus = true;
+            m_Bonus = effect;
+            m_BonusValue = value;
+            m_BonusText = text;
+            return this;
+        }
     }
 
     /// <summary>A case in the main menu: skins of one slot for coins or a rewarded video.</summary>

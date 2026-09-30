@@ -12,7 +12,7 @@ namespace ZombiCar.UI
     /// End-of-run screen (HUD scene), shown when <see cref="RunState"/> gets its outcome.
     /// Victory (after the finale, <see cref="VictoryFinaleView"/>): a medal and "ПОБЕДА!", then the lines of the run one
     /// by one — time (with the best time), zombies, bosses 3/3, level — and the coins step by step: for the zombies,
-    /// for the waves, the scrap left exchanged ("ОСТАТОК ДЕТАЛЕЙ 2000 → +400"), the victory reward, and the total that
+    /// for the waves, the scrap left exchanged ("ОСТАТОК ДЕТАЛЕЙ 2000 → +80"), the victory reward, and the total that
     /// counts up while coins fly into it; "К КЕЙСАМ" (the menu with the cases open), "ЗАНОВО", "В МЕНЮ".
     /// Defeat: "ИГРА ОКОНЧЕНА" with the reason, "ДОШЁЛ ДО ВОЛНЫ 17 ИЗ 30" over the wave line with the boss marks, how
     /// many waves were left to the next boss, the run's zombies / level / coins and the scrap exchanged; "ВОСКРЕСНУТЬ"
@@ -95,13 +95,15 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_BalanceGain;
 
         [Header("Coins")]
-        [Tooltip("Coins per zombie killed, per wave reached and for a victory.")]
-        [SerializeField, Min(0)] private int m_CoinsPerKill = 1;
-        [SerializeField, Min(0)] private int m_CoinsPerWave = 10;
-        [Tooltip("The reward for beating all 30 waves (on top of the kills and waves): enough for several cases.")]
-        [SerializeField, Min(0)] private int m_VictoryCoins = 1500;
+        // Kept scarce: a case (100-150) takes a few runs, a full victory pays for about four.
+        [Tooltip("Zombies killed per coin (the remainder is lost).")]
+        [SerializeField, Min(1)] private int m_KillsPerCoin = 5;
+        [Tooltip("Coins per wave reached.")]
+        [SerializeField, Min(0)] private int m_CoinsPerWave = 2;
+        [Tooltip("The reward for beating all 30 waves (on top of the kills and waves): about two cases.")]
+        [SerializeField, Min(0)] private int m_VictoryCoins = 250;
         [Tooltip("Scrap left at the end is exchanged: this many parts give one coin (win or lose).")]
-        [SerializeField, Min(1)] private int m_ScrapPerCoin = 5;
+        [SerializeField, Min(1)] private int m_ScrapPerCoin = 25;
 
         [Header("Look")]
         [SerializeField] private Color m_DefeatColor = new Color(1f, 0.38f, 0.3f, 1f);
@@ -228,7 +230,7 @@ namespace ZombiCar.UI
             m_Kills = m_Run.Kills;
             m_Level = m_Stats != null ? m_Stats.Level : 1;
             m_Bosses = m_Run.BossKills;
-            m_KillCoins = m_Run.Kills * m_CoinsPerKill;
+            m_KillCoins = m_Run.Kills / m_KillsPerCoin;
             m_WaveCoins = Mathf.Max(0, m_Run.Wave - 1) * m_CoinsPerWave;
             m_Scrap = m_Run.Money;
             m_ScrapCoins = ScrapCoins;
@@ -279,7 +281,7 @@ namespace ZombiCar.UI
         /// Coins this run pays for the cases: kills, the wave reached (the first counts 0), the scrap left exchanged
         /// (<see cref="ScrapCoins"/>), a victory bonus — all of it twice after the ×2 for an ad.
         /// </summary>
-        public int CoinsEarned => (m_Run.Kills * m_CoinsPerKill + Mathf.Max(0, m_Run.Wave - 1) * m_CoinsPerWave + ScrapCoins +
+        public int CoinsEarned => (m_Run.Kills / m_KillsPerCoin + Mathf.Max(0, m_Run.Wave - 1) * m_CoinsPerWave + ScrapCoins +
                                    (m_Run.Outcome == RunOutcome.Victory ? m_VictoryCoins : 0)) * (m_Run.CoinsDoubled ? 2 : 1);
 
         // ---------------------------------------------------------------- ×2 coins, the balance

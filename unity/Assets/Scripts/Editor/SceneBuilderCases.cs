@@ -14,7 +14,9 @@ namespace ZombiCar.EditorTools
     /// </summary>
     public static partial class SceneBuilder
     {
-        private static readonly Vector2 s_CaseCard = new Vector2(420f, 720f);
+        private static readonly Vector2 s_CaseCard = new Vector2(420f, 770f);           // room for the bonus plate
+        private static readonly Color s_BonusPlate = new Color(0.04f, 0.16f, 0.2f, 0.9f);
+        private static readonly Color s_BonusText = new Color(0.45f, 0.92f, 1f, 1f);
         private const float c_CaseStep = 450f;
         private const float c_TileSize = 220f;
         private const float c_TileStep = 236f;
@@ -37,7 +39,7 @@ namespace ZombiCar.EditorTools
             TextMeshProUGUI coins = CoinCounter("Coins", root, topRight, topRight, new Vector2(-40f, -44f), 64f, 300f, "0", 48f, outline);
             OutlinedLabel("Hint", root, top, top, new Vector2(0f, -120f), new Vector2(1300f, 44f),
                 "МОНЕТЫ ДАЮТСЯ В КОНЦЕ КАЖДОГО ЗАБЕГА", 28f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
-            Button close = HudButton("BackButton", root, bottomLeft, new Vector2(40f, 40f), new Vector2(300f, 96f), "НАЗАД", 40f,
+            Button close = HudButton("BackButton", root, bottomLeft, new Vector2(40f, 24f), new Vector2(300f, 96f), "НАЗАД", 40f,
                 Color.white, outline);
 
             string[] icons = { "UI_Icon_Rifle", "UI_Icon_Axe", "UI_AmmoIcon" };
@@ -70,6 +72,9 @@ namespace ZombiCar.EditorTools
                 TextAlignmentOptions.Center, Color.white, outline);
             TextMeshProUGUI note = OutlinedLabel("Note", result, top, top, new Vector2(0f, -146f), new Vector2(1200f, 46f),
                 "НОВЫЙ СКИН В КОЛЛЕКЦИИ!", 32f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            note.enableAutoSizing = true;                                         // a legendary skin's bonus goes after it
+            note.fontSizeMin = 18f;
+            note.fontSizeMax = 32f;
             Button equip = HudButton("EquipButton", result, bottom, new Vector2(-190f, 0f), new Vector2(340f, 100f), "НАДЕТЬ", 44f,
                 s_PlayColor, outline);
             Button ok = HudButton("OkButton", result, bottom, new Vector2(190f, 0f), new Vector2(340f, 100f), "ОК", 44f, Color.white, outline);
@@ -94,6 +99,8 @@ namespace ZombiCar.EditorTools
                 c.FindPropertyRelative("OpenButton").objectReferenceValue = cards[i].OpenButton;
                 c.FindPropertyRelative("OpenLabel").objectReferenceValue = cards[i].OpenLabel;
                 c.FindPropertyRelative("AdButton").objectReferenceValue = cards[i].AdButton;
+                c.FindPropertyRelative("Bonus").objectReferenceValue = cards[i].Bonus;
+                c.FindPropertyRelative("BonusGlow").objectReferenceValue = cards[i].BonusGlow;
             }
             so.ApplyModifiedPropertiesWithoutUndo();
             return screen;
@@ -104,7 +111,7 @@ namespace ZombiCar.EditorTools
             var center = new Vector2(0.5f, 0.5f);
             var top = new Vector2(0.5f, 1f);
             var bottom = new Vector2(0.5f, 0f);
-            RectTransform card = UiFactory.Rect($"Case{index + 1}", parent, center, center, new Vector2((index - 1) * c_CaseStep, -40f), s_CaseCard);
+            RectTransform card = UiFactory.Rect($"Case{index + 1}", parent, center, center, new Vector2((index - 1) * c_CaseStep, -28f), s_CaseCard);
             UiFactory.Image(card, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
             var refs = new CaseCardRefs();
             refs.Title = OutlinedLabel("Title", card, top, top, new Vector2(0f, -22f), new Vector2(390f, 60f), "КЕЙС", 40f,
@@ -126,8 +133,27 @@ namespace ZombiCar.EditorTools
             chances.richText = true;
             refs.Chances = chances;
 
-            refs.OpenButton = HudButton("OpenButton", card, bottom, new Vector2(0f, 112f), new Vector2(380f, 96f), "ОТКРЫТЬ", 32f,
+            refs.OpenButton = HudButton("OpenButton", card, bottom, new Vector2(0f, 196f), new Vector2(380f, 96f), "ОТКРЫТЬ", 32f,
                 s_PlayColor, outline);
+            // The legendary skin's bonus ("???" until it is won): a teal plate of its own, apart from the gold chances.
+            // A bright teal frame that breathes (CasesScreen), the trophy on the left, the text beside it.
+            RectTransform bonusPlate = UiFactory.Rect("Bonus", card, bottom, bottom, new Vector2(0f, 110f), new Vector2(380f, 78f));
+            RectTransform glowRt = UiFactory.Stretch("Glow", bonusPlate);
+            glowRt.offsetMin = new Vector2(-5f, -5f);
+            glowRt.offsetMax = new Vector2(5f, 5f);
+            refs.BonusGlow = UiFactory.Image(glowRt, UiFactory.Sprite("UI_Panel"), s_BonusText, true);
+            UiFactory.Image(UiFactory.Stretch("Plate", bonusPlate), UiFactory.Sprite("UI_Panel"), s_BonusPlate, true);
+            var midLeft = new Vector2(0f, 0.5f);
+            RectTransform trophy = UiFactory.Rect("Trophy", bonusPlate, midLeft, midLeft, new Vector2(8f, 0f), new Vector2(58f, 58f));
+            UiFactory.Image(trophy, UiFactory.Sprite("UI_Icon_Trophy"), Color.white, false).preserveAspect = true;
+            TextMeshProUGUI bonus = OutlinedLabel("Text", bonusPlate, center, center, new Vector2(30f, 0f), new Vector2(306f, 74f),
+                "ЛЕГЕНДАРНЫЙ СКИН ДАЁТ БОНУС:\n???", 22f, TextAlignmentOptions.Center, s_BonusText, outline);
+            bonus.textWrappingMode = TextWrappingModes.Normal;
+            bonus.richText = true;
+            bonus.enableAutoSizing = true;
+            bonus.fontSizeMin = 14f;
+            bonus.fontSizeMax = 22f;
+            refs.Bonus = bonus;
             refs.OpenLabel = refs.OpenButton.GetComponentInChildren<TMP_Text>();
             // Open for a rewarded ad: the shared gold ad button, icon only.
             refs.AdButton = AdButton("AdButton", card, bottom, new Vector2(0f, 24f), new Vector2(380f, 78f), null, 0f, outline);
@@ -199,6 +225,17 @@ namespace ZombiCar.EditorTools
             OutlinedLabel("Label", fresh, center, center, Vector2.zero, new Vector2(120f, 40f), "НОВЫЙ", 24f,
                 TextAlignmentOptions.Center, Color.white, outline);
             fresh.gameObject.SetActive(false);
+            // A legendary skin's run bonus: a gold tag over the name.
+            RectTransform bonus = UiFactory.Rect("Bonus", tile, bottom, bottom, new Vector2(0f, 56f), new Vector2(206f, 50f));
+            UiFactory.Image(bonus, UiFactory.Sprite("UI_Button"), new Color(1f, 0.72f, 0.15f, 1f), true);
+            TextMeshProUGUI bonusText = OutlinedLabel("Text", bonus, center, center, Vector2.zero, new Vector2(196f, 48f), "+15%", 19f,
+                TextAlignmentOptions.Center, Color.white, outline);
+            bonusText.textWrappingMode = TextWrappingModes.Normal;                    // two lines: "+15% К" / "СКОРОСТРЕЛЬНОСТИ"
+            bonusText.lineSpacing = -18f;
+            bonusText.enableAutoSizing = true;
+            bonusText.fontSizeMin = 13f;
+            bonusText.fontSizeMax = 19f;
+            bonus.gameObject.SetActive(false);
             var button = tile.gameObject.AddComponent<Button>();
             button.targetGraphic = plate;
             button.interactable = clickable;
@@ -210,7 +247,8 @@ namespace ZombiCar.EditorTools
                 tile.gameObject.AddComponent<UIButtonFx>();
             var view = tile.gameObject.AddComponent<ItemTile>();
             PrefabBuilder.Wire(view, ("m_Plate", plate), ("m_Icon", icon), ("m_Title", label), ("m_Equipped", equipped),
-                ("m_Locked", locked), ("m_Button", button), ("m_New", fresh.gameObject));
+                ("m_Locked", locked), ("m_Button", button), ("m_New", fresh.gameObject), ("m_BonusTag", bonus.gameObject),
+                ("m_BonusText", bonusText));
             return view;
         }
     }

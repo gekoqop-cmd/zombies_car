@@ -212,7 +212,8 @@ namespace ZombiCar.EditorTools
             systemsGo.transform.SetParent(systems, false);
             PrefabBuilder.Wire(systemsGo.AddComponent<MapBootstrap>(), ("m_Map", map),
                 ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
-                ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)));
+                ("m_PlayerStats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)),
+                ("m_Cosmetics", CosmeticsBuilder.Catalog));
             PrefabBuilder.Wire(systemsGo.AddComponent<CrosshairCursor>(),
                 ("m_Crosshair", AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/Art/Textures/UI/UI_Crosshair.png")));
             AudioBuilder.AddAudio();

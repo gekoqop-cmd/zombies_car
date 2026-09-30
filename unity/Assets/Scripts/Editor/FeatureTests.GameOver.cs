@@ -122,7 +122,7 @@ namespace ZombiCar.EditorTools
                 GameOverScreen screen = Find<GameOverScreen>();
                 Check(screen.IsShown && screen.Title == "ПОБЕДА!", "victory screen: ПОБЕДА!");
                 Check(GamePause.Has(GamePause.Reason.GameOver), "the game is paused behind it");
-                Check(screen.CoinsEarned >= 1500, $"the victory pays a big coin reward ({screen.CoinsEarned})");
+                Check(screen.CoinsEarned >= 250, $"the victory pays its coin reward ({screen.CoinsEarned})");
                 MetaProgress.TrySpend(screen.CoinsEarned);                     // the developer's own coins stay as they were
             });
             At(11.5f, () => Shot("4_Victory"));

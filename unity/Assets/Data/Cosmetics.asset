@@ -22,6 +22,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 1
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_olive
     m_Title: "\u041E\u041B\u0418\u0412\u0410"
     m_Slot: 0
@@ -31,6 +35,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_sand
     m_Title: "\u041F\u0415\u0421\u041E\u041A"
     m_Slot: 0
@@ -40,6 +48,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_graphite
     m_Title: "\u0413\u0420\u0410\u0424\u0418\u0422"
     m_Slot: 0
@@ -49,6 +61,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_ice
     m_Title: "\u041B\u0401\u0414"
     m_Slot: 0
@@ -58,6 +74,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_blood
     m_Title: "\u041A\u0420\u041E\u0412\u042C"
     m_Slot: 0
@@ -67,6 +87,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_toxic
     m_Title: "\u042F\u0414"
     m_Slot: 0
@@ -76,6 +100,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_neon
     m_Title: "\u041D\u0415\u041E\u041D"
     m_Slot: 0
@@ -85,6 +113,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_cobalt
     m_Title: "\u041A\u041E\u0411\u0410\u041B\u042C\u0422"
     m_Slot: 0
@@ -94,6 +126,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: gun_gold
     m_Title: "\u0417\u041E\u041B\u041E\u0422\u041E"
     m_Slot: 0
@@ -103,6 +139,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 1
+    m_Bonus: 1
+    m_BonusValue: 0.15
+    m_BonusText: "+15% \u043A \u0441\u043A\u043E\u0440\u043E\u0441\u0442\u0440\u0435\u043B\u044C\u043D\u043E\u0441\u0442\u0438"
   - m_Id: axe_default
     m_Title: "\u0421\u0422\u0410\u041D\u0414\u0410\u0420\u0422"
     m_Slot: 1
@@ -112,6 +152,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 1
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: axe_rust
     m_Title: "\u0420\u0416\u0410\u0412\u0427\u0418\u041D\u0410"
     m_Slot: 1
@@ -121,6 +165,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: axe_steel
     m_Title: "\u0421\u0422\u0410\u041B\u042C"
     m_Slot: 1
@@ -130,6 +178,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: axe_ice
     m_Title: "\u041B\u0401\u0414"
     m_Slot: 1
@@ -139,6 +191,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: axe_blood
     m_Title: "\u041A\u0420\u041E\u0412\u042C"
     m_Slot: 1
@@ -148,6 +204,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: axe_toxic
     m_Title: "\u042F\u0414"
     m_Slot: 1
@@ -157,6 +217,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: axe_neon
     m_Title: "\u041D\u0415\u041E\u041D"
     m_Slot: 1
@@ -166,6 +230,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: axe_gold
     m_Title: "\u0417\u041E\u041B\u041E\u0422\u041E"
     m_Slot: 1
@@ -175,6 +243,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 1
+    m_Bonus: 13
+    m_BonusValue: 0.25
+    m_BonusText: "+25% \u043A \u0434\u0430\u043B\u044C\u043D\u043E\u0441\u0442\u0438 \u0443\u0434\u0430\u0440\u0430 \u0442\u043E\u043F\u043E\u0440\u043E\u043C"
   - m_Id: bullet_default
     m_Title: "\u041E\u0411\u042B\u0427\u041D\u042B\u0415"
     m_Slot: 2
@@ -184,6 +256,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 1
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: bullet_white
     m_Title: "\u0411\u0415\u041B\u042B\u0415"
     m_Slot: 2
@@ -193,6 +269,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: bullet_green
     m_Title: "\u0417\u0415\u041B\u0401\u041D\u042B\u0415"
     m_Slot: 2
@@ -202,6 +282,10 @@ MonoBehaviour:
     m_Size: 1
     m_Trail: 0
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: bullet_plasma
     m_Title: "\u041F\u041B\u0410\u0417\u041C\u0410"
     m_Slot: 2
@@ -211,6 +295,10 @@ MonoBehaviour:
     m_Size: 1.1
     m_Trail: 1
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: bullet_fire
     m_Title: "\u041E\u0413\u041D\u0415\u041D\u041D\u042B\u0415"
     m_Slot: 2
@@ -220,6 +308,10 @@ MonoBehaviour:
     m_Size: 1.1
     m_Trail: 1
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: bullet_toxic
     m_Title: "\u042F\u0414\u041E\u0412\u0418\u0422\u042B\u0415"
     m_Slot: 2
@@ -229,6 +321,10 @@ MonoBehaviour:
     m_Size: 1.25
     m_Trail: 1
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: bullet_void
     m_Title: "\u0424\u0418\u041E\u041B\u0415\u0422\u041E\u0412\u042B\u0415"
     m_Slot: 2
@@ -238,6 +334,10 @@ MonoBehaviour:
     m_Size: 1.25
     m_Trail: 1
     m_Default: 0
+    m_HasBonus: 0
+    m_Bonus: 0
+    m_BonusValue: 0
+    m_BonusText: 
   - m_Id: bullet_gold
     m_Title: "\u0417\u041E\u041B\u041E\u0422\u042B\u0415"
     m_Slot: 2
@@ -247,6 +347,10 @@ MonoBehaviour:
     m_Size: 1.4
     m_Trail: 1
     m_Default: 0
+    m_HasBonus: 1
+    m_Bonus: 0
+    m_BonusValue: 0.1
+    m_BonusText: "+10% \u043A \u0443\u0440\u043E\u043D\u0443 \u043F\u0443\u043B\u044C"
   m_Cases:
   - m_Title: "\u041E\u0420\u0423\u0416\u0415\u0419\u041D\u042B\u0419 \u041A\u0415\u0419\u0421"
     m_Slot: 0

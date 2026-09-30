@@ -375,7 +375,7 @@ namespace ZombiCar.EditorTools
 
             // Collection page.
             RectTransform collection = UiFactory.Stretch("CollectionPage", window);
-            OutlinedLabel("Hint", collection, top, top, new Vector2(0f, -196f), new Vector2(1000f, 40f), "НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ", 28f,
+            OutlinedLabel("Hint", collection, top, top, new Vector2(0f, -196f), new Vector2(1000f, 40f), "НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ  •  ЛЕГЕНДАРНЫЕ ДАЮТ БОНУС В ЗАБЕГЕ", 26f,
                 TextAlignmentOptions.Center, s_SubtitleColor, outline);
             RectTransform grid = UiFactory.Rect("Grid", collection, top, top, new Vector2(0f, -248f), new Vector2(1220f, 460f));
             var layout = grid.gameObject.AddComponent<GridLayoutGroup>();

@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using ZombiCar.Core;
+using ZombiCar.Progression;
 
 namespace ZombiCar.EditorTools
 {
@@ -47,7 +48,8 @@ namespace ZombiCar.EditorTools
                 new CosmeticItem("gun_toxic", "ЯД", gun, rare, C(0.5f, 1f, 0.35f), Color.white),
                 new CosmeticItem("gun_neon", "НЕОН", gun, epic, C(1f, 0.35f, 0.95f), Color.white),
                 new CosmeticItem("gun_cobalt", "КОБАЛЬТ", gun, epic, C(0.3f, 0.5f, 1f), Color.white),
-                new CosmeticItem("gun_gold", "ЗОЛОТО", gun, legend, C(1f, 0.8f, 0.3f), Color.white),
+                new CosmeticItem("gun_gold", "ЗОЛОТО", gun, legend, C(1f, 0.8f, 0.3f), Color.white)
+                    .WithBonus(StatEffect.FireRate, 0.15f, "+15% к скорострельности"),
 
                 // Axe: blade tint, slash colour.
                 new CosmeticItem("axe_default", "СТАНДАРТ", axe, common, Color.white, C(1f, 0.97f, 0.86f), isDefault: true),
@@ -57,7 +59,8 @@ namespace ZombiCar.EditorTools
                 new CosmeticItem("axe_blood", "КРОВЬ", axe, rare, C(1f, 0.35f, 0.3f), C(1f, 0.25f, 0.2f)),
                 new CosmeticItem("axe_toxic", "ЯД", axe, epic, C(0.55f, 1f, 0.4f), C(0.5f, 1f, 0.3f)),
                 new CosmeticItem("axe_neon", "НЕОН", axe, epic, C(1f, 0.45f, 1f), C(0.95f, 0.4f, 1f)),
-                new CosmeticItem("axe_gold", "ЗОЛОТО", axe, legend, C(1f, 0.82f, 0.35f), C(1f, 0.85f, 0.3f)),
+                new CosmeticItem("axe_gold", "ЗОЛОТО", axe, legend, C(1f, 0.82f, 0.35f), C(1f, 0.85f, 0.3f))
+                    .WithBonus(StatEffect.AxeRange, 0.25f, "+25% к дальности удара топором"),
 
                 // Bullets: tracer colour (made HDR in Bullet.ApplySkin), trail colour, size.
                 new CosmeticItem("bullet_default", "ОБЫЧНЫЕ", bullet, common, C(1f, 0.72f, 0.28f), Color.white, isDefault: true),
@@ -67,7 +70,8 @@ namespace ZombiCar.EditorTools
                 new CosmeticItem("bullet_fire", "ОГНЕННЫЕ", bullet, rare, C(1f, 0.42f, 0.1f), C(1f, 0.35f, 0.05f), 1.1f, true),
                 new CosmeticItem("bullet_toxic", "ЯДОВИТЫЕ", bullet, epic, C(0.5f, 1f, 0.2f), C(0.35f, 1f, 0.15f), 1.25f, true),
                 new CosmeticItem("bullet_void", "ФИОЛЕТОВЫЕ", bullet, epic, C(0.8f, 0.3f, 1f), C(0.7f, 0.2f, 1f), 1.25f, true),
-                new CosmeticItem("bullet_gold", "ЗОЛОТЫЕ", bullet, legend, C(1f, 0.85f, 0.3f), C(1f, 0.7f, 0.2f), 1.4f, true),
+                new CosmeticItem("bullet_gold", "ЗОЛОТЫЕ", bullet, legend, C(1f, 0.85f, 0.3f), C(1f, 0.7f, 0.2f), 1.4f, true)
+                    .WithBonus(StatEffect.WeaponDamage, 0.1f, "+10% к урону пуль"),
             };
             CaseDef[] cases =
             {
