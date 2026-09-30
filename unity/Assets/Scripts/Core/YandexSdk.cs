@@ -13,7 +13,9 @@ namespace ZombiCar.Core
     /// <item>game_api_pause / resume — pause the game and the sound while the platform asks;</item>
     /// <item>fullscreen ads at logical breaks (<see cref="ShowFullscreenAd"/>), with the game paused and muted meanwhile;</item>
     /// <item>the player's language (<see cref="Language"/>);</item>
-    /// <item>the "best_time" leaderboard: a victory's time sent, the top and the player's line read.</item>
+    /// <item>the "best_time" leaderboard: a victory's time sent, the top and the player's line read;</item>
+    /// <item>cloud saves: the player's progress (<see cref="MetaProgress"/>) read at start and merged with this device's,
+    /// then every saved change sent a moment later (and at once when the tab is hidden).</item>
     /// </list>
     /// Outside a WebGL build every call is a no-op and ads complete at once.
     /// </summary>
@@ -29,6 +31,8 @@ namespace ZombiCar.Core
         [DllImport("__Internal")] private static extern void YaShowRewardedAd();
         [DllImport("__Internal")] private static extern void YaSubmitScore(string leaderboard, int score);
         [DllImport("__Internal")] private static extern void YaGetLeaderboardEntries(string leaderboard, int count);
+        [DllImport("__Internal")] private static extern void YaCloudLoad();
+        [DllImport("__Internal")] private static extern void YaCloudSave(string json);
         private static readonly bool s_Live = true;
 #else
         private static void YaInit() { }
@@ -38,6 +42,8 @@ namespace ZombiCar.Core
         private static void YaShowRewardedAd() { }
         private static void YaSubmitScore(string leaderboard, int score) { }
         private static void YaGetLeaderboardEntries(string leaderboard, int count) { }
+        private static void YaCloudLoad() { }
+        private static void YaCloudSave(string json) { }
         private static readonly bool s_Live = false;
 #endif
 
@@ -109,6 +115,8 @@ namespace ZombiCar.Core
         {
             GamePause.Changed += Report;
             GameSession.Changed += Report;
+            MetaProgress.Saved += OnProgressSaved;
+            CloudReady = !s_Live;                         // no cloud to wait for outside Yandex Games
             YaInit();
         }
 
@@ -116,6 +124,7 @@ namespace ZombiCar.Core
         {
             GamePause.Changed -= Report;
             GameSession.Changed -= Report;
+            MetaProgress.Saved -= OnProgressSaved;
             if (s_Instance == this)
                 s_Instance = null;
         }
@@ -234,6 +243,76 @@ namespace ZombiCar.Core
 
         private void OnScoreSubmitted(string ok) => Debug.Log($"[YandexSdk] Leaderboard score {(ok == "1" ? "sent" : "not sent")}.");
 
+        // ---------------------------------------------------------------- cloud saves
+        /// <summary>Seconds a saved change waits before it goes to the cloud (changes in a row go together).</summary>
+        private const float c_CloudSaveDelay = 2f;
+
+        /// <summary>
+        /// The cloud save was read and merged — or there is none to wait for (outside Yandex Games, an SDK error): the
+        /// Boot scene waits for this before the menu shows the coins.
+        /// </summary>
+        public static bool CloudReady { get; private set; }
+
+        /// <summary>The progress is mirrored to the Yandex cloud (the SDK and the player are there).</summary>
+        public static bool CloudEnabled { get; private set; }
+
+        private float m_CloudSaveAt = -1f;
+
+        private void OnProgressSaved()
+        {
+            if (CloudEnabled && m_CloudSaveAt < 0f)
+                m_CloudSaveAt = Time.unscaledTime + c_CloudSaveDelay;
+        }
+
+        private void Update()
+        {
+            if (m_CloudSaveAt >= 0f && Time.unscaledTime >= m_CloudSaveAt)
+                SendCloudSave();
+        }
+
+        // The tab is hidden or the page closes: whatever is waiting goes now.
+        private void OnApplicationFocus(bool focus)
+        {
+            if (!focus && m_CloudSaveAt >= 0f)
+                SendCloudSave();
+        }
+
+        private void OnApplicationPause(bool paused)
+        {
+            if (paused && m_CloudSaveAt >= 0f)
+                SendCloudSave();
+        }
+
+        private void SendCloudSave()
+        {
+            m_CloudSaveAt = -1f;
+            if (CloudEnabled)
+                YaCloudSave(MetaProgress.ExportJson());
+        }
+
+        // The cloud's copy ("" = nothing saved yet, "!" = no cloud): merged into this device's progress; when the two
+        // differ, the merged progress goes back up at once.
+        private void OnCloudLoaded(string payload)
+        {
+            CloudReady = true;
+            if (payload == "!")
+            {
+                Debug.Log("[YandexSdk] cloud save unavailable: progress stays on this device.");
+                return;
+            }
+            CloudEnabled = true;
+            bool changed = MetaProgress.MergeCloud(payload);
+            Debug.Log($"[YandexSdk] cloud save {(string.IsNullOrEmpty(payload) ? "empty" : "read")}{(changed ? ", merged in" : "")}.");
+            if (MetaProgress.ExportJson() != payload)
+                SendCloudSave();
+        }
+
+        private void OnCloudSaved(string ok)
+        {
+            if (ok != "1")
+                Debug.LogWarning("[YandexSdk] cloud save failed; it is sent again with the next change.");
+        }
+
         // Gameplay for the platform = a map is open and nothing pauses it.
         private void Report()
         {
@@ -253,9 +332,14 @@ namespace ZombiCar.Core
                 Language = language;
             Debug.Log($"[YandexSdk] ready, language {Language}");
             Report();
+            YaCloudLoad();
         }
 
-        private void OnSdkMissing(string _) => Debug.Log("[YandexSdk] SDK not available (not on Yandex Games).");
+        private void OnSdkMissing(string _)
+        {
+            CloudReady = true;
+            Debug.Log("[YandexSdk] SDK not available (not on Yandex Games).");
+        }
 
         private void OnPlatformPause(string _) => GamePause.Set(GamePause.Reason.Platform, true);
 

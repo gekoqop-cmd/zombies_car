@@ -4,6 +4,7 @@
 var YandexSdkLib = {
   $Ya: {
     receiver: "YandexSdk",
+    player: null,                 // the Yandex player (cloud saves), set by YaCloudLoad
     // Resolves with the SDK (or null when it could not be loaded).
     sdk: function () {
       return window.ysdkPromise || Promise.resolve(null);
@@ -101,6 +102,34 @@ var YandexSdkLib = {
         } else Ya.send("OnScoreSubmitted", "0");
       } catch (e) { fail(e); }
     });
+  },
+
+  // Cloud save, read once at start: the player (a guest too — scopes: false asks for nothing) and their "meta" key,
+  // the game's progress as a JSON string. Answers OnCloudLoaded with that string ("" = nothing saved yet) or "!" when
+  // the cloud cannot be used (no SDK, an error): the game then keeps its progress on this device only.
+  YaCloudLoad: function () {
+    Ya.sdk().then(function (s) {
+      if (!s || !s.getPlayer) { Ya.send("OnCloudLoaded", "!"); return; }
+      var fail = function (e) { console.warn("[YandexSdk] cloud load", e); Ya.send("OnCloudLoaded", "!"); };
+      try {
+        s.getPlayer({ scopes: false }).then(function (p) {
+          Ya.player = p;
+          return p.getData(["meta"]);
+        }).then(function (data) {
+          Ya.send("OnCloudLoaded", data && typeof data.meta === "string" ? data.meta : "");
+        }, fail);
+      } catch (e) { fail(e); }
+    });
+  },
+
+  // Cloud save: the whole progress (JSON) under "meta". The platform batches the writes (flush: false).
+  YaCloudSave: function (jsonPtr) {
+    var json = UTF8ToString(jsonPtr);
+    if (!Ya.player || !Ya.player.setData) return;
+    try {
+      Ya.player.setData({ meta: json }, false).then(function () { Ya.send("OnCloudSaved", "1"); },
+        function (e) { console.warn("[YandexSdk] cloud save", e); Ya.send("OnCloudSaved", "0"); });
+    } catch (e) { console.warn("[YandexSdk] cloud save", e); }
   },
 
   // The top of a leaderboard with the player's own entry; answers with JSON (or "" when there is nothing to show).

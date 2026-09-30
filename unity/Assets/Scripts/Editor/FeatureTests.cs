@@ -136,6 +136,7 @@ namespace ZombiCar.EditorTools
         [MenuItem("Tools/Diagnostics/Feature Tests/14 Parts economy")] private static void MenuEconomy() => Run("economy");
         [MenuItem("Tools/Diagnostics/Feature Tests/15 Leaderboard")] private static void MenuLeaderboard() => Run("leaderboard");
         [MenuItem("Tools/Diagnostics/Feature Tests/16 Legendary card")] private static void MenuLegendary() => Run("legendary");
+        [MenuItem("Tools/Diagnostics/Feature Tests/17 Cloud saves")] private static void MenuCloud() => Run("cloud");
 
         public static void Run(string scenario)
         {
