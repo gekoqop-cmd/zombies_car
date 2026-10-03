@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -16,8 +17,10 @@ namespace ZombiCar.EditorTools
     /// car and player health every few seconds, saves game-camera screenshots to Screenshots/Playtest_*.png and exits
     /// with code 0 when zombies spawned, were killed and no errors were logged.
     /// Batch: Unity.exe -batchmode -projectPath &lt;unity&gt; -executeMethod ZombiCar.EditorTools.Playtest.Run
-    /// [-playtestWave N] (without -quit: the editor has to keep running through Play mode; the test exits by itself).
+    /// [-playtestWave N] [-playtestNight] (without -quit: the editor has to keep running through Play mode; the test
+    /// exits by itself).
     /// -playtestWave starts at a later wave, so the zombie types that appear later are tested too.
+    /// -playtestNight runs Map02 (night) instead of Map01 (day).
     /// </summary>
     [InitializeOnLoad]
     public static class Playtest
@@ -25,6 +28,7 @@ namespace ZombiCar.EditorTools
         private const string c_StateKey = "ZombiCar.Playtest.State";   // 0 idle, 1 running, 2 finished
         private const string c_ResultKey = "ZombiCar.Playtest.Result";
         private const string c_WaveArgument = "-playtestWave";
+        private const string c_NightArgument = "-playtestNight";
         private const float c_GameSeconds = 110f;
         private const float c_TimeScale = 2f;
         private const float c_LogInterval = 10f;
@@ -78,7 +82,8 @@ namespace ZombiCar.EditorTools
         [MenuItem("Tools/Diagnostics/Run Playtest")]
         public static void Run()
         {
-            EditorSceneManager.OpenScene(SceneBuilder.c_MapScene, OpenSceneMode.Single);
+            bool night = System.Environment.GetCommandLineArgs().Contains(c_NightArgument);
+            EditorSceneManager.OpenScene(night ? SceneBuilder.c_NightMapScene : SceneBuilder.c_MapScene, OpenSceneMode.Single);
             SessionState.SetInt(c_StateKey, 1);
             SessionState.SetInt(c_ResultKey, 1);
             EditorApplication.update -= Tick;
@@ -207,11 +212,23 @@ namespace ZombiCar.EditorTools
             Camera cam = Camera.main;
             if (cam == null)
                 return;
+            HudOnCamera(cam);
             string folder = Path.GetFullPath("Screenshots");
             Directory.CreateDirectory(folder);
             string path = Path.Combine(folder, name + ".png");
             MapScreenshots.Render(cam, c_ShotWidth, c_ShotHeight, path);
             Debug.Log($"[Playtest] {path}");
+        }
+
+        // The HUD is a screen-space overlay, which camera renders leave out: draw it through the camera instead.
+        private static void HudOnCamera(Camera cam)
+        {
+            var hud = Object.FindAnyObjectByType<ZombiCar.UI.HudController>();
+            if (hud == null || !hud.TryGetComponent(out Canvas canvas) || canvas.renderMode == RenderMode.ScreenSpaceCamera)
+                return;
+            canvas.renderMode = RenderMode.ScreenSpaceCamera;
+            canvas.worldCamera = cam;
+            canvas.planeDistance = cam.nearClipPlane + 0.5f;
         }
 
         private static void Finish()
