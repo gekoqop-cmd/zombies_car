@@ -41,12 +41,18 @@ namespace ZombiCar.Core
         public static float MusicVolume { get; private set; } = c_FallbackVolume;
         public static float SfxVolume { get; private set; } = c_FallbackVolume;
 
-        /// <summary>Screen shake, hit stops and vibration (off for players who get dizzy from them).</summary>
-        public static bool ShakeEnabled { get; private set; } = true;
+        /// <summary>
+        /// Screen shake, hit stops and vibration. Only a phone has the switch (vibration is a phone thing, and some
+        /// players get dizzy there); on a computer they are always on.
+        /// </summary>
+        public static bool ShakeEnabled => !DeviceInfo.IsMobile || s_ShakeSetting;
 
+        private static bool s_ShakeSetting = true;
+
+        /// <summary>The phone's "ТРЯСКА И ВИБРАЦИЯ" switch (a computer keeps shaking whatever it is).</summary>
         public static void SetShakeEnabled(bool enabled)
         {
-            ShakeEnabled = enabled;
+            s_ShakeSetting = enabled;
             PlayerPrefs.SetInt(c_ShakeKey, enabled ? 1 : 0);
             PlayerPrefs.Save();
         }
@@ -73,7 +79,7 @@ namespace ZombiCar.Core
             MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_MusicVolumeKey, c_FallbackVolume));
             SfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_SfxVolumeKey, c_FallbackVolume));
             ControlsScale = Mathf.Clamp(PlayerPrefs.GetFloat(c_ControlsScaleKey, 1f), c_MinControlsScale, c_MaxControlsScale);
-            ShakeEnabled = PlayerPrefs.GetInt(c_ShakeKey, 1) == 1;
+            s_ShakeSetting = PlayerPrefs.GetInt(c_ShakeKey, 1) == 1;
 
             // Let the browser drive the frame pacing on the Web (requestAnimationFrame).
             Application.targetFrameRate = -1;

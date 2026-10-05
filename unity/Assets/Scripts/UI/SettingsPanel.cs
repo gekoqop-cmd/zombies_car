@@ -6,10 +6,10 @@ namespace ZombiCar.UI
 {
     /// <summary>
     /// Settings pop-up (main menu and HUD gear button): music / effects volume sliders (the mixer groups via
-    /// <see cref="SettingsService"/>), "ТРЯСКА И ВИБРАЦИЯ" on / off, quality tier (Low / Medium / High / Ultra; Ultra
-    /// hidden on mobile,
-    /// <see cref="SettingsService.IsUltraAllowed"/>), Back and — in the game only — "To menu", which leaves the map for
-    /// the main menu. Fades in and out (unscaled time).
+    /// <see cref="SettingsService"/>), quality tier (Low / Medium / High / Ultra; Ultra hidden on mobile,
+    /// <see cref="SettingsService.IsUltraAllowed"/>), on a phone only "ТРЯСКА И ВИБРАЦИЯ" on / off and the touch
+    /// controls, Back and — in the game only — "To menu", which leaves the map for the main menu. Fades in and out
+    /// (unscaled time).
     /// </summary>
     [RequireComponent(typeof(CanvasGroup))]
     public sealed class SettingsPanel : MonoBehaviour
@@ -31,12 +31,12 @@ namespace ZombiCar.UI
         [SerializeField] private Color m_NormalColor = new Color(0.16f, 0.17f, 0.2f, 0.95f);
         [SerializeField] private Color m_SelectedColor = new Color(0.9f, 0.45f, 0.12f, 1f);
 
-        [Header("Touch controls (mobile only)")]
+        [Header("Phone only: shake switch, touch controls")]
         [SerializeField, OptionalReference] private GameObject m_MobileSection;
         [SerializeField, OptionalReference] private Slider m_ControlsSizeSlider;
         [Tooltip("Opens the controls' edit mode (only where the controls exist: the HUD).")]
         [SerializeField, OptionalReference] private Button m_EditControlsButton;
-        [Tooltip("The window; it is this much shorter when the touch-controls section is hidden.")]
+        [Tooltip("The window; it is this much shorter when the phone-only section is hidden.")]
         [SerializeField] private RectTransform m_Window;
         [SerializeField, Min(0f)] private float m_MobileSectionHeight;
 

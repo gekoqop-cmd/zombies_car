@@ -39,17 +39,31 @@ namespace ZombiCar.EditorTools
             At(1.7f, () =>
             {
                 Shot("21_Settings_Shake");
-                Find<SettingsPanel>().ToggleShake();
-                Check(!SettingsService.ShakeEnabled, "ТРЯСКА И ВИБРАЦИЯ: ВЫКЛ");
-                Find<SettingsPanel>().Hide();
+                var settings = Find<SettingsPanel>();
+                if (DeviceInfo.IsMobile)
+                {
+                    settings.ToggleShake();
+                    Check(!SettingsService.ShakeEnabled, "ТРЯСКА И ВИБРАЦИЯ: ВЫКЛ");
+                }
+                else
+                {
+                    SettingsService.SetShakeEnabled(false);                    // even a switch saved off somewhere
+                    bool shown = settings.GetComponentsInChildren<Transform>(true)
+                        .Any(t => t.name == "ShakeButton" && t.gameObject.activeInHierarchy);
+                    Check(SettingsService.ShakeEnabled && !shown, "a computer has no ТРЯСКА switch: the shake is always on");
+                }
+                settings.Hide();
             });
             At(2.0f, () =>
             {
                 float kick = CameraShake.LastKick, stop = GameFeel.LastStop;
                 GameFeel.Hurt(40);
                 CameraShake.Add(0.9f);
-                Check(Mathf.Approximately(CameraShake.LastKick, kick) && Mathf.Approximately(GameFeel.LastStop, stop) &&
-                      Mathf.Approximately(GamePause.SlowMotion, 1f), "with it off: no shake, no hit stop");
+                if (DeviceInfo.IsMobile)
+                    Check(Mathf.Approximately(CameraShake.LastKick, kick) && Mathf.Approximately(GameFeel.LastStop, stop) &&
+                          Mathf.Approximately(GamePause.SlowMotion, 1f), "with it off: no shake, no hit stop");
+                else
+                    Check(CameraShake.LastKick > 0.5f, $"a computer shakes anyway ({CameraShake.LastKick:F2})");
                 SettingsService.SetShakeEnabled(true);
                 s_PlayerHealth.Heal(1000);
             });

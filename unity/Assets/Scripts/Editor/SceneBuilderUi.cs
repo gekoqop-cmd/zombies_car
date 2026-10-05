@@ -627,9 +627,9 @@ namespace ZombiCar.EditorTools
             group.alpha = 0f;
             var center = new Vector2(0.5f, 0.5f);
             var top = new Vector2(0.5f, 1f);
-            // Taller by the touch-controls row; SettingsPanel removes that height again on desktop.
+            // Taller by the phone-only rows (shake switch, touch controls); SettingsPanel removes that height on a computer.
             RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero,
-                new Vector2(1060f, 820f + c_MobileSettingsRowHeight));
+                new Vector2(1060f, 720f + c_PhoneOnlySettingsHeight));
             UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
             OutlinedLabel("Title", window, top, top, new Vector2(0f, -34f), new Vector2(900f, 80f), "НАСТРОЙКИ", 60f,
                 TextAlignmentOptions.Center, s_ButtonLabel, outline);
@@ -641,16 +641,9 @@ namespace ZombiCar.EditorTools
             // Music and effects only: no master slider (the game's own master stays at full).
             Slider music = VolumeRow(window, "MusicVolume", "МУЗЫКА", -150f, outline);
             Slider sfx = VolumeRow(window, "SfxVolume", "ЭФФЕКТЫ", -250f, outline);
-            // Shake, hit stops and vibration: on or off (some players get dizzy).
-            RectTransform shakeRow = UiFactory.Rect("Shake", window, top, top, new Vector2(0f, -350f), new Vector2(940f, 80f));
-            OutlinedLabel("Label", shakeRow, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(560f, 70f),
-                "ТРЯСКА И ВИБРАЦИЯ", 36f, TextAlignmentOptions.Left, s_ButtonLabel, outline);
-            Button shake = HudButton("ShakeButton", shakeRow, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(260f, 84f), "ВКЛ", 38f,
-                Color.white, outline);
-
-            OutlinedLabel("QualityLabel", window, top, top, new Vector2(0f, -440f), new Vector2(900f, 60f), "КАЧЕСТВО ГРАФИКИ", 38f,
+            OutlinedLabel("QualityLabel", window, top, top, new Vector2(0f, -350f), new Vector2(900f, 60f), "КАЧЕСТВО ГРАФИКИ", 38f,
                 TextAlignmentOptions.Center, new Color(0.8f, 0.78f, 0.74f), outline);
-            RectTransform row = UiFactory.Rect("TierButtons", window, top, top, new Vector2(0f, -520f), new Vector2(1000f, UiFactory.c_MinTouchTarget));
+            RectTransform row = UiFactory.Rect("TierButtons", window, top, top, new Vector2(0f, -430f), new Vector2(1000f, UiFactory.c_MinTouchTarget));
             var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
             layout.spacing = 16f;
             layout.childAlignment = TextAnchor.MiddleCenter;
@@ -663,10 +656,18 @@ namespace ZombiCar.EditorTools
             Button high = TierButton("HighButton", row, size, "ВЫСОКОЕ", normal, outline);
             Button ultra = TierButton("UltraButton", row, size, "УЛЬТРА", normal, outline);
 
-            // Touch controls (mobile only): size, and "layout" to drag them around (only in the game, where they exist).
-            RectTransform mobileRow = UiFactory.Rect("TouchControls", window, top, top, new Vector2(0f, -655f), new Vector2(940f, 90f));
+            // Phone only (hidden on a computer, the window then shorter): the shake switch and the touch controls.
+            RectTransform phoneOnly = UiFactory.Stretch("PhoneOnly", window);
             var midLeft = new Vector2(0f, 0.5f);
             var midRight = new Vector2(1f, 0.5f);
+            // Shake, hit stops and vibration: on or off (some players get dizzy).
+            RectTransform shakeRow = UiFactory.Rect("Shake", phoneOnly, top, top, new Vector2(0f, -545f), new Vector2(940f, 80f));
+            OutlinedLabel("Label", shakeRow, midLeft, midLeft, Vector2.zero, new Vector2(560f, 70f),
+                "ТРЯСКА И ВИБРАЦИЯ", 36f, TextAlignmentOptions.Left, s_ButtonLabel, outline);
+            Button shake = HudButton("ShakeButton", shakeRow, midRight, Vector2.zero, new Vector2(260f, 84f), "ВКЛ", 38f,
+                Color.white, outline);
+            // Touch controls: size, and "layout" to drag them around (only in the game, where they exist).
+            RectTransform mobileRow = UiFactory.Rect("TouchControls", phoneOnly, top, top, new Vector2(0f, -655f), new Vector2(940f, 90f));
             OutlinedLabel("Label", mobileRow, midLeft, midLeft, Vector2.zero, new Vector2(270f, 70f), "ДЖОЙСТИКИ", 36f,
                 TextAlignmentOptions.Left, s_ButtonLabel, outline);
             RectTransform sizeSlot = UiFactory.Rect("SizeSlot", mobileRow, midLeft, midLeft, new Vector2(270f, 0f), new Vector2(360f, 56f));
@@ -688,11 +689,11 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(settings, ("m_MusicSlider", music), ("m_SfxSlider", sfx), ("m_ShakeButton", shake),
                 ("m_ShakeLabel", shake.GetComponentInChildren<TMP_Text>()),
                 ("m_LowButton", low), ("m_MediumButton", medium), ("m_HighButton", high), ("m_UltraButton", ultra),
-                ("m_CloseButton", close), ("m_MenuButton", toMenu), ("m_MobileSection", mobileRow.gameObject), ("m_Coins", coins),
+                ("m_CloseButton", close), ("m_MenuButton", toMenu), ("m_MobileSection", phoneOnly.gameObject), ("m_Coins", coins),
                 ("m_ControlsSizeSlider", controlsSize), ("m_EditControlsButton", editControls), ("m_Window", window),
                 ("m_TutorialButton", tutorial),
                 ("m_Tutorial", DataAssetsBuilder.Load<ZombiCar.Progression.TutorialState>(DataAssetsBuilder.c_TutorialState)));
-            CharacterBuilder.SetProps(settings, ("m_MobileSectionHeight", c_MobileSettingsRowHeight));
+            CharacterBuilder.SetProps(settings, ("m_MobileSectionHeight", c_PhoneOnlySettingsHeight));
             root.gameObject.SetActive(false);
             return settings;
         }
@@ -885,7 +886,8 @@ namespace ZombiCar.EditorTools
         }
 
         // ------------------------------------------------------------------ touch controls (mobile)
-        private const float c_MobileSettingsRowHeight = 110f;
+        // The settings' phone-only rows: the shake switch and the touch controls.
+        private const float c_PhoneOnlySettingsHeight = 220f;
         private const float c_HudReserve = 270f;           // the top HUD panels + counters: controls stay below
         private const float c_StickTouch = 380f;           // touch area of a stick
         private const float c_StickRing = 260f;

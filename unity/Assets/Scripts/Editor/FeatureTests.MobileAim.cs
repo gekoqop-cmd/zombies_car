@@ -34,7 +34,7 @@ namespace ZombiCar.EditorTools
                 Vector3 car = s_Car.transform.position;
                 Teleport(car + new Vector3(-4.5f, 0f, 0f));
                 hidden = s_Spawner.SpawnAt(Zombie("Walker"), car + new Vector3(2.6f, 0f, 0f));
-                visible = s_Spawner.SpawnAt(Zombie("Walker"), car + new Vector3(-4.5f, 0f, 8.5f));
+                visible = s_Spawner.SpawnAt(Zombie("Walker"), car + new Vector3(-4.5f, 0f, -8.5f));
                 foreach (ZombieController z in new[] { hidden, visible })
                     if (z != null)
                         z.SpeedScale = 0f;                                 // they stand still for the check

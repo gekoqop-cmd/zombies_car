@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ZombiCar.EditorTools
 {
@@ -39,6 +40,8 @@ namespace ZombiCar.EditorTools
             PlayerSettings.WebGL.maximumMemorySize = c_MaximumMemoryMb;
             PlayerSettings.WebGL.memoryGrowthMode = WebGLMemoryGrowthMode.Geometric;
             UnityEditor.WebGL.UserBuildSettings.codeOptimization = UnityEditor.WebGL.WasmCodeOptimization.DiskSizeLTO;
+            // No video in the game: the video shaders only when something references them.
+            GraphicsSettings.videoShadersIncludeMode = VideoShadersIncludeMode.Referenced;
 
             AssetDatabase.SaveAssets();
 
@@ -57,7 +60,8 @@ namespace ZombiCar.EditorTools
                 + $"  wasm2023 = {PlayerSettings.WebGL.wasm2023}\n"
                 + $"  template = {PlayerSettings.WebGL.template}\n"
                 + $"  memory = {PlayerSettings.WebGL.initialMemorySize}..{PlayerSettings.WebGL.maximumMemorySize} MB {PlayerSettings.WebGL.memoryGrowthMode}\n"
-                + $"  codeOptimization = {UnityEditor.WebGL.UserBuildSettings.codeOptimization}");
+                + $"  codeOptimization = {UnityEditor.WebGL.UserBuildSettings.codeOptimization}\n"
+                + $"  videoShadersIncludeMode = {GraphicsSettings.videoShadersIncludeMode}");
         }
     }
 }
