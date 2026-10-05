@@ -137,6 +137,10 @@ namespace ZombiCar.EditorTools
         [MenuItem("Tools/Diagnostics/Feature Tests/15 Leaderboard")] private static void MenuLeaderboard() => Run("leaderboard");
         [MenuItem("Tools/Diagnostics/Feature Tests/16 Legendary card")] private static void MenuLegendary() => Run("legendary");
         [MenuItem("Tools/Diagnostics/Feature Tests/17 Cloud saves")] private static void MenuCloud() => Run("cloud");
+        [MenuItem("Tools/Diagnostics/Feature Tests/18 Loot on the ground")] private static void MenuLoot() => Run("loot");
+        [MenuItem("Tools/Diagnostics/Feature Tests/19 Difficulty, checkpoints, achievement")] private static void MenuDifficulty() => Run("difficulty");
+        [MenuItem("Tools/Diagnostics/Feature Tests/20 Touch aim")] private static void MenuMobileAim() => Run("mobileaim");
+        [MenuItem("Tools/Diagnostics/Feature Tests/21 Hit feel, streak, music")] private static void MenuFeel() => Run("feel");
 
         public static void Run(string scenario)
         {
@@ -145,6 +149,7 @@ namespace ZombiCar.EditorTools
             s_Started = false;                                       // statics survive between plays (no domain reload)
             MetaProgress.TutorialDone = MetaProgress.LiveHintsDone = true;   // no intro cards pausing the scenario
             BossIntroView.Suppressed = scenario != "screens";                 // nor boss cards (scenarios time the bosses)
+            StageClearScreen.Suppressed = scenario != "difficulty";           // nor the stage windows after them
             string scene = Argument(c_MapArgument) == "night" ? SceneBuilder.c_NightMapScene : SceneBuilder.c_MapScene;
             EditorSceneManager.OpenScene(scene, OpenSceneMode.Single);
             SessionState.SetString(c_ScenarioKey, scenario);
@@ -176,6 +181,7 @@ namespace ZombiCar.EditorTools
                 EditorApplication.update -= Tick;
                 SessionState.SetInt(c_StateKey, 0);
                 BossIntroView.Suppressed = false;                    // statics outlive the play session
+                StageClearScreen.Suppressed = false;
                 int result = SessionState.GetInt(c_ResultKey, 1);
                 Debug.Log($"[FeatureTests] Finished, exit code {result}.");
                 if (Application.isBatchMode)
@@ -218,6 +224,7 @@ namespace ZombiCar.EditorTools
             Application.logMessageReceived -= CountErrors;
             Application.logMessageReceived += CountErrors;
             s_Scenario = SessionState.GetString(c_ScenarioKey, "progression");
+            s_CheckpointsBefore = MetaProgress.AllCheckpoints().ToArray();     // put back when the scenario ends
             Rebind();
 
             s_Steps.Clear();
@@ -308,6 +315,7 @@ namespace ZombiCar.EditorTools
         private static void CanvasesOnCamera()
         {
             Camera cam = Camera.main;
+            cam.cullingMask |= 1 << UiFactory.c_UiLayer;               // the menu's UI camera renders nothing else
             foreach (Canvas canvas in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Exclude))
             {
                 if (!canvas.isRootCanvas || canvas.renderMode != RenderMode.ScreenSpaceOverlay)
@@ -367,6 +375,7 @@ namespace ZombiCar.EditorTools
         private static void Shot(string name)
         {
             CanvasesOnCamera();
+            Canvas.ForceUpdateCanvases();                              // texts changed this frame are in the picture
             string folder = Path.GetFullPath(c_Folder);
             Directory.CreateDirectory(folder);
             string path = Path.Combine(folder, $"Feature_{name}.png");
@@ -374,8 +383,20 @@ namespace ZombiCar.EditorTools
             Debug.Log($"[FeatureTests] {path}");
         }
 
+        // The saved runs of the editor's player as they were before the scenario (a boss cleared on Normal saves one).
+        private static MetaProgress.Checkpoint[] s_CheckpointsBefore = Array.Empty<MetaProgress.Checkpoint>();
+
+        private static void RestoreCheckpoints()
+        {
+            foreach (MetaProgress.Checkpoint cp in MetaProgress.AllCheckpoints().ToArray())
+                MetaProgress.ClearCheckpoint(cp.map, DifficultyRules.Clamp(cp.difficulty));
+            foreach (MetaProgress.Checkpoint cp in s_CheckpointsBefore)
+                MetaProgress.SaveCheckpoint(cp);
+        }
+
         private static void Finish()
         {
+            RestoreCheckpoints();
             bool ok = s_Failures == 0 && s_Errors == 0;
             Debug.Log($"[FeatureTests] Scenario '{s_Scenario}': {s_Checks - s_Failures}/{s_Checks} checks passed, " +
                       $"{s_Errors} errors logged -> {(ok ? "PASS" : "FAIL")}");

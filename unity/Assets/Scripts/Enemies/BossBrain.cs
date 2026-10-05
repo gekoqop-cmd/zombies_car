@@ -168,6 +168,12 @@ namespace ZombiCar.Enemies
             if (m_Ability != Ability.None)
             {
                 m_AbilityTime += Time.deltaTime;
+                // The wind-up of every blow reads at a glance: the boss throbs red until it strikes.
+                if (IsWindingUp() && Time.time >= m_NextWarnFlash)
+                {
+                    m_Zombie.Animator.Flash(s_WarnColor, 0.12f);
+                    m_NextWarnFlash = Time.time + 0.22f;
+                }
                 UpdateAbility();
                 return;
             }
@@ -241,6 +247,22 @@ namespace ZombiCar.Enemies
                     Voice(m_Config.SpecialClip, Sound.BossSpit, 1f, 0.8f);         // the acid rain has its own cue
             }
         }
+
+        private static readonly Color s_WarnColor = new Color(1f, 0.22f, 0.16f, 1f);
+        private float m_NextWarnFlash;
+
+        /// <summary>An ability is still winding up (its telegraph shows, the blow has not come yet).</summary>
+        public bool IsWindingUp() => m_Ability switch
+        {
+            Ability.Summon => m_AbilityTime < m_Config.SummonWindup,
+            Ability.Spit => m_AbilityTime < m_Config.SpitWindup,
+            Ability.Sweep => m_AbilityTime < m_Config.SweepWindup,
+            Ability.Cracks => m_AbilityTime < m_Config.CracksWindup,
+            Ability.Reap => m_AbilityTime < m_Config.ReapWindup,
+            Ability.Charge => m_AbilityTime < m_Config.ChargeWindup,
+            Ability.Slam => m_AbilityTime < m_Config.SlamWindup,
+            _ => false,
+        };
 
         private void Begin(Ability ability, CharacterAnim anim, float animSpeed)
         {

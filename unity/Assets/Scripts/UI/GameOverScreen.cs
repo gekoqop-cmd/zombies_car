@@ -94,17 +94,6 @@ namespace ZombiCar.UI
         [Tooltip("\"+N\" that rises from the balance as the coins come in.")]
         [SerializeField] private TMP_Text m_BalanceGain;
 
-        [Header("Coins")]
-        // Kept scarce: a case (100-150) takes a few runs, a full victory pays for about four.
-        [Tooltip("Zombies killed per coin (the remainder is lost).")]
-        [SerializeField, Min(1)] private int m_KillsPerCoin = 5;
-        [Tooltip("Coins per wave reached.")]
-        [SerializeField, Min(0)] private int m_CoinsPerWave = 2;
-        [Tooltip("The reward for beating all 30 waves (on top of the kills and waves): about two cases.")]
-        [SerializeField, Min(0)] private int m_VictoryCoins = 250;
-        [Tooltip("Scrap left at the end is exchanged: this many parts give one coin (win or lose).")]
-        [SerializeField, Min(1)] private int m_ScrapPerCoin = 50;
-
         [Header("Look")]
         [SerializeField] private Color m_DefeatColor = new Color(1f, 0.38f, 0.3f, 1f);
         [SerializeField] private Color m_VictoryColor = new Color(1f, 0.82f, 0.3f, 1f);
@@ -230,11 +219,12 @@ namespace ZombiCar.UI
             m_Kills = m_Run.Kills;
             m_Level = m_Stats != null ? m_Stats.Level : 1;
             m_Bosses = m_Run.BossKills;
-            m_KillCoins = m_Run.Kills / m_KillsPerCoin;
-            m_WaveCoins = Mathf.Max(0, m_Run.Wave - 1) * m_CoinsPerWave;
-            m_Scrap = m_Run.Money;
+            // Since the run's base: a run that went on from its checkpoint was paid for the stages before it.
+            m_KillCoins = CoinRules.KillCoins(m_Run);
+            m_WaveCoins = CoinRules.WaveCoins(m_Run, m_Run.Wave);
+            m_Scrap = m_Victory ? m_Run.Money : Mathf.Max(0, m_Run.Money - m_Run.BaseMoney);
             m_ScrapCoins = ScrapCoins;
-            m_BonusCoins = m_Victory ? m_VictoryCoins : 0;
+            m_BonusCoins = CoinRules.VictoryBonus(m_Run);
             m_Total = m_TotalFrom = CoinsEarned;
             m_DoubledAt = float.NegativeInfinity;
             // Paid now; the balance counts it in once the coins are on screen (after the total on a victory).
@@ -251,6 +241,7 @@ namespace ZombiCar.UI
             // Both: the ad slot (cases / revive) on the left, again in the middle, menu on the right.
             PlaceButton(m_RestartButton, 0f);
             PlaceButton(m_MenuButton, m_ButtonStep);
+            LabelRestart();
             PlaceDoubleButton(m_Victory ? m_DoubleVictoryPosition : m_DoubleDefeatPosition,
                 m_Victory ? m_DoubleVictorySize : m_DoubleDefeatSize);
             m_GainStart = m_Victory ? m_GainHome : m_DefeatGainPosition;
@@ -278,11 +269,10 @@ namespace ZombiCar.UI
         }
 
         /// <summary>
-        /// Coins this run pays for the cases: kills, the wave reached (the first counts 0), the scrap left exchanged
-        /// (<see cref="ScrapCoins"/>), a victory bonus — all of it twice after the ×2 for an ad.
+        /// Coins this run pays for the cases (<see cref="CoinRules"/>): kills, the waves reached, the scrap left
+        /// exchanged, a victory bonus, times the difficulty — all of it twice after the ×2 for an ad.
         /// </summary>
-        public int CoinsEarned => (m_Run.Kills / m_KillsPerCoin + Mathf.Max(0, m_Run.Wave - 1) * m_CoinsPerWave + ScrapCoins +
-                                   (m_Run.Outcome == RunOutcome.Victory ? m_VictoryCoins : 0)) * (m_Run.CoinsDoubled ? 2 : 1);
+        public int CoinsEarned => CoinRules.Total(m_Run);
 
         // ---------------------------------------------------------------- ×2 coins, the balance
         /// <summary>
@@ -376,8 +366,8 @@ namespace ZombiCar.UI
             m_BalanceGain.color = c;
         }
 
-        /// <summary>The scrap left at the end exchanged for coins (<see cref="m_ScrapPerCoin"/> parts per coin).</summary>
-        public int ScrapCoins => m_Run.Money / m_ScrapPerCoin;
+        /// <summary>The scrap left at the end exchanged for coins (<see cref="CoinRules.ScrapPerCoin"/> parts per coin).</summary>
+        public int ScrapCoins => CoinRules.ScrapCoins(m_Run);
 
         // ---------------------------------------------------------------- victory
         private void SetupVictory()
@@ -544,14 +534,31 @@ namespace ZombiCar.UI
             });
         }
 
-        /// <summary>Plays the same map again (buttons, tests).</summary>
+        /// <summary>
+        /// Plays the same map again on the same difficulty (buttons, tests); after a defeat on Easy / Normal it goes on
+        /// from the last checkpoint ("С ВОЛНЫ 11"), otherwise from wave 1.
+        /// </summary>
         public void Restart()
         {
             if (m_Leaving || m_Run.Map == null)
                 return;
             Leave();
             MapConfig map = m_Run.Map;
+            RunLaunch.Choose(m_Run.Difficulty, RestartCheckpoint() != null);
             YandexSdk.ShowFullscreenAd(() => SceneLoader.EnsureExists().LoadMap(map));
+        }
+
+        /// <summary>The checkpoint "ЗАНОВО" goes on from (a defeat on Easy / Normal after a boss), or null.</summary>
+        public MetaProgress.Checkpoint RestartCheckpoint() =>
+            m_Run.Map == null || m_Run.Outcome == RunOutcome.Victory ? null : MetaProgress.GetCheckpoint(m_Run.Map.name, m_Run.Difficulty);
+
+        private void LabelRestart()
+        {
+            TMP_Text label = m_RestartButton.GetComponentInChildren<TMP_Text>(true);
+            if (label == null)
+                return;
+            MetaProgress.Checkpoint checkpoint = RestartCheckpoint();
+            label.SetText(checkpoint != null ? $"С ВОЛНЫ {checkpoint.wave}" : "ЗАНОВО");
         }
 
         /// <summary>Back to the main menu (buttons, tests).</summary>

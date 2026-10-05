@@ -31,7 +31,8 @@ namespace ZombiCar.Core
                 m_PlayerStats.ResetToDefaults();
             if (m_Run != null)
             {
-                m_Run.BeginRun(m_Map);
+                // The menu's choice; a map opened directly (editor, tests) plays Normal.
+                m_Run.BeginRun(m_Map, RunLaunch.Chosen ? RunLaunch.Difficulty : Difficulty.Normal);
                 ApplySkinBonuses();
             }
         }

@@ -832,7 +832,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.MobilePlayerInput
   m_Weapon: {fileID: 1305879416160015679}
-  m_TapBurst: 0.35
+  m_Melee: {fileID: 6366682696340025211}
+  m_TapAim: 0.3
+  m_AimHeight: 1
 --- !u!114 &5096280400247978864
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -12,7 +12,8 @@ namespace ZombiCar.UI
     /// Roguelike level-up choice (HUD scene): whenever the run has a level-up waiting (<see cref="RunState"/>), the
     /// game pauses and three random cards from the <see cref="PerkPool"/> fly in; a click (or 1 / 2 / 3 on the
     /// keyboard) takes one. From <see cref="PerkPool.LegendaryFromLevel"/> on, the run's legendary card is in every hand
-    /// until it is taken (<see cref="PerkPool.OfferLegendary"/>). "ПЕРЕБРОСИТЬ" deals a new hand for a rewarded ad.
+    /// until it is taken (<see cref="PerkPool.OfferLegendary"/>); the legendary card for an ad is taken only once the
+    /// rewarded ad is watched. "ПОМЕНЯТЬ" deals a new hand for a rewarded ad.
     /// Several level-ups in a row deal a new hand each; the game goes on after the last one.
     /// Never shown once the run is over.
     /// </summary>
@@ -28,7 +29,7 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_Subtitle;
         [SerializeField] private PerkCardView[] m_Cards = System.Array.Empty<PerkCardView>();
         [Header("Reroll")]
-        [Tooltip("\"ПЕРЕБРОСИТЬ\" with the ad icon: deals a new hand for a rewarded ad.")]
+        [Tooltip("\"ПОМЕНЯТЬ\" with the ad icon: deals a new hand for a rewarded ad.")]
         [SerializeField] private UnityEngine.UI.Button m_RerollButton;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.2f;
         [SerializeField, Min(0.01f)] private float m_CardTime = 0.35f;
@@ -161,13 +162,38 @@ namespace ZombiCar.UI
                 m_RerollButton.interactable = m_Open && m_Picked < 0 && !m_WaitingForAd;
         }
 
-        /// <summary>Takes the card at <paramref name="index"/> (clicks, number keys, tests).</summary>
+        /// <summary>
+        /// Takes the card at <paramref name="index"/> (clicks, number keys, tests); the card for an ad is taken when the
+        /// platform confirms the reward (a closed or failed video leaves the hand as it is).
+        /// </summary>
         public void Pick(int index)
         {
-            if (!m_Open || m_Picked >= 0 || index < 0 || index >= m_Hand.Count)
+            if (!m_Open || m_Picked >= 0 || m_WaitingForAd || index < 0 || index >= m_Hand.Count)
                 return;
             if (Time.unscaledTime - m_DealTime < m_CardTime * 0.5f)
                 return;                                            // a click still meant for the previous hand
+            if (m_Hand[index].ForAd)
+            {
+                Perk wanted = m_Hand[index];
+                m_WaitingForAd = true;
+                RefreshReroll();
+                YandexSdk.ShowRewardedAd(rewarded =>
+                {
+                    m_WaitingForAd = false;
+                    if (this == null)
+                        return;
+                    if (rewarded && m_Open && m_Picked < 0 && index < m_Hand.Count && m_Hand[index] == wanted)
+                        Choose(index);
+                    else
+                        RefreshReroll();
+                });
+                return;
+            }
+            Choose(index);
+        }
+
+        private void Choose(int index)
+        {
             m_Picked = index;
             m_PickStart = Time.unscaledTime;
             RefreshReroll();

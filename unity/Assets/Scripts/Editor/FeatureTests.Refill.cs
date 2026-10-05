@@ -116,7 +116,45 @@ namespace ZombiCar.EditorTools
             {
                 Check(!resupply.IsSupplied, "an unused supply is gone when the next wave starts");
             });
-            At(8.8f, Finish);
+
+            // The break after a wave says "ПЕРЕРЫВ", and skipping it with the ammo still at the car asks twice first.
+            BreakSkipView skip = null;
+            bool skipAsked = false;
+            System.Action onSkip = () => skipAsked = true;
+            At(8.8f, () =>
+            {
+                s_Waves.SkipBreakRequested += onSkip;
+                s_Waves.EndWave(3, false);
+                s_Waves.Set(4, 20);
+                SetAmmo(2, 0);
+                Teleport(resupply.transform.position + new Vector3(6f, 0f, 7f));   // away: no prompt over the skip
+            });
+            At(9.2f, () =>
+            {
+                Check(s_Waves.InBreak && System.Linq.Enumerable.Any(Object.FindObjectsByType<TMPro.TMP_Text>(FindObjectsSortMode.None),
+                    t => t.text == "ПЕРЕРЫВ"), "the wave plate says ПЕРЕРЫВ in the break (not the next wave's number)");
+                skip = Find<BreakSkipView>();
+                Check(skip.Offered && s_Waves.RefillWaiting, $"the skip is offered, the ammo waits at the car ({s_Waves.RefillWaiting})");
+                skip.Skip();
+            });
+            At(9.5f, () =>
+            {
+                Check(skip.NagStep == 1 && !skipAsked, "first press: \"ПОПОЛНИ ПАТРОНЫ У МАШИНЫ :)\", no skip");
+                Shot("7_Refill_SkipNag");
+                skip.Skip();
+            });
+            At(9.8f, () =>
+            {
+                Check(skip.NagStep == 2 && !skipAsked, "second press: \"ТЫ БУДЕШЬ БЕЗ ПАТРОНОВ?\", no skip");
+                skip.Skip();
+            });
+            At(10.0f, () => Check(skip.NagStep == 3 && !skipAsked, "third press: \"НУ ЛАДНО...\" is read first"));
+            At(11.2f, () =>
+            {
+                Check(skipAsked, "then the wave is asked for");
+                s_Waves.SkipBreakRequested -= onSkip;
+            });
+            At(11.4f, Finish);
         }
 
         private static void SetAmmo(int magazine, int reserve)

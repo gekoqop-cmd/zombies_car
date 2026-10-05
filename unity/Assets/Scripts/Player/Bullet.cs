@@ -35,11 +35,15 @@ namespace ZombiCar.Player
         private static readonly int s_BaseColor = Shader.PropertyToID("_BaseColor");
         // Unlit tracer colours are HDR (over 1) so the bloom picks them up, like the default M_Bullet tint.
         private const float c_SkinGlow = 3f;
+        // The outline glows a little (the bloom gives it a soft halo), less than a tracer.
+        private const float c_OutlineGlow = 1.35f;
 
         [Tooltip("The tracer mesh (skins recolour and resize it).")]
         [SerializeField] private Renderer m_Visual;
         [Tooltip("Glowing trail, off unless a bullet skin has one.")]
         [SerializeField] private TrailRenderer m_Trail;
+        [Tooltip("A shell a little larger than the tracer, drawn from the inside: the glowing outline of some skins.")]
+        [SerializeField, OptionalReference] private Renderer m_Outline;
 
         private readonly List<IDamageable> m_AlreadyHit = new List<IDamageable>();
         private Vector3 m_Direction;
@@ -56,7 +60,10 @@ namespace ZombiCar.Player
         /// <summary>A bullet stopped: point, surface normal, and whether it hit an enemy (impact effects, sound).</summary>
         public static event Action<Vector3, Vector3, bool> Impacted;
 
-        /// <summary>Puts a bullet skin on this pooled bullet: tracer colour and size, a trail in its second colour.</summary>
+        /// <summary>
+        /// Puts a bullet skin on this pooled bullet: tracer colour and size, a trail in its second colour, and for some
+        /// (the black bullets) a glowing outline in the second colour around the tracer.
+        /// </summary>
         public void ApplySkin(CosmeticItem skin)
         {
             if (m_Visual != null)
@@ -67,6 +74,18 @@ namespace ZombiCar.Player
                 block.SetColor(s_BaseColor, c);
                 m_Visual.SetPropertyBlock(block);
                 m_Visual.transform.localScale *= skin.Size;
+            }
+            if (m_Outline != null)
+            {
+                m_Outline.enabled = skin.Outline;
+                if (skin.Outline)
+                {
+                    var block = new MaterialPropertyBlock();
+                    Color rim = skin.Color2 * c_OutlineGlow;
+                    rim.a = 1f;
+                    block.SetColor(s_BaseColor, rim);
+                    m_Outline.SetPropertyBlock(block);
+                }
             }
             if (m_Trail == null)
                 return;

@@ -31,17 +31,30 @@ namespace ZombiCar.UI
         [Tooltip("\"СКИНЫ\": the characters and the skin collections.")]
         [SerializeField] private Button m_SkinsButton;
         [SerializeField] private SkinsPanel m_Skins;
+        [Tooltip("\"ДОСТИЖЕНИЯ\": the achievements and their rewards; the mark shows when one waits to be taken.")]
+        [SerializeField, OptionalReference] private Button m_AchievementsButton;
+        [SerializeField, OptionalReference] private AchievementsPanel m_Achievements;
+        [SerializeField, OptionalReference] private GameObject m_AchievementsMark;
+        [Tooltip("\"ЕЖЕДНЕВНЫЕ БОНУСЫ\": the 7-day row; the mark shows while today's bonus waits.")]
+        [SerializeField, OptionalReference] private Button m_DailyButton;
+        [SerializeField, OptionalReference] private DailyBonusPanel m_Daily;
+        [SerializeField, OptionalReference] private GameObject m_DailyMark;
+        [Tooltip("\"!\" on КЕЙСЫ while a free case (the daily bonus) waits.")]
+        [SerializeField, OptionalReference] private GameObject m_CasesMark;
         [SerializeField, Min(0.01f)] private float m_FadeTime = 0.3f;
         [Tooltip("Calm menu track (cross-fades from the map's music when coming back).")]
         [SerializeField] private AudioClip m_Music;
 
         private bool m_MapOpen;
+        private float m_MarksAt;
 
         public bool IsMapSelectionOpen => m_MapOpen;
         public SettingsPanel Settings => m_Settings;
         public CasesScreen Cases => m_Cases;
         public LeaderboardPanel Leaderboard => m_Leaderboard;
         public SkinsPanel Skins => m_Skins;
+        public AchievementsPanel Achievements => m_Achievements;
+        public DailyBonusPanel Daily => m_Daily;
 
         private void Awake()
         {
@@ -54,7 +67,22 @@ namespace ZombiCar.UI
                 m_CasesButton.onClick.AddListener(m_Cases.Show);
             m_LeaderboardButton.onClick.AddListener(m_Leaderboard.Open);
             m_SkinsButton.onClick.AddListener(m_Skins.Open);
+            if (m_AchievementsButton != null && m_Achievements != null)
+                m_AchievementsButton.onClick.AddListener(m_Achievements.Open);
+            if (m_DailyButton != null && m_Daily != null)
+                m_DailyButton.onClick.AddListener(m_Daily.Open);
             Apply(1f, true);
+        }
+
+        // The marks on "ДОСТИЖЕНИЯ", "ЕЖЕДНЕВНЫЕ БОНУСЫ" and "КЕЙСЫ" (checked once a second: the day can turn while the menu is open).
+        private void ShowMarks()
+        {
+            if (m_AchievementsMark != null)
+                m_AchievementsMark.SetActive(MetaProgress.HasUnclaimedAchievement);
+            if (m_DailyMark != null)
+                m_DailyMark.SetActive(MetaProgress.DailyReady);
+            if (m_CasesMark != null)
+                m_CasesMark.SetActive(MetaProgress.FreeCases > 0);
         }
 
         private void OnEnable()
@@ -94,7 +122,23 @@ namespace ZombiCar.UI
         /// <summary>Jumps to the current state without the fade (tools, screenshots).</summary>
         public void Snap() => Apply(1f, true);
 
-        private void Update() => Apply(Time.unscaledDeltaTime / m_FadeTime, false);
+        private void Update()
+        {
+            Apply(Time.unscaledDeltaTime / m_FadeTime, false);
+            if (Time.unscaledTime >= m_MarksAt)
+            {
+                m_MarksAt = Time.unscaledTime + 1f;
+                ShowMarks();
+            }
+            // The marks breathe to be seen.
+            float pulse = 1f + 0.12f * Mathf.Sin(Time.unscaledTime * 5f);
+            if (m_DailyMark != null && m_DailyMark.activeSelf)
+                m_DailyMark.transform.localScale = Vector3.one * pulse;
+            if (m_CasesMark != null && m_CasesMark.activeSelf)
+                m_CasesMark.transform.localScale = Vector3.one * pulse;
+            if (m_AchievementsMark != null && m_AchievementsMark.activeSelf)
+                m_AchievementsMark.transform.localScale = Vector3.one * pulse;
+        }
 
         private void Apply(float step, bool instant)
         {

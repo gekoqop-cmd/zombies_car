@@ -26,6 +26,7 @@ namespace ZombiCar.Waves
         [NonSerialized] private int m_BossHealth;
         [NonSerialized] private int m_BossMaxHealth;
         [NonSerialized] private bool m_BossEnraged;
+        [NonSerialized] private bool m_InBreak;
 
         /// <summary>Wave number or countdown changed (at most once per second).</summary>
         public event Action Changed;
@@ -48,7 +49,15 @@ namespace ZombiCar.Waves
                 SkipBreakRequested?.Invoke();
         }
 
+        /// <summary>The upcoming wave during a countdown, the running one during a wave.</summary>
         public int Wave => m_Wave;
+
+        /// <summary>The break after a cleared wave (not the countdown before wave 1).</summary>
+        public bool InBreak => m_InBreak;
+
+        /// <summary>The ammo refill of this break still waits at the car (the map writes it, the HUD's skip reads it).</summary>
+        public bool RefillWaiting { get; set; }
+
         public int SecondsLeft => m_SecondsLeft;
         public WavePhase Phase => m_Phase;
         public int WaveCount => m_WaveCount;
@@ -90,11 +99,14 @@ namespace ZombiCar.Waves
             m_WaveCount = waveCount;
             m_Phase = WavePhase.Countdown;
             m_BossName = null;
+            m_InBreak = false;
+            RefillWaiting = false;
         }
 
         public void StartWave(int wave)
         {
             m_Phase = WavePhase.Running;
+            m_InBreak = false;
             m_Wave = wave;
             Changed?.Invoke();
             WaveStarted?.Invoke(wave);
@@ -103,6 +115,7 @@ namespace ZombiCar.Waves
         public void EndWave(int wave, bool last)
         {
             m_Phase = last ? WavePhase.Finished : WavePhase.Countdown;
+            m_InBreak = !last;
             m_BossName = null;
             Changed?.Invoke();
             WaveEnded?.Invoke(wave);

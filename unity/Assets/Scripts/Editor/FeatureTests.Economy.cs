@@ -47,14 +47,16 @@ namespace ZombiCar.EditorTools
                     $"{items.Length} workshop items, {sounds.Distinct().Count()} own sounds with clips");
                 // Growing gains: every level gives more than the one before, the tile shows the next one.
                 CarUpgrade spikes = catalog.Upgrades.First(u => u.Id == "spikes");
-                Check(Enumerable.Range(0, 4).Select(spikes.ValueAt).SequenceEqual(new[] { 8f, 10f, 12f, 14f }) &&
-                      spikes.MaxLevel == 4 && spikes.CostAt(4) < 0, "spikes +8, +10, +12, +14, then the top");
-                Check(armor.DescriptionAt(0).Contains("6%") && armor.DescriptionAt(1).Contains("7%"), $"the tile shows the next gain: '{armor.DescriptionAt(1)}'");
+                Check(Enumerable.Range(0, 6).Select(spikes.ValueAt).SequenceEqual(new[] { 8f, 10f, 12f, 14f, 16f, 18f }) &&
+                      spikes.MaxLevel == 6 && spikes.CostAt(6) < 0, "spikes +8 ... +18 over 6 levels, then the top");
+                int total = catalog.Upgrades.Sum(u => Enumerable.Range(0, u.RegularLevels).Sum(u.CostAt));
+                Check(total >= 14000, $"the whole workshop costs {total} scrap: deep enough for the whole run");
+                Check(armor.DescriptionAt(0).Contains("4%") && armor.DescriptionAt(1).Contains("4.5%"), $"the tile shows the next gain: '{armor.DescriptionAt(1)}'");
                 for (int i = 0; i < armor.RegularLevels; i++)
                     workshop.Buy(0);
-                Check(s_Run.LevelOf(armor) == 5 && Mathf.Approximately(s_Car.Armor, 0.4f), $"armour maxed (6+7+8+9+10%): {s_Car.Armor:P0}");
+                Check(s_Run.LevelOf(armor) == 8 && Mathf.Abs(s_Car.Armor - 0.46f) < 0.001f, $"armour maxed (4 + 4.5 + ... + 7.5%): {s_Car.Armor:P1}");
                 money = s_Run.Money;
-                Check(!workshop.Buy(0) && s_Run.Money == money && s_Run.LevelOf(armor) == 5 && armor.CostAt(5) < 0,
+                Check(!workshop.Buy(0) && s_Run.Money == money && s_Run.LevelOf(armor) == 8 && armor.CostAt(8) < 0,
                     "no level past the last: no master level, the scrap stays");
                 var row = workshop.GetComponentsInChildren<WorkshopRowView>(true).First(v => v.GetComponentsInChildren<TMPro.TMP_Text>(true).Any(t => t.text == "БРОНЯ"));
                 var texts = row.GetComponentsInChildren<TMPro.TMP_Text>(true).Where(t => t.gameObject.activeInHierarchy).Select(t => t.text).ToArray();
@@ -131,7 +133,7 @@ namespace ZombiCar.EditorTools
                 money = s_Run.Money;
                 int rerolls = s_Run.Rerolls;
                 // For a rewarded ad (the stand-in rewards at once): a new hand, no parts spent.
-                Check(levelUp.Reroll() && s_Run.Rerolls == rerolls + 1 && s_Run.Money == money, "ПЕРЕБРОСИТЬ for an ad: a new hand, parts kept");
+                Check(levelUp.Reroll() && s_Run.Rerolls == rerolls + 1 && s_Run.Money == money, "ПОМЕНЯТЬ for an ad: a new hand, parts kept");
             });
             At(7.8f, () => Check(levelUp.Reroll() && s_Run.Money == money, "and again: every reroll is an ad, never parts"));
             At(8.2f, () => Shot("14_LevelUp_Reroll"));

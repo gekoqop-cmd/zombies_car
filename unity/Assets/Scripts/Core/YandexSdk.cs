@@ -26,6 +26,7 @@ namespace ZombiCar.Core
 #if UNITY_WEBGL && !UNITY_EDITOR
         [DllImport("__Internal")] private static extern void YaInit();
         [DllImport("__Internal")] private static extern void YaLoadingReady();
+        [DllImport("__Internal")] private static extern void YaVibrate(int milliseconds);
         [DllImport("__Internal")] private static extern void YaGameplay(int running);
         [DllImport("__Internal")] private static extern void YaShowFullscreenAd();
         [DllImport("__Internal")] private static extern void YaShowRewardedAd();
@@ -37,6 +38,7 @@ namespace ZombiCar.Core
 #else
         private static void YaInit() { }
         private static void YaLoadingReady() { }
+        private static void YaVibrate(int milliseconds) { }
         private static void YaGameplay(int running) { }
         private static void YaShowFullscreenAd() { }
         private static void YaShowRewardedAd() { }
@@ -49,7 +51,8 @@ namespace ZombiCar.Core
 
         /// <summary>
         /// Technical name of the leaderboard "Лучшее время прохождения" in the Yandex Games console: seconds of a
-        /// victory, sorted ascending (fewer seconds = better). Only victories are sent.
+        /// victory, sorted ascending (fewer seconds = better). Only victories are sent. It is Normal's table; Easy and
+        /// Hardcore have their own (<see cref="DifficultyRules.Leaderboard"/>).
         /// </summary>
         public const string c_BestTimeLeaderboard = "best_time";
 
@@ -73,6 +76,9 @@ namespace ZombiCar.Core
             public int userRank;
 
             [NonSerialized] public LeaderboardEntry Player;
+
+            /// <summary>The table this answer is for.</summary>
+            [NonSerialized] public string Board;
 
             /// <summary>Nothing to show: the SDK is not there (editor, local build) or it answered with an error.</summary>
             public static LeaderboardEntries Unavailable => new LeaderboardEntries { available = false };
@@ -139,6 +145,9 @@ namespace ZombiCar.Core
             Debug.Log("[YandexSdk] LoadingAPI.ready");
         }
 
+        /// <summary>A short vibration on a phone (the browser's Vibration API; nothing where it is missing).</summary>
+        public static void Vibrate(int milliseconds) => YaVibrate(milliseconds);
+
         /// <summary>
         /// Shows a fullscreen ad at a logical break (between menu and map), then calls <paramref name="done"/>.
         /// The platform decides whether an ad is actually shown (frequency limits); the game waits either way.
@@ -175,42 +184,65 @@ namespace ZombiCar.Core
             YaShowRewardedAd();
         }
 
+        /// <summary>Tests: the table each time of <see cref="SubmittedScores"/> was sent to.</summary>
+        public static System.Collections.Generic.List<string> SubmittedBoards { get; } = new System.Collections.Generic.List<string>();
+
         /// <summary>
-        /// A victory's time to the <see cref="c_BestTimeLeaderboard"/> leaderboard. Only an authorized player on Yandex
+        /// A victory's time to <paramref name="board"/> (the difficulty's table). Only an authorized player on Yandex
         /// Games gets on it; otherwise (a guest, the editor, a local build) nothing is sent and nothing fails.
         /// </summary>
-        public static void SubmitTimeScore(int seconds)
+        public static void SubmitTimeScore(int seconds, string board = c_BestTimeLeaderboard)
         {
             if (seconds <= 0)
                 return;
             SubmittedScores.Add(seconds);
+            SubmittedBoards.Add(board);
             if (!s_Live || s_Instance == null || !IsAvailable)
             {
-                Debug.Log($"[YandexSdk] Leaderboard '{c_BestTimeLeaderboard}': {seconds} s not sent (no SDK).");
+                Debug.Log($"[YandexSdk] Leaderboard '{board}': {seconds} s not sent (no SDK).");
                 return;
             }
-            YaSubmitScore(c_BestTimeLeaderboard, seconds);
+            YaSubmitScore(board, seconds);
         }
 
         /// <summary>
-        /// The top <paramref name="count"/> of the <see cref="c_BestTimeLeaderboard"/> leaderboard with the player's own
-        /// line. Without the SDK (or on an error) <paramref name="callback"/> gets an unavailable, empty answer at once.
+        /// The top <paramref name="count"/> of <paramref name="board"/> with the player's own line (the answer says
+        /// which table it is for). Without the SDK (or on an error) <paramref name="callback"/> gets an unavailable,
+        /// empty answer at once. One request at a time: a request for another table waits for the one going.
         /// </summary>
-        public static void GetLeaderboardEntries(int count, Action<LeaderboardEntries> callback)
+        public static void GetLeaderboardEntries(string board, int count, Action<LeaderboardEntries> callback)
         {
             if (callback == null)
                 return;
             if (!s_Live || s_Instance == null || !IsAvailable)
             {
-                callback(Finish(StubEntries) ?? LeaderboardEntries.Unavailable);
+                LeaderboardEntries stub = Finish(StubEntries) ?? LeaderboardEntries.Unavailable;
+                stub.Board = board;
+                callback(stub);
                 return;
             }
-            s_Instance.m_EntriesDone += callback;
-            if (s_Instance.m_EntriesDone.GetInvocationList().Length == 1)       // one request at a time
-                YaGetLeaderboardEntries(c_BestTimeLeaderboard, Mathf.Clamp(count, 1, 20));
+            YandexSdk sdk = s_Instance;
+            if (sdk.m_EntriesDone == null)
+            {
+                sdk.m_EntriesBoard = board;
+                sdk.m_EntriesDone = callback;
+                YaGetLeaderboardEntries(board, Mathf.Clamp(count, 1, 20));
+            }
+            else if (sdk.m_EntriesBoard == board)
+                sdk.m_EntriesDone += callback;
+            else
+            {
+                sdk.m_NextBoard = board;                                   // the latest wish wins
+                sdk.m_NextCount = count;
+                sdk.m_NextDone = callback;
+            }
         }
 
         private Action<LeaderboardEntries> m_EntriesDone;
+        private string m_EntriesBoard;
+        private Action<LeaderboardEntries> m_NextDone;
+        private string m_NextBoard;
+        private int m_NextCount;
 
         // The player's line: the entry at userRank.
         private static LeaderboardEntries Finish(LeaderboardEntries result)
@@ -237,8 +269,17 @@ namespace ZombiCar.Core
                 }
             }
             Action<LeaderboardEntries> done = m_EntriesDone;
+            string board = m_EntriesBoard;
             m_EntriesDone = null;
-            done?.Invoke(Finish(result) ?? LeaderboardEntries.Unavailable);
+            LeaderboardEntries answer = Finish(result) ?? LeaderboardEntries.Unavailable;
+            answer.Board = board;
+            done?.Invoke(answer);
+            if (m_NextDone != null)
+            {
+                Action<LeaderboardEntries> next = m_NextDone;
+                m_NextDone = null;
+                GetLeaderboardEntries(m_NextBoard, m_NextCount, next);  // the table asked for while this one was coming
+            }
         }
 
         private void OnScoreSubmitted(string ok) => Debug.Log($"[YandexSdk] Leaderboard score {(ok == "1" ? "sent" : "not sent")}.");

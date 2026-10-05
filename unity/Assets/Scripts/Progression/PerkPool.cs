@@ -29,6 +29,8 @@ namespace ZombiCar.Progression
         [Tooltip("The run's legendary card: never drawn at random, offered for sure once (PerkPool.LegendaryFromLevel), " +
                  "taken once and at its maximum at once; it may change a second stat too.")]
         [SerializeField] private bool m_Legendary;
+        [Tooltip("A legendary card taken for a rewarded ad (offered now and then, see PerkPool.AdLegendaryChance).")]
+        [SerializeField] private bool m_ForAd;
         [SerializeField] private bool m_HasSecond;
         [SerializeField] private StatEffect m_Effect2;
         [SerializeField] private float m_Value2;
@@ -71,6 +73,7 @@ namespace ZombiCar.Progression
         public int MaxStacks => m_MaxStacks;
         public float Weight => m_Weight;
         public bool Legendary => m_Legendary;
+        public bool ForAd => m_ForAd;
         public bool HasSecond => m_HasSecond;
         public StatEffect Effect2 => m_Effect2;
         public float Value2 => m_Value2;
@@ -86,6 +89,16 @@ namespace ZombiCar.Progression
             m_Weight = 0f;
             return this;
         }
+
+        /// <summary>Makes this a legendary card taken for a rewarded ad, one stat only (builders).</summary>
+        public Perk AsAdLegendary()
+        {
+            m_Legendary = true;
+            m_ForAd = true;
+            m_MaxStacks = 1;
+            m_Weight = 0f;
+            return this;
+        }
     }
 
     /// <summary>All level-up cards; <see cref="Draw"/> deals a hand of different ones the run can still take.</summary>
@@ -95,24 +108,48 @@ namespace ZombiCar.Progression
         [SerializeField] private Perk[] m_Perks = Array.Empty<Perk>();
         [Tooltip("From this player level on, every level-up hand holds the legendary card until the run takes it.")]
         [SerializeField, Min(1)] private int m_LegendaryFromLevel = 5;
+        [Tooltip("From this player level on, the legendary card for an ad may be in a hand (never with the other one).")]
+        [SerializeField, Min(1)] private int m_AdLegendaryFromLevel = 7;
+        [Tooltip("Chance that a hand holds the legendary card for an ad, until the run takes it.")]
+        [SerializeField, Range(0f, 1f)] private float m_AdLegendaryChance = 0.35f;
 
         private readonly List<Perk> m_Candidates = new List<Perk>();
 
         public IReadOnlyList<Perk> Perks => m_Perks;
         public int LegendaryFromLevel => m_LegendaryFromLevel;
+        public int AdLegendaryFromLevel => m_AdLegendaryFromLevel;
 
-        /// <summary>The legendary card (null when the pool has none).</summary>
-        public Perk Legendary => Array.Find(m_Perks, p => p != null && p.Legendary);
+        /// <summary>The legendary card every run gets for sure (null when the pool has none).</summary>
+        public Perk Legendary => Array.Find(m_Perks, p => p != null && p.Legendary && !p.ForAd);
+
+        /// <summary>The legendary card taken for a rewarded ad (null when the pool has none).</summary>
+        public Perk AdLegendary => Array.Find(m_Perks, p => p != null && p.Legendary && p.ForAd);
 
         /// <summary>
         /// The legendary card goes into <paramref name="hand"/> (in the middle) when the run has reached
-        /// <see cref="LegendaryFromLevel"/> and has not taken it yet: sure to come once in every run.
+        /// <see cref="LegendaryFromLevel"/> and has not taken it yet: sure to come once in every run. Otherwise, from
+        /// <see cref="AdLegendaryFromLevel"/> on, the card for an ad comes now and then (<paramref name="adRoll"/> 0..1
+        /// under the chance; tests pass 0 to force it).
         /// </summary>
-        public void OfferLegendary(RunState run, int playerLevel, List<Perk> hand)
+        public void OfferLegendary(RunState run, int playerLevel, List<Perk> hand, float adRoll = -1f)
         {
             Perk legendary = Legendary;
-            if (legendary == null || playerLevel < m_LegendaryFromLevel || run.StacksOf(legendary) > 0 || hand.Contains(legendary))
+            if (legendary != null && playerLevel >= m_LegendaryFromLevel && run.StacksOf(legendary) == 0 && !hand.Contains(legendary))
+            {
+                Place(legendary, hand);
                 return;
+            }
+            Perk ad = AdLegendary;
+            if (ad == null || playerLevel < m_AdLegendaryFromLevel || run.StacksOf(ad) > 0 || hand.Contains(ad))
+                return;
+            if (legendary != null && hand.Contains(legendary))
+                return;
+            if ((adRoll < 0f ? UnityEngine.Random.value : adRoll) < m_AdLegendaryChance)
+                Place(ad, hand);
+        }
+
+        private static void Place(Perk legendary, List<Perk> hand)
+        {
             if (hand.Count < 3)
                 hand.Add(legendary);
             else

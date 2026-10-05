@@ -18,7 +18,8 @@ namespace ZombiCar.EditorTools
 {
     /// <summary>
     /// Play-mode walkthrough of the cases and the skins, with checks and Screenshots/Skins/*.png: the cases screen, a
-    /// case spinning and its prize, the collection; then the map with a gold rifle, fire bullets and a neon axe, the axe
+    /// case spinning and its prize, the daily bonus's legendary case and black bullets, the collection; then the map with
+    /// a gold rifle, the black bullets and a neon axe, the axe
     /// in hand without the rifle, the four spike sets on the car and the first tutorial hint. The player's saved coins,
     /// skins and tutorial flag are restored afterwards.
     /// Tools/Diagnostics/Skin Screenshots (batch: without -quit; exits 0 when every check passed).
@@ -61,7 +62,11 @@ namespace ZombiCar.EditorTools
         private static Bot s_Bot;
         private static bool s_TutorialWas;
         private static readonly string[] s_MetaKeys =
-            { "meta.coins", "meta.owned", "meta.equip.Gun", "meta.equip.Axe", "meta.equip.Bullet" };
+        {
+            "meta.coins", "meta.owned", "meta.equip.Gun", "meta.equip.Axe", "meta.equip.Bullet", "meta.freecases", "meta.daily.day",
+            "meta.daily.date",
+        };
+        private static readonly HashSet<string> s_IntKeys = new HashSet<string> { "meta.coins", "meta.freecases", "meta.daily.day", "meta.daily.date" };
         private static readonly Dictionary<string, string> s_Saved = new Dictionary<string, string>();
 
         // The editor's PlayerPrefs are the developer's own: kept aside and put back after the walkthrough.
@@ -71,7 +76,7 @@ namespace ZombiCar.EditorTools
             foreach (string key in s_MetaKeys)
             {
                 if (PlayerPrefs.HasKey(key))
-                    s_Saved[key] = key == "meta.coins" ? PlayerPrefs.GetInt(key).ToString() : PlayerPrefs.GetString(key);
+                    s_Saved[key] = s_IntKeys.Contains(key) ? PlayerPrefs.GetInt(key).ToString() : PlayerPrefs.GetString(key);
             }
         }
 
@@ -81,7 +86,7 @@ namespace ZombiCar.EditorTools
             {
                 if (!s_Saved.TryGetValue(key, out string value))
                     PlayerPrefs.DeleteKey(key);
-                else if (key == "meta.coins")
+                else if (s_IntKeys.Contains(key))
                     PlayerPrefs.SetInt(key, int.Parse(value));
                 else
                     PlayerPrefs.SetString(key, value);
@@ -185,6 +190,14 @@ namespace ZombiCar.EditorTools
                 Check(CaseChances(Menu()).Contains("???") && !CaseChances(Menu()).Contains("+15%"),
                     "the legendary rifle's bonus is a secret on the case (???)");
                 Shot("02_Cases");
+                Menu().Cases.ToggleChances();
+                Check(Menu().Cases.ChancesShown, "the one \"?\" over the cases opens the chances");
+            });
+            At(t += 0.4f, () =>
+            {
+                Shot("02b_Cases_Chances");
+                Menu().Cases.ToggleChances();
+                Check(!Menu().Cases.ChancesShown, "pressing again closes the chances");
                 Check(Menu().Cases.BuyCase(catalog.Cases[0]), "the rifle case opens for 150 coins");
                 Check(MetaProgress.Coins <= 1000 - 150 + 60, $"coins after the case: {MetaProgress.Coins}");
             });
@@ -204,6 +217,28 @@ namespace ZombiCar.EditorTools
             {
                 Check(Object.FindAnyObjectByType<SkinRevealView>().FireworksPlaying, "a legendary skin sets off fireworks");
                 Shot("04b_Legendary_Fireworks");
+                Click(Menu().Cases, "OkButton");
+                // The 5th day's bonus: the legendary case, a gold roulette of the legendary skins.
+                MetaProgress.SetDaily(4, MetaProgress.Today - 1);
+                Check(Menu().Daily.Take() && Menu().Cases.IsSpinning, "day 5: the legendary case spins on the cases screen");
+            });
+            At(t += 1.2f, () => Shot("04c_LegendaryCase_Spinning"));
+            At(t += 3.8f, () =>
+            {
+                CosmeticItem prize = Menu().Cases.LastPrize;
+                Check(prize != null && prize.Rarity == Rarity.Legendary && !prize.IsExclusive && MetaProgress.Owns(prize),
+                    $"the legendary case gives a legendary skin: {prize?.Title} ({prize?.Slot})");
+                Shot("04d_LegendaryCase_Prize");
+                Click(Menu().Cases, "OkButton");
+                // The 7th day's bonus: the black bullets, never in a case.
+                MetaProgress.SetDaily(6, MetaProgress.Today - 1);
+                Check(catalog.Droppable(CosmeticSlot.Bullet).All(i => i.Id != "bullet_black") &&
+                      catalog.LegendaryPool().All(i => i.Id != "bullet_black"), "no case drops the black bullets");
+                Check(Menu().Daily.Take() && MetaProgress.Owns(catalog.Find("bullet_black")), "day 7: the black bullets are won");
+            });
+            At(t += 1.2f, () =>
+            {
+                Shot("04e_BlackBullets_Prize");
                 Click(Menu().Cases, "OkButton");
             });
             At(t += 0.4f, () =>
@@ -255,7 +290,7 @@ namespace ZombiCar.EditorTools
             });
             At(t += 0.4f, () =>
             {
-                MetaProgress.Equip(catalog.Find("bullet_fire"));
+                MetaProgress.Equip(catalog.Find("bullet_black"));
                 Check(Menu().Skins.CurrentTab == 3, "ЭФФЕКТ ПУЛЬ");
                 Shot("05f_Collection_BulletEffects");
                 Menu().Skins.Close();
@@ -275,6 +310,15 @@ namespace ZombiCar.EditorTools
                 records.Close();
             });
             At(t += 0.4f, () => Click(Object.FindAnyObjectByType<MapSelectScreen>(FindObjectsInactive.Include).Current, "PlayButton"));
+            // ИГРАТЬ asks for the difficulty first: СРЕДНИЙ, from wave 1.
+            At(t += 0.6f, () =>
+            {
+                var difficulty = Object.FindAnyObjectByType<DifficultyScreen>();
+                Check(difficulty != null && difficulty.State == "cards", "ИГРАТЬ opens the difficulty choice");
+                difficulty?.Choose(Difficulty.Normal);
+                if (difficulty != null && difficulty.State == "resume")
+                    difficulty.StartOver();
+            });
 
             // Map01 with the skins.
             At(t += 3.5f, () =>
@@ -295,8 +339,13 @@ namespace ZombiCar.EditorTools
                     "the rifle skin overlay is drawn");
                 var run = AssetDatabase.LoadAssetAtPath<RunState>(DataAssetsBuilder.c_RunState);
                 Check(run.Modifiers[StatEffect.FireRate] >= 0.15f - 0.001f, $"the gold rifle's bonus is on in the run: fire rate +{run.Modifiers[StatEffect.FireRate]:P0}");
-                CloseUp("07_GoldRifle_FireBullets", 7f);
+                Check(run.Modifiers[StatEffect.BulletPierce] >= 1f - 0.001f,
+                    $"the black bullets' bonus is on from the start: pierce +{run.Modifiers[StatEffect.BulletPierce]:0}");
+                CloseUp("07_GoldRifle_BlackBullets", 7f);
             });
+            // More close-ups a moment apart: one of them catches a bullet in flight.
+            At(t += 0.07f, () => CloseUp("07b_BlackBullets", 5f));
+            At(t += 0.07f, () => CloseUp("07c_BlackBullets", 5f));
             At(t += 0.3f, () =>
             {
                 s_Bot.FireHeld = false;
@@ -330,7 +379,7 @@ namespace ZombiCar.EditorTools
                 var car = Object.FindAnyObjectByType<CarHealth>();
                 int shown = car.GetComponent<CarSpikesView>() != null
                     ? car.transform.Find("Spikes").Cast<Transform>().Count(c => c.gameObject.activeSelf) : 0;
-                Check(car.Spikes == 44 && shown == 4, $"spikes {car.Spikes} damage, {shown} sets on the car");
+                Check(car.Spikes == 78 && shown == 4, $"spikes {car.Spikes} damage, {shown} sets on the car");
                 CloseUp("10_Car_Spikes", 9f, car.transform.position);
             });
             At(t += 0.4f, () =>

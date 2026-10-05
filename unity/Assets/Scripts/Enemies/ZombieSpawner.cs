@@ -36,6 +36,12 @@ namespace ZombiCar.Enemies
         public CarHealth Car => m_Car;
         public PlayerHealth Player => m_Player;
 
+        /// <summary>The run's difficulty on every zombie that comes out: its health ...</summary>
+        public float HealthScale { get; set; } = 1f;
+
+        /// <summary>... and the damage it deals.</summary>
+        public float DamageScale { get; set; } = 1f;
+
         /// <summary>Zombies that are alive (rising, walking or fighting); corpses do not count.</summary>
         public int Alive { get; private set; }
 

@@ -35,7 +35,137 @@ namespace ZombiCar.EditorTools
             Paint("UI_Icon_Trophy", TrophyIcon, force);
             Paint("UI_Icon_Flag", FlagIcon, force);
             Paint("UI_Spark", Spark, force);
+            Paint("UI_Diff_Easy", EasyFace, force);
+            Paint("UI_Diff_Normal", NormalFace, force);
+            Paint("UI_Diff_Hardcore", DemonFace, force);
+            Paint("UI_Icon_Lock", LockIcon, force);
+            Paint("UI_Icon_Gift", GiftIcon, force);
         }
+
+        // ---------------------------------------------------------------- difficulty faces
+        private static readonly Color s_Mouth = new Color(0.32f, 0.06f, 0.05f, 1f);
+
+        private static Color Shade(Vector2 q, Color top, Color bottom) => Color.Lerp(bottom, top, Mathf.Clamp01(q.y * 0.6f + 0.6f));
+
+        // Easy, the kind one: a round green face, happy closed eyes, rosy cheeks, a wide open smile.
+        private static Color EasyFace(Vector2 p) => Outlined(p, q =>
+        {
+            Vector2 c = q - new Vector2(0f, -0.06f);
+            if (c.magnitude > 0.74f)
+                return Color.clear;
+            Color skin = Shade(q, new Color(0.62f, 0.95f, 0.45f, 1f), new Color(0.26f, 0.62f, 0.22f, 1f));
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector2 eye = c - new Vector2(0.26f * side, 0.14f);
+                if (eye.y > -0.01f && Mathf.Abs(eye.magnitude - 0.11f) < 0.035f)
+                    return s_Ink;
+                Vector2 cheek = new Vector2((c.x - 0.43f * side) / 0.12f, (c.y + 0.08f) / 0.08f);
+                if (cheek.sqrMagnitude < 1f)
+                    skin = Color.Lerp(skin, new Color(1f, 0.55f, 0.55f, 1f), 0.6f * (1f - cheek.sqrMagnitude));
+            }
+            Vector2 m = c - new Vector2(0f, -0.1f);
+            if (m.y < 0f && m.magnitude < 0.34f)
+            {
+                if (m.magnitude > 0.295f)
+                    return s_Ink;
+                Vector2 tongue = new Vector2(m.x / 0.16f, (m.y + 0.26f) / 0.1f);
+                return tongue.sqrMagnitude < 1f ? new Color(1f, 0.45f, 0.5f, 1f) : s_Mouth;
+            }
+            return skin;
+        });
+
+        // Normal: an orange face, round eyes under straight brows, a firm line of a mouth.
+        private static Color NormalFace(Vector2 p) => Outlined(p, q =>
+        {
+            Vector2 c = q - new Vector2(0f, -0.06f);
+            if (c.magnitude > 0.74f)
+                return Color.clear;
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector2 eye = c - new Vector2(0.25f * side, 0.08f);
+                if (eye.magnitude < 0.06f)
+                    return s_Ink;
+                if (eye.magnitude < 0.13f)
+                    return Color.white;
+                if (eye.magnitude < 0.155f)
+                    return s_Ink;
+                if (Segment(c, new Vector2(0.12f * side, 0.3f), new Vector2(0.4f * side, 0.33f)) < 0.04f)
+                    return s_Ink;
+            }
+            if (Segment(c, new Vector2(-0.22f, -0.3f), new Vector2(0.22f, -0.28f)) < 0.045f)
+                return s_Ink;
+            return Shade(q, new Color(1f, 0.78f, 0.32f, 1f), new Color(0.88f, 0.42f, 0.08f, 1f));
+        });
+
+        // Hardcore, the demon: a red face with horns, angry brows, glowing eyes and a fanged grin.
+        private static Color DemonFace(Vector2 p) => Outlined(p, q =>
+        {
+            Vector2 c = q - new Vector2(0f, -0.12f);
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector2 h = new Vector2(q.x * side, q.y);                  // the right horn, mirrored for the left
+                if (InTriangle(h, new Vector2(0.28f, 0.42f), new Vector2(0.62f, 0.3f), new Vector2(0.72f, 0.88f)))
+                    return Color.Lerp(new Color(0.22f, 0.08f, 0.06f, 1f), new Color(0.95f, 0.88f, 0.72f, 1f), Mathf.Clamp01((h.y - 0.35f) / 0.6f));
+            }
+            if (c.magnitude > 0.7f)
+                return Color.clear;
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector2 e = new Vector2(c.x * side, c.y);
+                if (InTriangle(e, new Vector2(0.1f, 0.12f), new Vector2(0.4f, 0.04f), new Vector2(0.36f, 0.2f)))
+                    return Color.Lerp(new Color(1f, 0.95f, 0.4f, 1f), new Color(1f, 0.6f, 0.1f, 1f), Mathf.Clamp01((e.x - 0.1f) / 0.3f));
+                if (Segment(e, new Vector2(0.06f, 0.24f), new Vector2(0.44f, 0.38f)) < 0.055f)
+                    return s_Ink;
+            }
+            // The grin: a dark band curving up at the ends, two fangs hanging into it.
+            float curve = -0.3f + 0.6f * c.x * c.x;
+            if (Mathf.Abs(c.x) < 0.38f && c.y < curve + 0.06f && c.y > curve - 0.1f)
+            {
+                foreach (float side in new[] { -1f, 1f })
+                    if (InTriangle(c, new Vector2(0.1f * side, curve + 0.06f), new Vector2(0.22f * side, curve + 0.06f), new Vector2(0.16f * side, curve - 0.08f)))
+                        return Color.white;
+                return s_Mouth;
+            }
+            return Shade(q, new Color(0.98f, 0.3f, 0.2f, 1f), new Color(0.55f, 0.04f, 0.04f, 1f));
+        });
+
+        // A closed padlock (a locked achievement).
+        private static Color LockIcon(Vector2 p) => Outlined(p, q =>
+        {
+            Vector2 shackle = q - new Vector2(0f, 0.22f);
+            if (shackle.y > 0f && Mathf.Abs(shackle.magnitude - 0.3f) < 0.08f)
+                return new Color(0.72f, 0.74f, 0.78f, 1f);
+            if (Mathf.Abs(Mathf.Abs(q.x) - 0.3f) < 0.08f && q.y > 0f && q.y < 0.24f)
+                return new Color(0.72f, 0.74f, 0.78f, 1f);
+            if (RoundBox(q - new Vector2(0f, -0.28f), new Vector2(0.5f, 0.38f), 0.08f) <= 0f)
+            {
+                if ((q - new Vector2(0f, -0.2f)).magnitude < 0.09f || (Mathf.Abs(q.x) < 0.035f && q.y < -0.2f && q.y > -0.45f))
+                    return s_Ink;
+                return Gold(q);
+            }
+            return Color.clear;
+        });
+
+        // A gift box with a ribbon and a bow (the daily bonus).
+        private static Color GiftIcon(Vector2 p) => Outlined(p, q =>
+        {
+            Color box = Color.Lerp(new Color(0.7f, 0.1f, 0.12f, 1f), new Color(0.95f, 0.28f, 0.25f, 1f), Mathf.Clamp01(q.y + 0.6f));
+            bool lid = RoundBox(q - new Vector2(0f, 0.12f), new Vector2(0.66f, 0.14f), 0.04f) <= 0f;
+            bool body = RoundBox(q - new Vector2(0f, -0.38f), new Vector2(0.56f, 0.38f), 0.04f) <= 0f;
+            foreach (float side in new[] { -1f, 1f })
+            {
+                Vector2 loop = new Vector2((q.x - 0.2f * side) / 0.24f, (q.y - 0.42f) / 0.16f);
+                if (loop.sqrMagnitude < 1f && loop.sqrMagnitude > 0.3f)
+                    return Gold(q);
+            }
+            if ((lid || body) && Mathf.Abs(q.x) < 0.1f)
+                return Gold(q);
+            if (lid)
+                return Color.Lerp(box, Color.white, 0.12f);
+            if (body)
+                return box;
+            return Color.clear;
+        });
 
         private static void Paint(string name, Func<Vector2, Color> shade, bool force)
         {

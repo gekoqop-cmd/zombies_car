@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 using ZombiCar.Car;
+using ZombiCar.Core;
 using ZombiCar.Player;
 using ZombiCar.Progression;
 using ZombiCar.UI;
@@ -586,7 +587,7 @@ namespace ZombiCar.EditorTools
             // Reroll for a rewarded ad (the shared gold ad button): bottom left, clear of the cards, the weapon column
             // (bottom right) and the tutorial hint (centre).
             var bottomLeft = new Vector2(0f, 0f);
-            Button reroll = AdButton("RerollButton", root, bottomLeft, new Vector2(30f, 36f), new Vector2(370f, 96f), "ПЕРЕБРОСИТЬ", 34f,
+            Button reroll = AdButton("RerollButton", root, bottomLeft, new Vector2(30f, 36f), new Vector2(370f, 96f), "ПОМЕНЯТЬ", 34f,
                 outline);
 
             var screen = host.gameObject.AddComponent<LevelUpScreen>();
@@ -666,6 +667,12 @@ namespace ZombiCar.EditorTools
             shineImage.raycastTarget = false;
             shineClip.gameObject.SetActive(false);
 
+            // The legendary card for an ad: the shared ad disc in the top right corner.
+            var topRight = new Vector2(1f, 1f);
+            RectTransform adRt = UiFactory.Rect("AdBadge", body, topRight, topRight, new Vector2(-18f, -18f), new Vector2(96f, 96f));
+            UiFactory.Image(adRt, UiFactory.Sprite("UI_Icon_Ad"), Color.white, false).preserveAspect = true;
+            adRt.gameObject.SetActive(false);
+
             var button = card.gameObject.AddComponent<Button>();
             button.targetGraphic = plate;
             ColorBlock colors = button.colors;
@@ -678,7 +685,7 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(view, ("m_Button", button), ("m_Body", body), ("m_Group", group), ("m_IconDisc", discImage),
                 ("m_Icon", icon), ("m_Title", title), ("m_Description", description), ("m_Level", level), ("m_KeyHint", key),
                 ("m_Glow", glow), ("m_LegendaryHalo", halo), ("m_LegendaryRays", rays), ("m_LegendaryShineClip", shineClip.gameObject),
-                ("m_LegendaryShine", shine));
+                ("m_LegendaryShine", shine), ("m_AdBadge", adRt.gameObject));
             return view;
         }
 
@@ -1159,7 +1166,7 @@ namespace ZombiCar.EditorTools
 
         // ------------------------------------------------------------------ leaderboard
         private const int c_LeaderboardRows = 10;
-        private static readonly Vector2 s_LeaderboardWindow = new Vector2(1100f, 1000f);
+        private static readonly Vector2 s_LeaderboardWindow = new Vector2(1100f, 1030f);
         private const float c_LeaderboardRowHeight = 56f;
 
         /// <summary>
@@ -1179,13 +1186,26 @@ namespace ZombiCar.EditorTools
             UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
             OutlinedLabel("Title", window, top, top, new Vector2(0f, -24f), new Vector2(1000f, 76f), "ТАБЛИЦА ЛИДЕРОВ", 60f,
                 TextAlignmentOptions.Center, s_TitleColor, outline);
-            OutlinedLabel("Subtitle", window, top, top, new Vector2(0f, -98f), new Vector2(1000f, 40f), "ЛУЧШЕЕ ВРЕМЯ ПРОХОЖДЕНИЯ 30 ВОЛН", 30f,
-                TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            // One table per difficulty: the tabs under the title (the chosen one in its colour).
+            var tabs = new Button[DifficultyRules.Count];
+            var tabPlates = new Image[DifficultyRules.Count];
+            for (int i = 0; i < DifficultyRules.Count; i++)
+            {
+                var difficulty = (Difficulty)i;
+                RectTransform tab = UiFactory.Rect($"Tab{DifficultyRules.Title(difficulty)}", window, top, top,
+                    new Vector2((i - 1) * 320f, -100f), new Vector2(300f, 64f));
+                tabPlates[i] = UiFactory.Image(tab, UiFactory.Sprite("UI_Button"), new Color(0.16f, 0.17f, 0.2f, 0.95f), true, true);
+                OutlinedLabel("Label", tab, center, center, Vector2.zero, new Vector2(290f, 60f), DifficultyRules.Title(difficulty), 32f,
+                    TextAlignmentOptions.Center, s_ButtonLabel, outline);
+                tabs[i] = tab.gameObject.AddComponent<Button>();
+                tabs[i].targetGraphic = tabPlates[i];
+                tab.gameObject.AddComponent<UIButtonFx>();
+            }
 
             var rows = new LeaderboardPanel.Row[c_LeaderboardRows];
             for (int i = 0; i < c_LeaderboardRows; i++)
-                rows[i] = LeaderboardRow(window, $"Row{i + 1}", -146f - i * (c_LeaderboardRowHeight + 6f), outline);
-            LeaderboardPanel.Row player = LeaderboardRow(window, "PlayerRow", -146f - c_LeaderboardRows * (c_LeaderboardRowHeight + 6f) - 14f,
+                rows[i] = LeaderboardRow(window, $"Row{i + 1}", -172f - i * (c_LeaderboardRowHeight + 6f), outline);
+            LeaderboardPanel.Row player = LeaderboardRow(window, "PlayerRow", -172f - c_LeaderboardRows * (c_LeaderboardRowHeight + 6f) - 14f,
                 outline);
             TextMeshProUGUI status = OutlinedLabel("Status", window, center, center, new Vector2(0f, 20f), new Vector2(960f, 220f), "ЗАГРУЗКА…",
                 44f, TextAlignmentOptions.Center, Color.white, outline);
@@ -1198,6 +1218,7 @@ namespace ZombiCar.EditorTools
             var panel = root.gameObject.AddComponent<LeaderboardPanel>();
             PrefabBuilder.Wire(panel, ("m_Group", group), ("m_Window", window), ("m_Status", status), ("m_CloseButton", close),
                 ("m_AvatarPlaceholder", UiFactory.Sprite("UI_Icon_Skull")));
+            CharacterBuilder.SetProps(panel, ("m_Tabs", tabs), ("m_TabPlates", tabPlates));
             var so = new SerializedObject(panel);
             SerializedProperty list = so.FindProperty("m_Rows");
             list.arraySize = rows.Length;
@@ -1375,7 +1396,7 @@ namespace ZombiCar.EditorTools
             description.fontSizeMin = 16f;
             description.fontSizeMax = 23f;
 
-            const int pipCount = 5;
+            const int pipCount = 8;                                   // the deepest upgrade's levels
             var pips = new Image[pipCount];
             for (int i = 0; i < pipCount; i++)
             {

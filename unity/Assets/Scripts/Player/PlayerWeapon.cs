@@ -34,6 +34,8 @@ namespace ZombiCar.Player
 
         // Shots closer than this to the muzzle keep the input direction (a target inside the gun would flip it).
         private const float c_MinShotDistance = 0.25f;
+        // On a phone the shot starts this far out from the player's centre, on the aim line.
+        private const float c_MobileMuzzleReach = 0.5f;
 
         public WeaponConfig Config => m_Config;
         public bool IsReloading => m_IsReloading;
@@ -73,6 +75,9 @@ namespace ZombiCar.Player
 
         /// <summary>Level direction the next bullet will take from the muzzle.</summary>
         public Vector3 ShotDirection { get; private set; } = Vector3.forward;
+
+        /// <summary>Where the last bullet started (tests).</summary>
+        public Vector3 LastShotOrigin { get; private set; }
 
         /// <summary>Raised on every shot (muzzle flash, shooting pose, sound).</summary>
         public event Action Fired;
@@ -132,7 +137,15 @@ namespace ZombiCar.Player
                 return;
 
             // The bullet is drawn at the barrel of the sprite; it collides over the whole height band from
-            // WeaponConfig.HitBandBottom up to the barrel, so low cover and small zombies stop it too.
+            // WeaponConfig.HitBandBottom up to the barrel, so low cover and small zombies stop it too. On a phone it
+            // leaves from the player along the aim line (drawn from the player), not from the barrel off to the side.
+            Vector3 origin = m_Muzzle.position;
+            if (DeviceInfo.IsMobile)
+            {
+                Vector3 body = transform.position;
+                origin = new Vector3(body.x, origin.y, body.z) + ShotDirection * c_MobileMuzzleReach;
+            }
+            LastShotOrigin = origin;
             Bullet bullet = m_Pool.Get();
             var stats = new ShotStats
             {
@@ -141,7 +154,7 @@ namespace ZombiCar.Player
                 Pierce = Mods?.Whole(StatEffect.BulletPierce) ?? 0,
                 CritChance = Mods?[StatEffect.CritChance] ?? 0f,
             };
-            bullet.Launch(m_Muzzle.position, ShotDirection, m_Config, stats, m_BlockMask, m_Pool.Release);
+            bullet.Launch(origin, ShotDirection, m_Config, stats, m_BlockMask, m_Pool.Release);
 
             m_InMagazine--;
             m_NextShotTime = Time.time + ShotInterval;

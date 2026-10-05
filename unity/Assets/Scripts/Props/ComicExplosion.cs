@@ -84,6 +84,7 @@ namespace ZombiCar.Props
             m_Clouds.Emit(Mathf.RoundToInt(7 * size));
             AudioManager.PlaySfx(Sound.Explosion, 1f, Random.Range(0.9f, 1.05f));
             CameraShake.AddAt(position, m_Shake * size);
+            GameFeel.Blast(size);
             Animate();
         }
 

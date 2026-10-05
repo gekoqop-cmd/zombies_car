@@ -14,7 +14,7 @@ namespace ZombiCar.EditorTools
     /// </summary>
     public static partial class SceneBuilder
     {
-        private static readonly Vector2 s_CaseCard = new Vector2(420f, 770f);           // room for the bonus plate
+        private static readonly Vector2 s_CaseCard = new Vector2(420f, 550f);           // compact: the chances live under the one "?"
         private static readonly Color s_BonusPlate = new Color(0.04f, 0.16f, 0.2f, 0.9f);
         private static readonly Color s_BonusText = new Color(0.45f, 0.92f, 1f, 1f);
         private const float c_CaseStep = 450f;
@@ -37,8 +37,12 @@ namespace ZombiCar.EditorTools
             OutlinedLabel("Title", root, top, top, new Vector2(0f, -36f), new Vector2(1200f, 90f), "КЕЙСЫ", 70f,
                 TextAlignmentOptions.Center, s_TitleColor, outline);
             TextMeshProUGUI coins = CoinCounter("Coins", root, topRight, topRight, new Vector2(-40f, -44f), 64f, 300f, "0", 48f, outline);
-            OutlinedLabel("Hint", root, top, top, new Vector2(0f, -120f), new Vector2(1300f, 44f),
+            TextMeshProUGUI hint = OutlinedLabel("Hint", root, top, top, new Vector2(0f, -120f), new Vector2(1300f, 44f),
                 "МОНЕТЫ ДАЮТСЯ В КОНЦЕ КАЖДОГО ЗАБЕГА", 28f, TextAlignmentOptions.Center, s_SubtitleColor, outline);
+            // The daily bonus's free case, in place of the hint while it waits.
+            TextMeshProUGUI freeNote = OutlinedLabel("FreeNote", root, top, top, new Vector2(0f, -116f), new Vector2(1300f, 52f),
+                "БЕСПЛАТНЫЙ КЕЙС — ВЫБЕРИ ЛЮБОЙ!", 36f, TextAlignmentOptions.Center, new Color(0.45f, 1f, 0.45f, 1f), outline);
+            freeNote.gameObject.SetActive(false);
             Button close = HudButton("BackButton", root, bottomLeft, new Vector2(40f, 24f), new Vector2(300f, 96f), "НАЗАД", 40f,
                 Color.white, outline);
 
@@ -47,11 +51,43 @@ namespace ZombiCar.EditorTools
             for (int i = 0; i < cards.Length; i++)
                 cards[i] = BuildCaseCard(root, i, UiFactory.Sprite(icons[i]), outline);
 
+            // One "?" between the hint and the cases, over the middle one: the drop chances (the same for every case).
+            RectTransform info = UiFactory.Rect("InfoButton", root, top, top, new Vector2(0f, -190f), new Vector2(84f, 84f));
+            Image infoPlate = UiFactory.Image(info, UiFactory.Sprite("UI_StickKnob"), new Color(0.3f, 0.56f, 0.9f, 1f), false, true);
+            OutlinedLabel("Label", info, center, center, new Vector2(0f, 2f), new Vector2(84f, 84f), "?", 58f, TextAlignmentOptions.Center,
+                Color.white, outline);
+            var infoButton = info.gameObject.AddComponent<Button>();
+            infoButton.targetGraphic = infoPlate;
+            info.gameObject.AddComponent<UIButtonFx>();
+            RectTransform popup = UiFactory.Rect("Chances", root, center, center, new Vector2(0f, -28f), new Vector2(560f, 340f));
+            Image popupPlate = UiFactory.Image(popup, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
+            var popupButton = popup.gameObject.AddComponent<Button>();
+            popupButton.targetGraphic = popupPlate;
+            popupButton.transition = Selectable.Transition.None;
+            TextMeshProUGUI chances = OutlinedLabel("Text", popup, center, center, Vector2.zero, new Vector2(500f, 300f),
+                "ОБЫЧНОЕ 55%", 40f, TextAlignmentOptions.Center, Color.white, outline);
+            chances.enableAutoSizing = true;
+            chances.fontSizeMin = 22f;
+            chances.fontSizeMax = 40f;
+            chances.textWrappingMode = TextWrappingModes.Normal;
+            chances.richText = true;
+            popup.gameObject.SetActive(false);
+
             // ---- roulette
             RectTransform roulette = UiFactory.Stretch("Roulette", root);
             var rouletteGroup = roulette.gameObject.AddComponent<CanvasGroup>();
             UiFactory.Image(roulette, null, new Color(0.02f, 0.02f, 0.03f, 1f), false, true);   // nothing of the cases shows through
             RectTransform wheel = UiFactory.Stretch("Wheel", roulette);
+            // The legendary case (the daily bonus): a gold frame around the strip and "ЛЕГЕНДАРНЫЙ КЕЙС" over it.
+            RectTransform legendary = UiFactory.Stretch("Legendary", wheel);
+            Color gold = CosmeticCatalog.RarityColor(Rarity.Legendary);
+            RectTransform goldRays = UiFactory.Rect("Rays", legendary, center, center, new Vector2(0f, 360f), new Vector2(300f, 300f));
+            UiFactory.Image(goldRays, UiFactory.Sprite("UI_Rays"), new Color(gold.r, gold.g, gold.b, 0.55f), false);
+            RectTransform frame = UiFactory.Rect("Frame", legendary, center, center, new Vector2(0f, 150f), new Vector2(1372f, 302f));
+            UiFactory.Image(frame, UiFactory.Sprite("UI_Panel"), gold, true);
+            OutlinedLabel("Title", legendary, center, center, new Vector2(0f, 360f), new Vector2(1300f, 100f), "ЛЕГЕНДАРНЫЙ КЕЙС", 76f,
+                TextAlignmentOptions.Center, gold, outline);
+            legendary.gameObject.SetActive(false);
             RectTransform viewport = UiFactory.Rect("Viewport", wheel, center, center, new Vector2(0f, 150f), new Vector2(1340f, 270f));
             UiFactory.Image(viewport, UiFactory.Sprite("UI_Panel"), new Color(0.06f, 0.07f, 0.09f, 0.95f), true);
             viewport.gameObject.AddComponent<RectMask2D>();
@@ -84,7 +120,8 @@ namespace ZombiCar.EditorTools
                 ("m_CloseButton", close), ("m_Roulette", rouletteGroup), ("m_Wheel", wheel.gameObject), ("m_SkipButton", skip),
                 ("m_Reveal", reveal), ("m_Strip", strip), ("m_StripTemplate", stripTemplate),
                 ("m_ResultPanel", result.gameObject), ("m_ResultRarity", rarity), ("m_ResultName", prizeName), ("m_ResultNote", note),
-                ("m_EquipButton", equip), ("m_OkButton", ok));
+                ("m_EquipButton", equip), ("m_OkButton", ok), ("m_InfoButton", infoButton), ("m_InfoPopup", popupButton),
+                ("m_Chances", chances), ("m_FreeNote", freeNote), ("m_Hint", hint.gameObject), ("m_LegendaryTitle", legendary.gameObject));
             CharacterBuilder.SetProps(screen, ("m_SlotIcons", new Object[] { UiFactory.Sprite(icons[0]), UiFactory.Sprite(icons[1]),
                 UiFactory.Sprite(icons[2]) }), ("m_TileStep", c_TileStep));
             var so = new SerializedObject(screen);
@@ -94,10 +131,11 @@ namespace ZombiCar.EditorTools
             {
                 SerializedProperty c = list.GetArrayElementAtIndex(i);
                 c.FindPropertyRelative("Title").objectReferenceValue = cards[i].Title;
-                c.FindPropertyRelative("Chances").objectReferenceValue = cards[i].Chances;
                 c.FindPropertyRelative("Icon").objectReferenceValue = cards[i].Icon;
                 c.FindPropertyRelative("OpenButton").objectReferenceValue = cards[i].OpenButton;
                 c.FindPropertyRelative("OpenLabel").objectReferenceValue = cards[i].OpenLabel;
+                c.FindPropertyRelative("PriceCoin").objectReferenceValue = cards[i].PriceCoin;
+                c.FindPropertyRelative("FreeLabel").objectReferenceValue = cards[i].FreeLabel;
                 c.FindPropertyRelative("AdButton").objectReferenceValue = cards[i].AdButton;
                 c.FindPropertyRelative("Bonus").objectReferenceValue = cards[i].Bonus;
                 c.FindPropertyRelative("BonusGlow").objectReferenceValue = cards[i].BonusGlow;
@@ -119,25 +157,16 @@ namespace ZombiCar.EditorTools
             ((TextMeshProUGUI)refs.Title).enableAutoSizing = true;
             ((TextMeshProUGUI)refs.Title).fontSizeMin = 26f;
             ((TextMeshProUGUI)refs.Title).fontSizeMax = 40f;
-            RectTransform disc = UiFactory.Rect("IconDisc", card, top, top, new Vector2(0f, -94f), new Vector2(170f, 170f));
+            RectTransform disc = UiFactory.Rect("IconDisc", card, top, top, new Vector2(0f, -88f), new Vector2(150f, 150f));
             UiFactory.Image(disc, UiFactory.Sprite("UI_StickKnob"), new Color(0.95f, 0.55f, 0.18f, 1f), false);
-            RectTransform iconRt = UiFactory.Rect("Icon", disc, center, center, Vector2.zero, new Vector2(126f, 126f));
+            RectTransform iconRt = UiFactory.Rect("Icon", disc, center, center, Vector2.zero, new Vector2(112f, 112f));
             refs.Icon = UiFactory.Image(iconRt, icon, Color.white, false);
             refs.Icon.preserveAspect = true;
-            TextMeshProUGUI chances = OutlinedLabel("Chances", card, top, top, new Vector2(0f, -272f), new Vector2(380f, 170f),
-                "ОБЫЧНОЕ 55%", 26f, TextAlignmentOptions.Center, Color.white, outline);
-            chances.enableAutoSizing = true;
-            chances.fontSizeMin = 18f;
-            chances.fontSizeMax = 26f;
-            chances.textWrappingMode = TextWrappingModes.Normal;
-            chances.richText = true;
-            refs.Chances = chances;
 
-            refs.OpenButton = HudButton("OpenButton", card, bottom, new Vector2(0f, 196f), new Vector2(380f, 96f), "ОТКРЫТЬ", 32f,
-                s_PlayColor, outline);
-            // The legendary skin's bonus ("???" until it is won): a teal plate of its own, apart from the gold chances.
+            // The bonus plate goes where the chances were (under the icon); the opening buttons below it.
+            // The legendary skin's bonus ("???" until it is won): a teal plate of its own.
             // A bright teal frame that breathes (CasesScreen), the trophy on the left, the text beside it.
-            RectTransform bonusPlate = UiFactory.Rect("Bonus", card, bottom, bottom, new Vector2(0f, 110f), new Vector2(380f, 78f));
+            RectTransform bonusPlate = UiFactory.Rect("Bonus", card, top, top, new Vector2(0f, -250f), new Vector2(380f, 78f));
             RectTransform glowRt = UiFactory.Stretch("Glow", bonusPlate);
             glowRt.offsetMin = new Vector2(-5f, -5f);
             glowRt.offsetMax = new Vector2(5f, 5f);
@@ -154,9 +183,27 @@ namespace ZombiCar.EditorTools
             bonus.fontSizeMin = 14f;
             bonus.fontSizeMax = 22f;
             refs.Bonus = bonus;
+
+            // Open for coins: the price and the coin after it ("150 •"), no words.
+            refs.OpenButton = HudButton("OpenButton", card, top, new Vector2(0f, -342f), new Vector2(300f, 84f), string.Empty, 40f,
+                s_PlayColor, outline);
             refs.OpenLabel = refs.OpenButton.GetComponentInChildren<TMP_Text>();
-            // Open for a rewarded ad: the shared gold ad button, icon only.
-            refs.AdButton = AdButton("AdButton", card, bottom, new Vector2(0f, 24f), new Vector2(380f, 78f), null, 0f, outline);
+            RectTransform price = refs.OpenLabel.rectTransform;
+            price.anchoredPosition = new Vector2(-88f, 0f);
+            price.sizeDelta = new Vector2(200f, 84f);
+            refs.OpenLabel.alignment = TextAlignmentOptions.Right;
+            refs.OpenLabel.fontSize = 46f;
+            RectTransform coin = UiFactory.Rect("Coin", refs.OpenButton.transform, center, center, new Vector2(48f, 0f), new Vector2(58f, 58f));
+            UiFactory.Image(coin, UiFactory.Sprite("UI_Icon_Coin"), Color.white, false).preserveAspect = true;
+            refs.PriceCoin = coin.gameObject;
+            // A free case waits (the daily bonus): "ОТКРЫТЬ" in place of the price.
+            TextMeshProUGUI free = OutlinedLabel("Free", refs.OpenButton.transform, center, center, Vector2.zero, new Vector2(280f, 80f),
+                "ОТКРЫТЬ", 42f, TextAlignmentOptions.Center, new Color(0.55f, 1f, 0.5f, 1f), outline);
+            free.gameObject.SetActive(false);
+            refs.FreeLabel = free.gameObject;
+            // Open for a rewarded ad: the shared gold ad button, icon only, as big as the coins button.
+            refs.AdButton = AdButton("AdButton", card, bottom, new Vector2(0f, 26f), new Vector2(300f, 84f), null, 0f, outline);
+
             return refs;
         }
 

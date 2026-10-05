@@ -36,8 +36,8 @@ namespace ZombiCar.EditorTools
         }
 
         // Every card that raises a number gives more each time it is taken (value + step × times taken; the card shows
-        // what the next one gives). Flat on purpose: pierce (one more zombie per bullet), the first-aid kit (heals to
-        // full) and the pyrotechnic (a fixed tier of the barrels: radius +25%, damage +50%) — abilities, not numbers.
+        // what the next one gives). Flat on purpose: pierce (one more zombie per bullet) and the pyrotechnic (a fixed
+        // tier of the barrels: radius +25%, damage +50%) — abilities, not numbers.
         private static Perk[] Perks() => new[]
         {
             // Gun (on top of the base gun, which stays as it is).
@@ -53,12 +53,10 @@ namespace ZombiCar.EditorTools
             // Axe.
             new Perk("axedamage", "ОСТРЫЙ ТОПОР", "Урон топора +{1}%", Icon("Axe"), s_Axe, StatEffect.AxeDamage, 0.3f, 4, 0.9f, 0.1f),
             new Perk("axerange", "ШИРОКИЙ ЗАМАХ", "Дальность удара\nтопором +{1}%", Icon("AxeRange"), s_Axe, StatEffect.AxeRange, 0.15f, 3, 0.8f, 0.05f),
-            // Survival.
-            new Perk("health", "ЖИВУЧЕСТЬ", "+{0} к максимуму здоровья\nи лечение на {0}", Icon("Health"), s_Survival, StatEffect.PlayerMaxHealth, 15f, 5, 1f, 5f),
-            new Perk("regen", "РЕГЕНЕРАЦИЯ", "Восстанавливает\n+{0} здоровья в секунду", Icon("Regen"), s_Survival, StatEffect.PlayerRegen, 0.75f, 3, 1f, 0.25f),
+            // Survival: the only health card (+10 / 15 / 20 / 25, healing as much at once); full heals are the medkits
+            // of the workshop, life per kill is the legendary card for an ad below.
+            new Perk("health", "ЖИВУЧЕСТЬ", "+{0} к максимуму здоровья\nи лечение на {0}", Icon("Health"), s_Survival, StatEffect.PlayerMaxHealth, 10f, 4, 1f, 5f),
             new Perk("speed", "ЛЁГКИЕ НОГИ", "Скорость бега +{1}%", Icon("Speed"), s_Survival, StatEffect.MoveSpeed, 0.08f, 3, 0.9f, 0.02f),
-            new Perk("vampire", "ВАМПИРИЗМ", "Каждое убийство\nлечит ещё {0} здоровья", Icon("Vampire"), s_Survival, StatEffect.KillHeal, 1f, 3, 0.9f, 1f),
-            new Perk("medkit", "АПТЕЧКА", "Полностью восстанавливает\nздоровье", Icon("Medkit"), s_Survival, StatEffect.HealPlayerFull, 0f, 0, 0.6f),
             // No car cards: the car is upgraded only in the workshop (CarUpgrades below).
             // Run.
             new Perk("scrap", "БАРАХОЛЬЩИК", "Металлолома +{1}%", Icon("ScrapGain"), s_Run, StatEffect.MoneyGain, 0.2f, 3, 0.9f, 0.05f),
@@ -69,28 +67,33 @@ namespace ZombiCar.EditorTools
             // Strong but not a win button: about two good gun cards in one.
             new Perk("legend_gold", "ЗОЛОТАЯ ЛИХОРАДКА", "Урон оружия +35%\nи скорострельность +25%", Icon("Damage"), s_Legendary,
                 StatEffect.WeaponDamage, 0.35f, 1, 0f).AsLegendary(StatEffect.FireRate, 0.25f),
+            // The legendary card for a rewarded ad: now and then in a hand from level 7, the old three vampire cards in
+            // one (1 + 2 + 3 health per kill).
+            new Perk("legend_vampire", "ВАМПИРИЗМ", "Каждое убийство\nлечит {0} здоровья", Icon("Vampire"), s_Legendary,
+                StatEffect.KillHeal, 6f, 1, 0f).AsAdLegendary(),
         };
 
         // Car upgrades. Every level gives more than the one before (value + step × level; the tile shows the next
-        // level's gain); the last level is the top (МАКС). The last
-        // two levels cost ~1.5x of what they used to (scrap piled up by wave 30).
+        // level's gain); the last level is the top (МАКС). Deep enough to last the run: ~15 500 scrap in all against
+        // ~14 000 a run brings by wave 30 without bonuses, so a usual run maxes the car out round wave 25-28 (it used
+        // to be wave 10-15, with the scrap piling up after).
         private static CarUpgrade[] CarUpgrades() => new[]
         {
-            // 6 / 7 / 8 / 9 / 10% (40% in all).
-            new CarUpgrade("armor", "БРОНЯ", "Машина получает на {1}% меньше урона", Icon("Armor"), StatEffect.CarArmor, 0.06f,
-                new[] { 60, 110, 180, 405, 600 }, valueStep: 0.01f),
-            // +40 / 50 / 60 / 70 / 80 (300 in all)
+            // 4 / 4.5 / 5 ... / 7.5% (46% in all).
+            new CarUpgrade("armor", "БРОНЯ", "Машина получает на {1}% меньше урона", Icon("Armor"), StatEffect.CarArmor, 0.04f,
+                new[] { 60, 110, 180, 300, 450, 650, 900, 1200 }, valueStep: 0.005f),
+            // +40 / 45 / 50 ... / 75 (460 in all)
             new CarUpgrade("hull", "УСИЛЕННЫЙ КОРПУС", "+{0} к прочности машины (и ремонт)", Icon("Hull"), StatEffect.CarMaxHealth, 40f,
-                new[] { 50, 100, 160, 360, 525 }, valueStep: 10f),
-            // 8 / 10 / 12 / 14 damage (44 in all)
+                new[] { 50, 100, 160, 280, 420, 600, 850, 1150 }, valueStep: 5f),
+            // 8 / 10 / 12 / 14 / 16 / 18 damage (78 in all)
             new CarUpgrade("spikes", "ШИПЫ", "Зомби, бьющий машину, получает +{0} урона", Icon("Spikes"), StatEffect.CarSpikes, 8f,
-                new[] { 70, 140, 345, 525 }, valueStep: 2f),
-            // +20 / 25 / 30 (75 in all)
+                new[] { 70, 140, 260, 420, 650, 950 }, valueStep: 2f),
+            // +20 / 25 / 30 / 35 / 40 (150 in all)
             new CarUpgrade("shock", "ЭЛЕКТРОРАЗРЯД", "Раз в 6 с бьёт током зомби рядом: +{0} урона", Icon("Shock"), StatEffect.CarShock, 20f,
-                new[] { 150, 420, 675 }, valueStep: 5f),
-            // +30 / 40 / 50 / 60 rounds (180 in all)
+                new[] { 150, 380, 620, 950, 1350 }, valueStep: 5f),
+            // +30 / 40 / 50 / 60 / 70 / 80 rounds (330 in all): the bosses' ammo boxes fill a bigger bag
             new CarUpgrade("ammo", "ОРУЖЕЙНЫЙ ЯЩИК", "+{0} к запасу патронов (вместимость)", Icon("AmmoBox"), StatEffect.MaxReserve, 30f,
-                new[] { 60, 110, 270, 390 }, valueStep: 10f),
+                new[] { 60, 110, 220, 360, 550, 800 }, valueStep: 10f),
         };
 
         /// <summary>The full repair is paid with a rewarded ad only, this many times per run.</summary>

@@ -34,6 +34,10 @@ namespace ZombiCar.Waves
         private bool m_BossWave;
 
         public int Wave => m_Wave;
+
+        /// <summary>The run's difficulty on the number of regular zombies in every wave.</summary>
+        public float CountScale { get; set; } = 1f;
+
         public bool IsWaveRunning => m_Phase == Phase.Wave;
         public bool IsFinished => m_Phase == Phase.Finished;
 
@@ -134,7 +138,7 @@ namespace ZombiCar.Waves
             m_TimeLeft = m_Config.WaveDuration;
             WaveConfig.BossWave boss = m_Config.BossFor(m_Wave);
             m_BossWave = boss != null;
-            int regular = m_Config.EnemiesInWave(m_Wave);
+            int regular = Mathf.Max(1, Mathf.RoundToInt(m_Config.EnemiesInWave(m_Wave) * CountScale));
             if (m_BossWave)
                 regular = Mathf.RoundToInt(regular * boss.RegularShare);
             m_ToSpawn += regular;
@@ -161,6 +165,14 @@ namespace ZombiCar.Waves
                     m_WaveState.SetBoss(null);
             }
             StartCountdown(countdown);
+        }
+
+        /// <summary>A run going on from its checkpoint: the countdown to <paramref name="wave"/> instead of wave 1.</summary>
+        public void StartFrom(int wave)
+        {
+            if (m_Config == null)
+                return;
+            SkipTo(wave, m_Config.FirstWaveDelay);
         }
 
         // Play-mode shortcuts to the boss waves (the component's context menu in the Inspector).

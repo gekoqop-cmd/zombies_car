@@ -32,6 +32,12 @@ var YandexSdkLib = {
     });
   },
 
+  // A short vibration (hits on a phone). Browsers without the Vibration API (iOS) or that block it in a frame do
+  // nothing.
+  YaVibrate: function (ms) {
+    try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) { }
+  },
+
   // The game has loaded and the player can play (LoadingAPI.ready, requirement 1.19.2).
   YaLoadingReady: function () {
     Ya.sdk().then(function (s) {

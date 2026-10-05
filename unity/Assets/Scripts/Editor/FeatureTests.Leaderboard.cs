@@ -24,6 +24,7 @@ namespace ZombiCar.EditorTools
             At(1.0f, () =>
             {
                 YandexSdk.SubmittedScores.Clear();
+                YandexSdk.SubmittedBoards.Clear();
                 YandexSdk.StubEntries = null;
                 Find<LevelUpScreen>().enabled = false;
                 screen = Find<GameOverScreen>();
@@ -56,6 +57,8 @@ namespace ZombiCar.EditorTools
                 Check(s_Run.Outcome == RunOutcome.Victory, "a victory");
                 Check(YandexSdk.SubmittedScores.Count == 1 && YandexSdk.SubmittedScores[0] == seconds,
                     $"the victory sends its time once: {string.Join(", ", YandexSdk.SubmittedScores)} s (run {seconds} s)");
+                Check(YandexSdk.SubmittedBoards.LastOrDefault() == DifficultyRules.Leaderboard(s_Run.Difficulty),
+                    $"to the table of its difficulty ({s_Run.Difficulty} -> {YandexSdk.SubmittedBoards.LastOrDefault()})");
             });
             At(10.8f, () =>
             {
@@ -87,6 +90,8 @@ namespace ZombiCar.EditorTools
                 Check(panel.Current == LeaderboardPanel.State.Table && rows == 10, $"the top 10 ({rows} rows)");
                 Check(window.Find("PlayerRow").gameObject.activeSelf, "the player's own line (17th) under them");
                 Shot("15_Leaderboard_Table");
+                panel.ShowTable(Difficulty.Hardcore);
+                Check(panel.Shown == Difficulty.Hardcore && panel.Current == LeaderboardPanel.State.Table, "the ХАРДКОР tab shows its own table");
                 panel.Close();
                 YandexSdk.StubEntries = null;
                 MetaProgress.TrySpend(screen.CoinsEarned);                    // the developer's own coins stay as they were

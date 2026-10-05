@@ -5,8 +5,9 @@ using ZombiCar.Core;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// Settings pop-up (main menu and HUD gear button): master / music / effects volume sliders (the mixer groups via
-    /// <see cref="SettingsService"/>), quality tier (Low / Medium / High / Ultra; Ultra hidden on mobile,
+    /// Settings pop-up (main menu and HUD gear button): music / effects volume sliders (the mixer groups via
+    /// <see cref="SettingsService"/>), "ТРЯСКА И ВИБРАЦИЯ" on / off, quality tier (Low / Medium / High / Ultra; Ultra
+    /// hidden on mobile,
     /// <see cref="SettingsService.IsUltraAllowed"/>), Back and — in the game only — "To menu", which leaves the map for
     /// the main menu. Fades in and out (unscaled time).
     /// </summary>
@@ -14,9 +15,13 @@ namespace ZombiCar.UI
     public sealed class SettingsPanel : MonoBehaviour
     {
         [Header("Volume")]
-        [SerializeField] private Slider m_MasterSlider;
         [SerializeField] private Slider m_MusicSlider;
         [SerializeField] private Slider m_SfxSlider;
+
+        [Header("Shake and vibration")]
+        [Tooltip("\"ВКЛ\" / \"ВЫКЛ\": screen shake, hit stops and vibration (SettingsService.ShakeEnabled).")]
+        [SerializeField, OptionalReference] private Button m_ShakeButton;
+        [SerializeField, OptionalReference] private TMPro.TMP_Text m_ShakeLabel;
 
         [Header("Quality")]
         [SerializeField] private Button m_LowButton;
@@ -48,6 +53,7 @@ namespace ZombiCar.UI
         private CanvasGroup m_Group;
         private float m_Target;
         private bool m_Initialised;
+        private float m_ScaleAtShow;
 
         private void Awake() => Init();
 
@@ -84,8 +90,9 @@ namespace ZombiCar.UI
             }
             if (m_EditControlsButton != null)
                 m_EditControlsButton.onClick.AddListener(EditControls);
-            m_MasterSlider.onValueChanged.AddListener(SettingsService.SetMasterVolume);
             m_MusicSlider.onValueChanged.AddListener(SettingsService.SetMusicVolume);
+            if (m_ShakeButton != null)
+                m_ShakeButton.onClick.AddListener(ToggleShake);
             m_SfxSlider.onValueChanged.AddListener(SettingsService.SetSfxVolume);
         }
 
@@ -101,11 +108,12 @@ namespace ZombiCar.UI
         {
             Init();
             gameObject.SetActive(true);
-            m_MasterSlider.SetValueWithoutNotify(SettingsService.MasterVolume);
             m_MusicSlider.SetValueWithoutNotify(SettingsService.MusicVolume);
             m_SfxSlider.SetValueWithoutNotify(SettingsService.SfxVolume);
             if (m_ControlsSizeSlider != null)
                 m_ControlsSizeSlider.SetValueWithoutNotify(SettingsService.ControlsScale);
+            m_ScaleAtShow = SettingsService.ControlsScale;
+            ShowShake();
             if (m_Coins != null)
                 m_Coins.SetText(MetaProgress.Coins.ToString());
             if (m_EditControlsButton != null)
@@ -120,6 +128,9 @@ namespace ZombiCar.UI
 
         public void Hide()
         {
+            // A new size of the touch controls is kept with the progress (it survives a cleared browser storage).
+            if (m_Target > 0f && !Mathf.Approximately(m_ScaleAtShow, SettingsService.ControlsScale))
+                MetaProgress.ControlsScale = SettingsService.ControlsScale;
             if (m_Target > 0f)
                 AudioManager.PlaySfx(Sound.UiClose);
             m_Target = 0f;
@@ -142,6 +153,22 @@ namespace ZombiCar.UI
             m_Group.alpha = Mathf.MoveTowards(m_Group.alpha, m_Target, Time.unscaledDeltaTime / m_FadeTime);
             if (m_Target <= 0f && m_Group.alpha <= 0f)
                 gameObject.SetActive(false);
+        }
+
+        /// <summary>Turns the shake, hit stops and vibration on or off (button, tests).</summary>
+        public void ToggleShake()
+        {
+            SettingsService.SetShakeEnabled(!SettingsService.ShakeEnabled);
+            AudioManager.PlaySfx(Sound.UiClick);
+            ShowShake();
+        }
+
+        private void ShowShake()
+        {
+            if (m_ShakeLabel != null)
+                m_ShakeLabel.SetText(SettingsService.ShakeEnabled ? "ВКЛ" : "ВЫКЛ");
+            if (m_ShakeButton != null && m_ShakeButton.targetGraphic != null)
+                m_ShakeButton.targetGraphic.color = SettingsService.ShakeEnabled ? m_SelectedColor : m_NormalColor;
         }
 
         private void EditControls()

@@ -95,6 +95,7 @@ namespace ZombiCar.Car
             base.OnDisable();
             if (m_Waves == null)
                 return;
+            m_Waves.RefillWaiting = false;
             m_Waves.WaveStarted -= OnWaveStarted;
             m_Waves.WaveEnded -= OnWaveEnded;
         }
@@ -150,6 +151,8 @@ namespace ZombiCar.Car
 
         private void LateUpdate()
         {
+            if (m_Waves != null)
+                m_Waves.RefillWaiting = IsAvailable;
             if (m_Marker == null)
                 return;
             float pop = (Time.time - m_PopStart) / m_PopTime;

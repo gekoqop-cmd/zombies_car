@@ -89,13 +89,18 @@ namespace ZombiCar.Progression
                     !m_Run.WasRevived);
             if (outcome == RunOutcome.Victory)
             {
-                // Only a victory goes to the "best time" leaderboard (a defeat sends nothing).
-                YandexSdk.SubmitTimeScore(Mathf.RoundToInt(m_Run.PlayTime));
+                // Only a victory goes to the difficulty's "best time" leaderboard (a defeat sends nothing); checkpoints
+                // or not, every full clear counts.
+                YandexSdk.SubmitTimeScore(Mathf.RoundToInt(m_Run.PlayTime), DifficultyRules.Leaderboard(m_Run.Difficulty));
                 if (m_Run.Map != null)
                 {
                     bool best = MetaProgress.RecordVictory(m_Run.Map.name, m_Run.PlayTime);
-                    Debug.Log($"[GameOverDirector] {m_Run.Map.name} beaten in {m_Run.PlayTime:F0} s{(best ? " (best time)" : "")}.");
+                    MetaProgress.ClearCheckpoint(m_Run.Map.name, m_Run.Difficulty);   // the city is saved: start over next time
+                    Debug.Log($"[GameOverDirector] {m_Run.Map.name} beaten in {m_Run.PlayTime:F0} s on {m_Run.Difficulty}{(best ? " (best time)" : "")}.");
                 }
+                // "БЕЗУМЕЦ!": all 30 waves on Hardcore (the HUD announces it over the victory screen).
+                if (m_Run.Difficulty == Difficulty.Hardcore && MetaProgress.Achieve(MetaProgress.MadmanAchievement))
+                    m_Run.NewAchievement = MetaProgress.MadmanAchievement;
             }
             StopAllCoroutines();
             if (finale)

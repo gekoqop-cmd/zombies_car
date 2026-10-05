@@ -26,13 +26,14 @@ namespace ZombiCar.Core
             GameOver = 1 << 7,
             Tutorial = 1 << 8,
             BossIntro = 1 << 9,
+            Stage = 1 << 10,
         }
 
         // Reasons that also silence the sound (the menus keep it).
         private const Reason c_Mute = Reason.Platform | Reason.Ad | Reason.Focus;
         // Reasons that belong to one map session; cleared when a scene is loaded.
         private const Reason c_Session = Reason.Settings | Reason.ControlsLayout | Reason.LevelUp | Reason.Workshop | Reason.GameOver |
-                                          Reason.Tutorial | Reason.BossIntro;
+                                          Reason.Tutorial | Reason.BossIntro | Reason.Stage;
 
         private static Reason s_Reasons;
         private static float s_SlowMotion = 1f;
@@ -66,6 +67,9 @@ namespace ZombiCar.Core
             Set(c_Session, false);
             Apply();
         }
+
+        /// <summary>The game speed while nothing pauses it.</summary>
+        public static float SlowMotion => s_SlowMotion;
 
         /// <summary>Game speed while nothing pauses it (1 = normal; the victory finale slows it down).</summary>
         public static void SetSlowMotion(float scale)

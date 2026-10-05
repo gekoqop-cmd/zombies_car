@@ -73,12 +73,24 @@ namespace ZombiCar.EditorTools
                 new Vector2(halfWidth, buttonHeight), "КЕЙСЫ", 40f, new Color(1f, 0.82f, 0.35f, 1f), outline);
             Button skinsButton = HudButton("SkinsButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 2f),
                 new Vector2(halfWidth, buttonHeight), "СКИНЫ", 40f, new Color(0.72f, 0.5f, 1f, 1f), outline);
-            Button leadersButton = HudButton("LeaderboardButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 3f),
-                new Vector2(buttonWidth, buttonHeight), "ТАБЛИЦА ЛИДЕРОВ", 34f, new Color(0.3f, 0.56f, 0.9f, 1f), outline);
+            // The leaderboard and the achievements share a row too; the daily bonus has its own under them.
+            Button leadersButton = HudButton("LeaderboardButton", main, topRight, new Vector2(columnX - halfWidth - 16f, y - (buttonHeight + 24f) * 3f),
+                new Vector2(halfWidth, buttonHeight), "ЛИДЕРЫ", 36f, new Color(0.3f, 0.56f, 0.9f, 1f), outline);
+            Button achievementsButton = HudButton("AchievementsButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 3f),
+                new Vector2(halfWidth, buttonHeight), "ДОСТИЖЕНИЯ", 28f, new Color(1f, 0.62f, 0.22f, 1f), outline);
+            GameObject achievementsMark = Mark(achievementsButton.transform, outline);
+            GameObject casesMark = Mark(casesButton.transform, outline);
+            Button dailyButton = HudButton("DailyButton", main, topRight, new Vector2(columnX, y - (buttonHeight + 24f) * 4f),
+                new Vector2(buttonWidth, buttonHeight), "ЕЖЕДНЕВНЫЕ БОНУСЫ", 32f, new Color(0.4f, 0.8f, 0.4f, 1f), outline);
+            TMP_Text dailyLabel = dailyButton.GetComponentInChildren<TMP_Text>();
+            dailyLabel.enableAutoSizing = true;
+            dailyLabel.fontSizeMin = 20f;
+            dailyLabel.fontSizeMax = 32f;
+            GameObject dailyMark = Mark(dailyButton.transform, outline);
             // The coins for the cases: the gold coin and the number, centred under the column.
             const float coinsWidth = 240f;
             TextMeshProUGUI coins = CoinCounter("Coins", main, topRight, topRight,
-                new Vector2(columnX - (buttonWidth - coinsWidth) * 0.5f, y - (buttonHeight + 24f) * 4f + 6f), 56f, coinsWidth, "0", 40f, outline);
+                new Vector2(columnX - (buttonWidth - coinsWidth) * 0.5f, y - (buttonHeight + 24f) * 5f + 6f), 56f, coinsWidth, "0", 40f, outline);
 
             // Map selection.
             RectTransform mapScreen = UiFactory.Stretch("MapScreen", safe);
@@ -86,9 +98,14 @@ namespace ZombiCar.EditorTools
             mapGroup.alpha = 0f;
             MapRecordsPanel records = BuildMapRecordsPanel(safe, outline);          // over the map screen
             Button back = BuildMapSelection(mapScreen, outline, records);
+            DifficultyScreen difficulty = BuildDifficultyScreen(safe, outline);      // a map's "ИГРАТЬ" opens it
+            foreach (MapCard card in mapScreen.GetComponentsInChildren<MapCard>(true))
+                PrefabBuilder.Wire(card, ("m_Difficulty", difficulty));
             mapScreen.gameObject.SetActive(false);
 
             CasesScreen cases = BuildCasesScreen(safe, outline);
+            AchievementsPanel achievements = BuildAchievementsPanel(safe, outline);
+            DailyBonusPanel daily = BuildDailyBonusPanel(safe, outline, cases);
             SettingsPanel settings = BuildSettingsPopup(canvas.transform, outline, false);
             BuildTutorialCards(safe, outline);                         // replayed from the settings
             LeaderboardPanel leaders = BuildLeaderboardPanel(safe, outline);
@@ -99,7 +116,9 @@ namespace ZombiCar.EditorTools
                 ("m_MainScreen", mainGroup), ("m_MapScreen", mapGroup), ("m_Dim", dim), ("m_Settings", settings),
                 ("m_Music", AudioBuilder.Music("Music_Menu")), ("m_CasesButton", casesButton), ("m_Cases", cases),
                 ("m_CoinsLabel", coins), ("m_LeaderboardButton", leadersButton), ("m_Leaderboard", leaders),
-                ("m_SkinsButton", skinsButton), ("m_Skins", skins));
+                ("m_SkinsButton", skinsButton), ("m_Skins", skins), ("m_AchievementsButton", achievementsButton),
+                ("m_Achievements", achievements), ("m_AchievementsMark", achievementsMark), ("m_DailyButton", dailyButton),
+                ("m_Daily", daily), ("m_DailyMark", dailyMark), ("m_CasesMark", casesMark));
             SaveUiPrefab(canvas.gameObject, "MainMenu");
             UiFactory.EventSystem();
             AudioBuilder.AddAudio();
@@ -619,9 +638,15 @@ namespace ZombiCar.EditorTools
                 ? CoinCounter("Coins", window, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -46f), 56f, 230f, "0", 40f, outline)
                 : null;
 
-            Slider master = VolumeRow(window, "MasterVolume", "ОБЩАЯ ГРОМКОСТЬ", -150f, outline);
-            Slider music = VolumeRow(window, "MusicVolume", "ГРОМКОСТЬ МУЗЫКИ", -250f, outline);
-            Slider sfx = VolumeRow(window, "SfxVolume", "ГРОМКОСТЬ ЭФФЕКТОВ", -350f, outline);
+            // Music and effects only: no master slider (the game's own master stays at full).
+            Slider music = VolumeRow(window, "MusicVolume", "МУЗЫКА", -150f, outline);
+            Slider sfx = VolumeRow(window, "SfxVolume", "ЭФФЕКТЫ", -250f, outline);
+            // Shake, hit stops and vibration: on or off (some players get dizzy).
+            RectTransform shakeRow = UiFactory.Rect("Shake", window, top, top, new Vector2(0f, -350f), new Vector2(940f, 80f));
+            OutlinedLabel("Label", shakeRow, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(560f, 70f),
+                "ТРЯСКА И ВИБРАЦИЯ", 36f, TextAlignmentOptions.Left, s_ButtonLabel, outline);
+            Button shake = HudButton("ShakeButton", shakeRow, new Vector2(1f, 0.5f), Vector2.zero, new Vector2(260f, 84f), "ВКЛ", 38f,
+                Color.white, outline);
 
             OutlinedLabel("QualityLabel", window, top, top, new Vector2(0f, -440f), new Vector2(900f, 60f), "КАЧЕСТВО ГРАФИКИ", 38f,
                 TextAlignmentOptions.Center, new Color(0.8f, 0.78f, 0.74f), outline);
@@ -660,7 +685,8 @@ namespace ZombiCar.EditorTools
                 : null;
 
             var settings = root.gameObject.AddComponent<SettingsPanel>();
-            PrefabBuilder.Wire(settings, ("m_MasterSlider", master), ("m_MusicSlider", music), ("m_SfxSlider", sfx),
+            PrefabBuilder.Wire(settings, ("m_MusicSlider", music), ("m_SfxSlider", sfx), ("m_ShakeButton", shake),
+                ("m_ShakeLabel", shake.GetComponentInChildren<TMP_Text>()),
                 ("m_LowButton", low), ("m_MediumButton", medium), ("m_HighButton", high), ("m_UltraButton", ultra),
                 ("m_CloseButton", close), ("m_MenuButton", toMenu), ("m_MobileSection", mobileRow.gameObject), ("m_Coins", coins),
                 ("m_ControlsSizeSlider", controlsSize), ("m_EditControlsButton", editControls), ("m_Window", window),
@@ -818,15 +844,24 @@ namespace ZombiCar.EditorTools
             WaveBanner banner = BuildWaveBanner(safe, outline);
             BuildCarAttackAlert(safe, outline, banner);
             BuildWeaponSlots(safe, outline);
+            // Pickups taken on the map fly from there into their counter (over the HUD, under the screens).
+            RectTransform lootSpace = UiFactory.Stretch("LootFly", safe);
+            PrefabBuilder.Wire(lootSpace.gameObject.AddComponent<LootFlyView>(), ("m_Run", Run), ("m_Space", lootSpace),
+                ("m_ScrapTarget", moneyPanel), ("m_AmmoTarget", ammo),
+                ("m_ScrapSprite", UiFactory.Sprite("UI_Icon_Scrap")), ("m_AmmoSprite", UiFactory.Sprite("UI_Icon_AmmoBox")));
 
+            BuildStreak(safe, outline);                                // the kill streak under the wave plate
             BuildTouchControls(safe, outline);
+            BuildModeBanner(safe, outline);                            // the run's difficulty, before the waves
             BuildLevelUpScreen(safe, outline);
             BuildWorkshopScreen(safe, outline);
+            BuildStageClearScreen(safe, outline);                      // a boss stage saved (Easy / Normal)
             BuildTutorialHint(safe, outline);                          // over the level-up cards (the first card's hint)
             BuildBossIntro(safe, outline);
             BuildVictoryFinale(safe, outline);                         // the fireworks go on behind the victory screen
             GameOverScreen gameOver = BuildGameOverScreen(safe, outline);
             PrefabBuilder.Wire(gameOver, ("m_Leaderboard", BuildLeaderboardPanel(safe, outline)));   // over the victory screen
+            BuildAchievementToast(safe, outline, gameOver);            // over everything of the victory
             SettingsPanel settings = BuildSettingsPopup(safe, outline, true);
             BuildTutorialCards(safe, outline);
 
@@ -933,7 +968,7 @@ namespace ZombiCar.EditorTools
             Button reset = HudButton("ResetButton", overlay, top, new Vector2(-190f, -c_HudReserve - 100f), new Vector2(340f, 100f),
                 "СБРОС", 42f, Color.white, outline);
             Button done = HudButton("DoneButton", overlay, top, new Vector2(190f, -c_HudReserve - 100f), new Vector2(340f, 100f),
-                "ГОТОВО", 42f, s_PlayColor, outline);
+                "СОХРАНИТЬ", 42f, s_PlayColor, outline);
 
             var so = new SerializedObject(layout);
             so.FindProperty("m_Area").objectReferenceValue = area;

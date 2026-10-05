@@ -72,6 +72,10 @@ namespace ZombiCar.EditorTools
                 new CosmeticItem("bullet_void", "ФИОЛЕТОВЫЕ", bullet, epic, C(0.8f, 0.3f, 1f), C(0.7f, 0.2f, 1f), 1.25f, true),
                 new CosmeticItem("bullet_gold", "ЗОЛОТЫЕ", bullet, legend, C(1f, 0.85f, 0.3f), C(1f, 0.7f, 0.2f), 1.4f, true)
                     .WithBonus(StatEffect.WeaponDamage, 0.1f, "+10% к урону пуль"),
+                // The 7th day's reward, never in a case: a black tracer in a violet glowing outline, a violet trail;
+                // every bullet goes through one more zombie from the start of the run.
+                new CosmeticItem("bullet_black", "ЧЁРНЫЕ", bullet, legend, C(0.015f, 0.012f, 0.02f), C(0.48f, 0.1f, 1f), 1.3f, true)
+                    .WithBonus(StatEffect.BulletPierce, 1f, "+1 к пробитию зомби").WithOutline().AsExclusive(),
             };
             CaseDef[] cases =
             {

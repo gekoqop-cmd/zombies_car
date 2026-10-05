@@ -25,6 +25,6 @@ MonoBehaviour:
   m_StaggerTime: 0
   m_Knockback: 0
   m_Xp: 600
-  m_Reward: 600
+  m_Reward: 350
   m_IsBoss: 1
   m_DisplayName: "\u0422\u0410\u0420\u0410\u041D"

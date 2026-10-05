@@ -9,7 +9,8 @@ namespace ZombiCar.UI
     /// One level-up card: icon on a disc in the perk's colour, title, what it does, "НОВОЕ" and a pulsing glow when
     /// the run has not taken it yet, and the number key that picks it on desktop. The legendary card is dressed up: a
     /// gold halo, rays turning behind the icon, a shine sweeping over it, it floats and sways, the title in gold and
-    /// "ЛЕГЕНДАРНАЯ • СРАЗУ МАКС.". <see cref="LevelUpScreen"/> drives its appear / pick animation.
+    /// "ЛЕГЕНДАРНАЯ • СРАЗУ МАКС."; the one taken for an ad wears the ad disc in its corner.
+    /// <see cref="LevelUpScreen"/> drives its appear / pick animation.
     /// </summary>
     public sealed class PerkCardView : MonoBehaviour
     {
@@ -30,6 +31,8 @@ namespace ZombiCar.UI
         [SerializeField] private GameObject m_LegendaryShineClip;
         [SerializeField] private RectTransform m_LegendaryShine;
         [SerializeField] private Color m_LegendaryColor = new Color(1f, 0.8f, 0.25f, 1f);
+        [Tooltip("The ad disc on a card taken for a rewarded ad.")]
+        [SerializeField] private GameObject m_AdBadge;
 
         private bool m_New;
         private bool m_Legendary;
@@ -64,6 +67,8 @@ namespace ZombiCar.UI
             m_LegendaryHalo.gameObject.SetActive(m_Legendary);
             m_LegendaryRays.gameObject.SetActive(m_Legendary);
             m_LegendaryShineClip.SetActive(m_Legendary);
+            if (m_AdBadge != null)
+                m_AdBadge.SetActive(perk.ForAd);
             m_Body.anchoredPosition = Vector2.zero;
             m_KeyHint.gameObject.SetActive(showKey);
             m_KeyHint.SetText((index + 1).ToString());

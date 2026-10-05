@@ -94,7 +94,7 @@ namespace ZombiCar.EditorTools
             At(t += 0.05f, () => moneyBefore = s_Run.Money);
             CarUpgrade Up(string id) => catalog.Upgrades.Concat(catalog.Supplies).First(u => u.Id == id);
             PressedRow("БРОНЯ", "+1", () => s_Run.LevelOf(Up("armor")) == 1, "armour level 1");
-            PressedRow("ШИПЫ", "МАКС", () => s_Run.LevelOf(Up("spikes")) == Up("spikes").RegularLevels && s_Car.Spikes == 44, "spikes maxed (8 + 10 + 12 + 14)");
+            PressedRow("ШИПЫ", "МАКС", () => s_Run.LevelOf(Up("spikes")) == Up("spikes").RegularLevels && s_Car.Spikes == 78, "spikes maxed (8 + 10 + 12 + 14 + 16 + 18)");
             PressedRow("РЕМОНТ", "СДЕЛАТЬ", () => s_Run.LevelOf(Up("repair")) == 1, "a repair");
             Pressed("ВСЯ МАШИНА НА МАКСИМУМ",
                 () => catalog.Upgrades.Where(u => !u.Repeatable).All(u => s_Run.LevelOf(u) == u.RegularLevels) && s_Run.Money == moneyBefore &&

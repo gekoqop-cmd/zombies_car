@@ -65,8 +65,23 @@ namespace ZombiCar.EditorTools
                       MetaProgress.ExportJson() == before, "a broken or empty cloud copy changes nothing");
                 // The export reads back as the same progress.
                 MetaProgress.Snapshot back = JsonUtility.FromJson<MetaProgress.Snapshot>(before);
-                Check(back.coins == 400 && back.owned.Length == 3 && back.maps.Length == 1 && back.maps[0].bestTime == 800f,
-                    $"the cloud JSON reads back ({before.Length} chars)");
+                MetaProgress.MapSnapshot map01 = back.maps.FirstOrDefault(m => m.map == "MapConfig_Map01");
+                Check(back.coins == 400 && back.owned.Length == 3 && map01 != null && map01.bestTime == 800f,
+                    $"the cloud JSON reads back ({before.Length} chars: coins {back.coins}, skins {back.owned.Length}, " +
+                    $"maps [{string.Join(",", back.maps.Select(m => m.map))}], best {map01?.bestTime})");
+
+                // The checkpoints, the achievements and the daily row travel too (and old copies without them still read).
+                MetaProgress.SaveCheckpoint(new MetaProgress.Checkpoint { map = "MapConfig_Map01", difficulty = 0, wave = 21, money = 77 });
+                MetaProgress.Achieve(MetaProgress.MadmanAchievement);
+                MetaProgress.Snapshot full = JsonUtility.FromJson<MetaProgress.Snapshot>(MetaProgress.ExportJson());
+                Check(full.checkpoints.Any(c => c.wave == 21 && c.money == 77) && full.achieved.Contains(MetaProgress.MadmanAchievement),
+                    "a checkpoint and an achievement go to the cloud copy");
+                MetaProgress.ClearCheckpoint("MapConfig_Map01", ZombiCar.Core.Difficulty.Easy);
+                MetaProgress.ForgetAchievement(MetaProgress.MadmanAchievement);
+                Check(MetaProgress.MergeCloud(JsonUtility.ToJson(full)) && MetaProgress.GetCheckpoint("MapConfig_Map01", ZombiCar.Core.Difficulty.Easy)?.wave == 21 &&
+                      MetaProgress.IsAchieved(MetaProgress.MadmanAchievement), "another device takes them back in");
+                MetaProgress.ClearCheckpoint("MapConfig_Map01", ZombiCar.Core.Difficulty.Easy);
+                MetaProgress.ForgetAchievement(MetaProgress.MadmanAchievement);
                 Check(!YandexSdk.CloudEnabled && YandexSdk.CloudReady, "outside Yandex Games: no cloud, nothing to wait for");
 
                 MetaProgress.ResetAll();

@@ -11,9 +11,9 @@ namespace ZombiCar.Progression
     /// weapons, the car, level-up cards, bosses; the game waits while they are open), then live hints on the HUD at the
     /// moment they matter: the first zombie, the gun running dry, the workshop opening after the first wave, the first
     /// level-up card. Every live hint shows once and goes as soon as the player did it (or after a few seconds). The
-    /// cards are seen once per device (<see cref="MetaProgress.TutorialDone"/>), the live hints until all were shown
-    /// (<see cref="MetaProgress.LiveHintsDone"/>); the settings' "Обучение" button replays both. Texts follow the
-    /// device (keyboard and mouse or touch controls).
+    /// cards are seen once per device (<see cref="MetaProgress.TutorialDone"/>) and the live hints only in the run that
+    /// showed them; the settings' "Обучение" button replays both. Texts follow the device (keyboard and mouse or touch
+    /// controls).
     /// </summary>
     public sealed class TutorialDirector : MonoBehaviour
     {
@@ -68,10 +68,15 @@ namespace ZombiCar.Progression
             m_State.CardsClosed += OnCardsClosed;
             if (m_Waves != null)
                 m_Waves.WaveEnded += OnWaveEnded;
+            // Live hints come in one run only (the first one, or the one after the settings' replay): a later run never
+            // shows them again, even when a hint never came up in it (the gun never ran dry).
             if (!MetaProgress.TutorialDone)
                 OpenCards();
             else
+            {
                 m_Live = !MetaProgress.LiveHintsDone;
+                MetaProgress.LiveHintsDone = true;
+            }
         }
 
         private void OnDestroy()
@@ -108,6 +113,7 @@ namespace ZombiCar.Progression
         {
             MetaProgress.TutorialDone = true;
             m_Live = !MetaProgress.LiveHintsDone;
+            MetaProgress.LiveHintsDone = true;
             m_Shown = 0;
             m_Current = -1;
         }

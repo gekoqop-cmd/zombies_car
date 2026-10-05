@@ -229,16 +229,33 @@ namespace ZombiCar.Core
         private void FadeMusic()
         {
             float step = Time.unscaledDeltaTime / m_MusicFade;
-            float scale = m_MusicLevel * MusicScale;
+            // The music's tension (late waves, an enraged boss): a little faster and louder, eased in and out.
+            m_Intensity = Mathf.MoveTowards(m_Intensity, m_IntensityTarget, Time.unscaledDeltaTime / 2f);
+            float scale = m_MusicLevel * MusicScale * (1f + 0.25f * m_Intensity);
+            float pitch = 1f + 0.07f * m_Intensity;
             for (int i = 0; i < m_Music.Length; i++)
             {
                 float target = !m_MusicSilent && i == m_ActiveMusic ? 1f : 0f;
                 m_MusicWeight[i] = Mathf.MoveTowards(m_MusicWeight[i], target, step);
                 AudioSource source = m_Music[i];
-                source.volume = m_MusicWeight[i] * scale;
+                source.volume = Mathf.Min(1f, m_MusicWeight[i] * scale);
+                source.pitch = pitch;
                 if (m_MusicWeight[i] <= 0f && source.isPlaying)
                     source.Stop();
             }
+        }
+
+        private float m_Intensity;
+        private float m_IntensityTarget;
+
+        /// <summary>The tension the music eases to now (tests).</summary>
+        public float MusicIntensity => m_Intensity;
+
+        /// <summary>How tense the music is, 0..1 (0 = as composed; 1 = ~7% faster and a quarter louder).</summary>
+        public static void SetMusicIntensity(float intensity)
+        {
+            if (Instance != null)
+                Instance.m_IntensityTarget = Mathf.Clamp01(intensity);
         }
 
         // ---------------------------------------------------------------- volume

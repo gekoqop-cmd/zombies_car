@@ -32,6 +32,10 @@ namespace ZombiCar.EditorTools
             Register("leaderboard", Leaderboard);
             Register("legendary", Legendary);
             Register("cloud", Cloud);
+            Register("loot", Loot);
+            Register("difficulty", DifficultyAndCheckpoints);
+            Register("mobileaim", MobileAim);
+            Register("feel", Feel);
         }
 
         // ================================================================== 1. workshop, levels, cards
@@ -81,7 +85,7 @@ namespace ZombiCar.EditorTools
             {
                 int carMax = s_Car.MaxHealth;
                 Check(workshop.Buy(0), "bought armour");
-                Check(Mathf.Approximately(s_Car.Armor, 0.06f), $"car armour {s_Car.Armor:P0}");
+                Check(Mathf.Approximately(s_Car.Armor, 0.04f), $"car armour {s_Car.Armor:P1}");
                 Check(workshop.Buy(1), "bought the reinforced hull");
                 Check(s_Car.MaxHealth == carMax + 40 && s_Car.Health == s_Car.MaxHealth, $"car durability {s_Car.Health}/{s_Car.MaxHealth}");
                 Check(workshop.Buy(2), "bought spikes");
@@ -94,7 +98,7 @@ namespace ZombiCar.EditorTools
                 int damaged = s_Car.Health;
                 Check(workshop.BuySupply(1) && s_Car.Health == s_Car.MaxHealth && s_Run.Money == money,
                     $"the repair (back to full from {damaged}) comes for an ad, not for scrap");
-                Check(!workshop.Buy(3), $"the second discharge level (420) is refused with {s_Run.Money} scrap");
+                Check(!workshop.Buy(3), $"the second discharge level (380) is refused with {s_Run.Money} scrap");
             });
             At(3.4f, () => Shot("1_Workshop_Bought"));
             At(3.5f, () =>

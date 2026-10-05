@@ -33,7 +33,7 @@ namespace ZombiCar.Core
         /// <summary>Adds <paramref name="amount"/> (0..1) of shake.</summary>
         public static void Add(float amount)
         {
-            if (s_Instance == null || amount <= 0f)
+            if (s_Instance == null || amount <= 0f || !SettingsService.ShakeEnabled)
                 return;
             s_Instance.m_Trauma = Mathf.Min(1f, s_Instance.m_Trauma + amount);
             LastKick = amount;

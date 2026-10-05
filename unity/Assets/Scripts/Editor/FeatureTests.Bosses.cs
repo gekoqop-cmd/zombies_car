@@ -61,7 +61,9 @@ namespace ZombiCar.EditorTools
             At(9.0f, () =>
             {
                 Check(!boss.IsAlive && s_Director.Boss == null && string.IsNullOrEmpty(s_Waves.BossName), "the boss is dead");
-                Check(s_Run.Money >= moneyBefore + 150 && s_Run.BossKills == 1, $"boss reward: {moneyBefore} -> {s_Run.Money}");
+                var loot = Find<ZombiCar.Props.LootDropper>();
+                Check(s_Run.BossKills == 1 && loot.CountOf(ZombiCar.Progression.LootKind.Scrap) > 0 && s_Run.Money < moneyBefore + 150,
+                    $"boss reward: scattered round it to be picked up ({loot.CountOf(ZombiCar.Progression.LootKind.Scrap)} pieces)");
                 Check(s_Director.IsWaveRunning, "the boss wave goes on while zombies are left");
                 KillAll();
             });

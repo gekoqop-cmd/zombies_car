@@ -121,6 +121,11 @@ namespace ZombiCar.EditorTools
 
         private static Dictionary<string, string> s_PrefabIndex;
 
+        /// <summary>
+        /// Boot, the menu and the HUD are built from code. The maps are built only when their scene is missing: an
+        /// existing map keeps its hand-placed decor (trees, props, the camera) and only gets the systems it lacks
+        /// (<see cref="PatchMap"/>). "Rebuild Map Scenes From Code" builds them anew — and throws the hand edits away.
+        /// </summary>
         [MenuItem("Tools/Build Scenes")]
         public static void BuildAll()
         {
@@ -131,8 +136,80 @@ namespace ZombiCar.EditorTools
             BuildBoot();
             BuildMainMenu();
             BuildHud();
+            BuildOrPatchMap(c_MapScene, DataAssetsBuilder.c_MapConfig, s_EveningLook);
+            BuildOrPatchMap(c_NightMapScene, DataAssetsBuilder.c_NightMapConfig, s_NightLook);
+            RegisterScenes();
+        }
+
+        /// <summary>Builds both maps from code, over the saved scenes: hand-placed decor in them is lost.</summary>
+        [MenuItem("Tools/Rebuild Map Scenes From Code (overwrites hand-placed decor)")]
+        public static void RebuildMapsFromCode()
+        {
+            UiFactory.Font = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(c_FontAsset);
+            s_PrefabIndex = null;
             BuildMap(c_MapScene, DataAssetsBuilder.c_MapConfig, s_EveningLook);
             BuildMap(c_NightMapScene, DataAssetsBuilder.c_NightMapConfig, s_NightLook);
+            RegisterScenes();
+        }
+
+        private static void BuildOrPatchMap(string path, string mapConfig, MapLook look)
+        {
+            if (System.IO.File.Exists(path))
+                PatchMap(path);
+            else
+                BuildMap(path, mapConfig, look);
+        }
+
+        /// <summary>
+        /// Adds to a saved map what newer code needs and it lacks — the loot on the ground, the run's difficulty and
+        /// checkpoints, the phone trim — leaving everything placed in it as it is.
+        /// </summary>
+        public static void PatchMap(string path)
+        {
+            Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
+            GameObject systemsGo = GameObject.Find("Systems/MapSystems");
+            Transform gameplay = GameObject.Find("Gameplay")?.transform;
+            GameObject player = GameObject.Find("Gameplay/Player");
+            MapBootstrap bootstrap = systemsGo != null ? systemsGo.GetComponent<MapBootstrap>() : null;
+            if (systemsGo == null || gameplay == null || player == null || bootstrap == null)
+            {
+                Debug.LogError($"[SceneBuilder] {path}: no MapSystems / Gameplay / Player to patch.");
+                return;
+            }
+            AddRunSystems(systemsGo, gameplay, player, bootstrap.Map);
+            EditorSceneManager.SaveScene(scene, path);
+            Debug.Log($"[SceneBuilder] {path} patched (its decor kept).");
+        }
+
+        // The run's systems on the map's MapSystems, each added once: loot, difficulty and checkpoints, the phone trim.
+        private static void AddRunSystems(GameObject systemsGo, Transform gameplay, GameObject player, MapConfig map)
+        {
+            if (systemsGo.GetComponent<ZombiCar.Props.LootDropper>() == null)
+                BuildLoot(systemsGo, gameplay, player);
+            var loot = systemsGo.GetComponent<ZombiCar.Props.LootDropper>();
+            if (systemsGo.GetComponent<RunSetup>() == null)
+                PrefabBuilder.Wire(systemsGo.AddComponent<RunSetup>(), ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                    ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                    ("m_Director", systemsGo.GetComponent<WaveDirector>()), ("m_Spawner", systemsGo.GetComponent<ZombieSpawner>()),
+                    ("m_Progression", systemsGo.GetComponent<PlayerProgression>()),
+                    ("m_Pool", DataAssetsBuilder.Load<PerkPool>(DataAssetsBuilder.c_PerkPool)),
+                    ("m_Catalog", DataAssetsBuilder.Load<CarUpgradeCatalog>(DataAssetsBuilder.c_CarUpgrades)),
+                    ("m_Weapon", player.GetComponent<PlayerWeapon>()), ("m_Player", player.GetComponent<PlayerHealth>()),
+                    ("m_Car", Object.FindAnyObjectByType<CarHealth>()), ("m_Loot", loot));
+            // Phones: what is never seen (inside the workshop, beyond all the camera can show) is not drawn.
+            if (systemsGo.GetComponent<MobileTrim>() == null)
+            {
+                Transform Root(string name) => GameObject.Find(name)?.transform;
+                Transform environment = Root("Environment");
+                PrefabBuilder.Wire(systemsGo.AddComponent<MobileTrim>(), ("m_Map", map), ("m_Follow", player.transform),
+                    ("m_Workshop", environment != null ? environment.Find("Workshop") : null));
+                CharacterBuilder.SetProps(systemsGo.GetComponent<MobileTrim>(), ("m_Roots", new[] { "Environment", "Fences", "Props", "Nature",
+                    "Decals", "Background" }.Select(Root).Where(t => t != null).Cast<Object>().ToArray()));
+            }
+        }
+
+        private static void RegisterScenes()
+        {
             EditorBuildSettings.scenes = new[]
             {
                 new EditorBuildSettingsScene(c_BootScene, true), new EditorBuildSettingsScene(c_MenuScene, true),
@@ -242,6 +319,7 @@ namespace ZombiCar.EditorTools
             BuildZombieSystems(systemsGo, gameplay, car, player);
             BuildWorkshopZone(gameplay);
             BuildCarResupply(gameplay, car, player);
+            AddRunSystems(systemsGo, gameplay, player, map);
             BuildNavMesh(systems);
             UltraQualityBuilder.AddToMap(map, lighting, nature, cameraRoot, systemsGo, player, (x, z) => IsFreeForGrass(x, z, map));
             foreach (Light light in Object.FindObjectsByType<Light>(FindObjectsInactive.Include))
@@ -376,6 +454,45 @@ namespace ZombiCar.EditorTools
                 ("m_Body", car.GetComponent<BoxCollider>()),
                 ("m_Marker", iconRoot.transform), ("m_MarkerSprite", icon), ("m_Glow", ring), ("m_Icon", icon.sprite));
             CharacterBuilder.SetProps(resupply, ("m_Radius", c_ResupplyRadius));
+        }
+
+        // Pickups on the ground: a boss's scrap in pieces, the ammo boxes of a boss fight. The template (inactive) is a
+        // billboard with the icon and gold rays turning behind it; LootDropper copies it for every piece.
+        private const float c_LootIconScale = 0.5f;
+        private const float c_LootRaysScale = 1.1f;
+        private static readonly Color s_LootRaysColor = new Color(1f, 0.82f, 0.3f, 0.55f);
+
+        private static void BuildLoot(GameObject systemsGo, Transform gameplay, GameObject player)
+        {
+            var template = new GameObject("LootTemplate");
+            template.transform.SetParent(gameplay, false);
+            CharacterBuilder.SetProps(template.AddComponent<YAxisBillboard>(), ("m_UpdateEveryFrame", false));
+            Material spriteMaterial = AssetDatabase.LoadAssetAtPath<Material>(CharacterBuilder.c_SpriteMaterial);
+            SpriteRenderer Layer(string name, Sprite sprite, float scale, Color color, int order)
+            {
+                var go = new GameObject(name);
+                go.transform.SetParent(template.transform, false);
+                go.transform.localScale = new Vector3(scale, scale * CharacterBuilder.PitchCompensation, 1f);
+                var sr = go.AddComponent<SpriteRenderer>();
+                sr.sprite = sprite;
+                sr.color = color;
+                sr.sharedMaterial = spriteMaterial;
+                sr.sortingOrder = order;
+                sr.shadowCastingMode = ShadowCastingMode.Off;
+                sr.receiveShadows = false;
+                return sr;
+            }
+            Layer("Rays", UiFactory.Sprite("UI_Rays"), c_LootRaysScale, s_LootRaysColor, 49);
+            Layer("Sprite", UiFactory.Sprite("UI_Icon_Scrap"), c_LootIconScale, Color.white, 50);
+            template.SetActive(false);
+
+            var loot = systemsGo.AddComponent<ZombiCar.Props.LootDropper>();
+            PrefabBuilder.Wire(loot, ("m_Run", DataAssetsBuilder.Load<RunState>(DataAssetsBuilder.c_RunState)),
+                ("m_Waves", DataAssetsBuilder.Load<WaveState>(DataAssetsBuilder.c_WaveState)),
+                ("m_Director", systemsGo.GetComponent<WaveDirector>()), ("m_Player", player.transform),
+                ("m_Weapon", player.GetComponent<PlayerWeapon>()), ("m_Template", template.transform),
+                ("m_ScrapSprite", UiFactory.Sprite("UI_Icon_Scrap")), ("m_AmmoSprite", UiFactory.Sprite("UI_Icon_AmmoBox")));
+            PrefabBuilder.Wire(systemsGo.GetComponent<PlayerProgression>(), ("m_Loot", loot));
         }
 
         // Compact world-space durability plate over the middle of the car body (anchor height; the plate is centred on

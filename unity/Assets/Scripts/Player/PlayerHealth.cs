@@ -79,6 +79,7 @@ namespace ZombiCar.Player
                 return;
             m_Stats.SetHealth(m_Stats.Health - amount);
             AudioManager.PlaySfx(Sound.PlayerHurt);
+            GameFeel.Hurt(amount);                                       // shake, a hit stop for a big blow, vibration
             if (m_View != null)
                 m_View.ShowHurt();
             Damaged?.Invoke(amount);

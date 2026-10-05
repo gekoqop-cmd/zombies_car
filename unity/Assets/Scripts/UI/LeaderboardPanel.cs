@@ -10,10 +10,11 @@ using ZombiCar.Core;
 namespace ZombiCar.UI
 {
     /// <summary>
-    /// "ТАБЛИЦА ЛИДЕРОВ" (main menu and the victory screen): the top 10 of the Yandex Games "best_time" leaderboard —
-    /// place, avatar (loaded from the SDK's URL, a placeholder otherwise), name and time (mm:ss) — and the player's own
-    /// line under it when they are not in the top. While the answer comes it says "ЗАГРУЗКА…"; with nothing to show
-    /// (no SDK — the editor, a local build —, an error, an empty table) it says so. Runs on unscaled time.
+    /// "ТАБЛИЦА ЛИДЕРОВ" (main menu and the victory screen): one table per difficulty, switched by the tabs ЛЁГКИЙ /
+    /// СРЕДНИЙ / ХАРДКОР (<see cref="DifficultyRules.Leaderboard"/>): the top 10 — place, avatar (loaded from the SDK's
+    /// URL, a placeholder otherwise), name and time (mm:ss) — and the player's own line under it when they are not in
+    /// the top. While the answer comes it says "ЗАГРУЗКА…"; with nothing to show (no SDK — the editor, a local
+    /// build —, an error, an empty table) it says so. Runs on unscaled time.
     /// </summary>
     public sealed class LeaderboardPanel : MonoBehaviour
     {
@@ -44,6 +45,15 @@ namespace ZombiCar.UI
         };
         [Tooltip("Real seconds to wait for the SDK before giving up.")]
         [SerializeField, Min(1f)] private float m_Timeout = 10f;
+        [Tooltip("ЛЁГКИЙ / СРЕДНИЙ / ХАРДКОР: one table each (in the Difficulty order).")]
+        [SerializeField] private Button[] m_Tabs = Array.Empty<Button>();
+        [SerializeField] private Image[] m_TabPlates = Array.Empty<Image>();
+        [SerializeField] private Color m_TabOff = new Color(0.16f, 0.17f, 0.2f, 0.95f);
+
+        private Difficulty m_Difficulty = Difficulty.Normal;
+
+        /// <summary>The table shown (tests).</summary>
+        public Difficulty Shown => m_Difficulty;
 
         private static readonly Dictionary<string, Sprite> s_Avatars = new Dictionary<string, Sprite>();
 
@@ -61,23 +71,44 @@ namespace ZombiCar.UI
         private void Awake()
         {
             m_CloseButton.onClick.AddListener(Close);
+            for (int i = 0; i < m_Tabs.Length; i++)
+            {
+                var difficulty = (Difficulty)i;
+                m_Tabs[i].onClick.AddListener(() => ShowTable(difficulty));
+            }
             m_Group.alpha = 0f;
             m_Group.blocksRaycasts = m_Group.interactable = false;
         }
 
-        public void Open()
+        /// <summary>Opens on the table of the difficulty played last.</summary>
+        public void Open() => Open(MetaProgress.LastDifficulty);
+
+        public void Open(Difficulty difficulty)
         {
             gameObject.SetActive(true);
             m_Open = true;
             m_OpenedAt = Time.unscaledTime;
             m_Group.blocksRaycasts = m_Group.interactable = true;
             AudioManager.PlaySfx(Sound.UiOpen);
+            ShowTable(difficulty);
+        }
+
+        /// <summary>Switches to the table of <paramref name="difficulty"/> (the tabs, tests).</summary>
+        public void ShowTable(Difficulty difficulty)
+        {
+            if (m_Open && difficulty != m_Difficulty)
+                AudioManager.PlaySfx(Sound.UiClick);
+            m_Difficulty = difficulty;
+            for (int i = 0; i < m_TabPlates.Length; i++)
+                m_TabPlates[i].color = i == (int)difficulty ? DifficultyRules.Color((Difficulty)i) : m_TabOff;
             ShowRows(null, null);
             SetStatus(State.Loading, "ЗАГРУЗКА…");
+            m_OpenedAt = Time.unscaledTime;
             int request = ++m_Request;
-            YandexSdk.GetLeaderboardEntries(m_Rows.Length, result =>
+            string board = DifficultyRules.Leaderboard(difficulty);
+            YandexSdk.GetLeaderboardEntries(board, m_Rows.Length, result =>
             {
-                if (this != null && m_Open && request == m_Request)
+                if (this != null && m_Open && request == m_Request && (result.Board == null || result.Board == board))
                     Show(result);
             });
         }
@@ -102,7 +133,7 @@ namespace ZombiCar.UI
             }
             if (result.entries.Length == 0)
             {
-                SetStatus(State.Empty, "ПОКА НИКТО НЕ ПРОШЁЛ ВСЕ 30 ВОЛН.\nСТАНЬ ПЕРВЫМ!");
+                SetStatus(State.Empty, $"ПОКА НИКТО НЕ ПРОШЁЛ ВСЕ 30 ВОЛН\nНА СЛОЖНОСТИ «{DifficultyRules.Title(m_Difficulty)}».\nСТАНЬ ПЕРВЫМ!");
                 return;
             }
             // The top rows by place; the player's line under them only when they are further down.

@@ -48,13 +48,13 @@ namespace ZombiCar.Core
         /// <summary>The skin of <paramref name="slot"/> the player wears (the default one if nothing else is equipped).</summary>
         public CosmeticItem Equipped(CosmeticSlot slot) => Find(MetaProgress.EquippedId(slot)) ?? DefaultFor(slot);
 
-        /// <summary>Skins a case of <paramref name="slot"/> can drop (everything but the default).</summary>
+        /// <summary>Skins a case of <paramref name="slot"/> can drop (everything but the default and the exclusive ones).</summary>
         public List<CosmeticItem> Droppable(CosmeticSlot slot)
         {
             var list = new List<CosmeticItem>();
             foreach (CosmeticItem item in m_Items)
             {
-                if (item.Slot == slot && !item.IsDefault)
+                if (item.Slot == slot && !item.IsDefault && !item.IsExclusive)
                     list.Add(item);
             }
             return list;
@@ -82,6 +82,29 @@ namespace ZombiCar.Core
             }
             List<CosmeticItem> of = pool.FindAll(i => i.Rarity == rarity);
             return of[UnityEngine.Random.Range(0, of.Count)];
+        }
+
+        /// <summary>The legendary case (the daily bonus): every legendary skin a case can drop, of all slots.</summary>
+        public List<CosmeticItem> LegendaryPool()
+        {
+            var list = new List<CosmeticItem>();
+            foreach (CosmeticItem item in m_Items)
+            {
+                if (item.Rarity == Rarity.Legendary && !item.IsDefault && !item.IsExclusive)
+                    list.Add(item);
+            }
+            return list;
+        }
+
+        /// <summary>The first exclusive skin of <paramref name="slot"/> (the 7th day's black bullets); null when none.</summary>
+        public CosmeticItem Exclusive(CosmeticSlot slot)
+        {
+            foreach (CosmeticItem item in m_Items)
+            {
+                if (item.Slot == slot && item.IsExclusive)
+                    return item;
+            }
+            return null;
         }
 
         public static string RarityName(Rarity rarity) => rarity switch

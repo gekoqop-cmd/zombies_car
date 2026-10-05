@@ -202,7 +202,7 @@ namespace ZombiCar.EditorTools
                 Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BossClips("Boss1") },
                 AgentRadius = 1f, ColliderRadius = 1f, ColliderHeight = 3.4f,
                 Health = 1600, Speed = 0.85f, SpeedVariation = 0.02f, Damage = 25, AttackInterval = 2.2f, AttackRange = 1f,
-                AttackAnimSpeed = 0.9f, Aggro = 7f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 300,
+                AttackAnimSpeed = 0.9f, Aggro = 7f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 150,
                 DisplayName = "МАТКА",
                 Boss = new BossSpec
                 {
@@ -228,7 +228,7 @@ namespace ZombiCar.EditorTools
                 Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = BossClips("Boss2") },
                 AgentRadius = 0.9f, ColliderRadius = 0.85f, ColliderHeight = 3.6f,
                 Health = 3200, Speed = 1.2f, SpeedVariation = 0.02f, Damage = 30, AttackInterval = 1.6f, AttackRange = 1f,
-                Aggro = 9f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 600,
+                Aggro = 9f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 350,
                 DisplayName = "ТАРАН",
                 Boss = new BossSpec
                 {

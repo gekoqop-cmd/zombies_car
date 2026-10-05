@@ -7,7 +7,8 @@ namespace ZombiCar.Core
 {
     /// <summary>
     /// What the player keeps between runs: coins earned at the end of every run, the skins won from cases and the one
-    /// equipped in each slot, the tutorial flags and the map records. Saved at once on this device (PlayerPrefs) and
+    /// equipped in each slot, the tutorial flags, the map records, the difficulty, the checkpoints of Easy / Normal runs,
+    /// the achievements, the daily bonus row and the touch controls' layout. Saved at once on this device (PlayerPrefs) and
     /// mirrored to the Yandex Games cloud (<see cref="CloudSave"/>): <see cref="ExportJson"/> is the whole state in one
     /// snapshot, <see cref="MergeCloud"/> takes the cloud's copy in at start. Every saved change raises the revision
     /// (<see cref="Revision"/>) that decides which copy's coins and equipped skins are the newer.
@@ -69,6 +70,245 @@ namespace ZombiCar.Core
                 PlayerPrefs.SetInt(c_LiveHintsKey, value ? 1 : 0);
                 Commit();
             }
+        }
+
+        private const string c_ControlsKey = "meta.controls";
+        private const string c_ControlsScaleKey = "meta.controlsScale";
+
+        /// <summary>
+        /// The touch controls the player moved, "id=x,y;id=x,y" (area fractions; empty = all at their designed places).
+        /// Kept with the progress, not only on the device: a browser in an iframe may drop its local storage.
+        /// </summary>
+        public static string ControlsLayout
+        {
+            get => PlayerPrefs.GetString(c_ControlsKey, string.Empty);
+            set
+            {
+                if ((value ?? string.Empty) == ControlsLayout)
+                    return;
+                PlayerPrefs.SetString(c_ControlsKey, value ?? string.Empty);
+                Commit();
+            }
+        }
+
+        /// <summary>The touch controls' size the player chose (0 = never chosen).</summary>
+        public static float ControlsScale
+        {
+            get => PlayerPrefs.GetFloat(c_ControlsScaleKey, 0f);
+            set
+            {
+                if (Mathf.Approximately(value, ControlsScale))
+                    return;
+                PlayerPrefs.SetFloat(c_ControlsScaleKey, value);
+                Commit();
+            }
+        }
+
+        // ---------------------------------------------------------------- difficulty, checkpoints
+        private const string c_DifficultyKey = "meta.difficulty";
+        private const string c_HardcoreOkKey = "meta.hardcoreConfirmed";
+        private const string c_CheckpointKey = "meta.checkpoint.";
+
+        /// <summary>The difficulty chosen last (the difficulty screen starts on it).</summary>
+        public static Difficulty LastDifficulty
+        {
+            get => DifficultyRules.Clamp(PlayerPrefs.GetInt(c_DifficultyKey, (int)Difficulty.Normal));
+            set
+            {
+                if (value == LastDifficulty && PlayerPrefs.HasKey(c_DifficultyKey))
+                    return;
+                PlayerPrefs.SetInt(c_DifficultyKey, (int)value);
+                Commit();
+            }
+        }
+
+        /// <summary>The player went through the "no saves — sure?" warning of Hardcore once (it is not asked again).</summary>
+        public static bool HardcoreConfirmed
+        {
+            get => PlayerPrefs.GetInt(c_HardcoreOkKey, 0) == 1;
+            set
+            {
+                PlayerPrefs.SetInt(c_HardcoreOkKey, value ? 1 : 0);
+                Commit();
+            }
+        }
+
+        /// <summary>
+        /// A run saved after a boss (Easy and Normal): the wave it goes on from and what the run had then — the cards
+        /// and workshop levels ("perk:id=2", "car:id=3"), scrap, kits, kills, the player's level, the time played.
+        /// </summary>
+        [Serializable]
+        public sealed class Checkpoint
+        {
+            public string map;
+            public int difficulty;
+            public int wave;
+            public string[] levels = Array.Empty<string>();
+            public int money, medkits, kills, bossKills, rerolls, playerLevel, playerXp, levelUps;
+            public float playTime;
+            public bool revived;
+        }
+
+        private static string CheckpointKey(string map, Difficulty d) => $"{c_CheckpointKey}{map}.{(int)d}";
+
+        /// <summary>The saved run of <paramref name="map"/> on <paramref name="difficulty"/> (null when there is none).</summary>
+        public static Checkpoint GetCheckpoint(string map, Difficulty difficulty)
+        {
+            if (string.IsNullOrEmpty(map) || !DifficultyRules.HasCheckpoints(difficulty))
+                return null;
+            string json = PlayerPrefs.GetString(CheckpointKey(map, difficulty), string.Empty);
+            if (string.IsNullOrEmpty(json))
+                return null;
+            try
+            {
+                Checkpoint cp = JsonUtility.FromJson<Checkpoint>(json);
+                return cp != null && cp.wave > 1 ? cp : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static void SaveCheckpoint(Checkpoint checkpoint)
+        {
+            if (checkpoint == null || string.IsNullOrEmpty(checkpoint.map))
+                return;
+            RememberMap(checkpoint.map);
+            PlayerPrefs.SetString(CheckpointKey(checkpoint.map, DifficultyRules.Clamp(checkpoint.difficulty)), JsonUtility.ToJson(checkpoint));
+            Commit();
+        }
+
+        public static void ClearCheckpoint(string map, Difficulty difficulty)
+        {
+            string key = CheckpointKey(map, difficulty);
+            if (string.IsNullOrEmpty(map) || !PlayerPrefs.HasKey(key))
+                return;
+            PlayerPrefs.DeleteKey(key);
+            Commit();
+        }
+
+        /// <summary>Every saved run (all maps and difficulties).</summary>
+        public static IEnumerable<Checkpoint> AllCheckpoints()
+        {
+            foreach (string map in KnownMaps())
+                for (int d = 0; d < DifficultyRules.Count; d++)
+                {
+                    Checkpoint cp = GetCheckpoint(map, (Difficulty)d);
+                    if (cp != null)
+                        yield return cp;
+                }
+        }
+
+        // ---------------------------------------------------------------- achievements
+        private const string c_AchievedKey = "meta.achieved";
+        private const string c_ClaimedKey = "meta.claimed";
+
+        /// <summary>"БЕЗУМЕЦ!": all 30 waves on Hardcore.</summary>
+        public const string MadmanAchievement = "madman";
+
+        private static IEnumerable<string> List(string key) =>
+            PlayerPrefs.GetString(key, string.Empty).Split(',').Where(s => !string.IsNullOrEmpty(s));
+
+        private static void AddToList(string key, string id)
+        {
+            string[] items = List(key).ToArray();
+            if (items.Contains(id))
+                return;
+            PlayerPrefs.SetString(key, string.Join(",", items.Append(id)));
+        }
+
+        public static bool IsAchieved(string id) => List(c_AchievedKey).Contains(id);
+        public static bool IsClaimed(string id) => List(c_ClaimedKey).Contains(id);
+
+        /// <summary>Unlocks an achievement; true when it is new (the notification shows).</summary>
+        public static bool Achieve(string id)
+        {
+            if (string.IsNullOrEmpty(id) || IsAchieved(id))
+                return false;
+            AddToList(c_AchievedKey, id);
+            Commit();
+            Changed?.Invoke();
+            return true;
+        }
+
+        /// <summary>Takes an unlocked achievement's reward once; false when it is locked or was taken.</summary>
+        public static bool ClaimAchievement(string id, int coins)
+        {
+            if (!IsAchieved(id) || IsClaimed(id))
+                return false;
+            AddToList(c_ClaimedKey, id);
+            AddCoins(coins);                                               // saves and raises Changed
+            return true;
+        }
+
+        /// <summary>An achievement waits to be claimed (the menu's button shows a mark).</summary>
+        public static bool HasUnclaimedAchievement => List(c_AchievedKey).Any(id => !IsClaimed(id));
+
+        /// <summary>Locks an achievement again, its reward untaken (tests, cheats).</summary>
+        public static void ForgetAchievement(string id)
+        {
+            PlayerPrefs.SetString(c_AchievedKey, string.Join(",", List(c_AchievedKey).Where(s => s != id)));
+            PlayerPrefs.SetString(c_ClaimedKey, string.Join(",", List(c_ClaimedKey).Where(s => s != id)));
+            Commit();
+            Changed?.Invoke();
+        }
+
+        // ---------------------------------------------------------------- daily bonus
+        private const string c_DailyDayKey = "meta.daily.day";
+        private const string c_DailyDateKey = "meta.daily.date";
+
+        /// <summary>The day of the 7-day row the next bonus is (0..6); a missed day does not reset it.</summary>
+        public static int DailyDay => Mathf.Clamp(PlayerPrefs.GetInt(c_DailyDayKey, 0), 0, 6);
+
+        /// <summary>The day (days since 2000-01-01, local) the last bonus was taken; -1 = never.</summary>
+        public static int DailyLastDate => PlayerPrefs.GetInt(c_DailyDateKey, -1);
+
+        public static int Today => (DateTime.Now.Date - new DateTime(2000, 1, 1)).Days;
+
+        /// <summary>Today's bonus can be taken.</summary>
+        public static bool DailyReady => DailyLastDate != Today;
+
+        /// <summary>Puts the daily row on <paramref name="day"/>, last taken on <paramref name="lastDate"/> (tests, cheats).</summary>
+        public static void SetDaily(int day, int lastDate)
+        {
+            PlayerPrefs.SetInt(c_DailyDayKey, Mathf.Clamp(day, 0, 6));
+            PlayerPrefs.SetInt(c_DailyDateKey, lastDate);
+            Commit();
+            Changed?.Invoke();
+        }
+
+        /// <summary>Marks today's bonus taken: the row moves to the next day (after the 7th, back to the 1st).</summary>
+        public static void TakeDaily()
+        {
+            PlayerPrefs.SetInt(c_DailyDayKey, (DailyDay + 1) % 7);
+            PlayerPrefs.SetInt(c_DailyDateKey, Today);
+            Commit();
+            Changed?.Invoke();
+        }
+
+        // ---------------------------------------------------------------- free cases (the daily bonus)
+        private const string c_FreeCasesKey = "meta.freecases";
+
+        /// <summary>Cases won for free (the daily bonus) waiting on the cases screen: any case opens with one.</summary>
+        public static int FreeCases => Mathf.Max(0, PlayerPrefs.GetInt(c_FreeCasesKey, 0));
+
+        public static void AddFreeCase()
+        {
+            PlayerPrefs.SetInt(c_FreeCasesKey, FreeCases + 1);
+            Commit();
+            Changed?.Invoke();
+        }
+
+        /// <summary>Uses up one free case; false when there is none.</summary>
+        public static bool TryUseFreeCase()
+        {
+            if (FreeCases <= 0)
+                return false;
+            PlayerPrefs.SetInt(c_FreeCasesKey, FreeCases - 1);
+            Commit();
+            Changed?.Invoke();
+            return true;
         }
 
         /// <summary>All waves of <paramref name="map"/> (a MapConfig name) were beaten at least once.</summary>
@@ -229,6 +469,7 @@ namespace ZombiCar.Core
             s_Owned.Clear();
             s_Seen.Clear();
             s_Equipped.Clear();
+            PlayerPrefs.DeleteKey(c_FreeCasesKey);
             Save();
         }
 
@@ -254,6 +495,16 @@ namespace ZombiCar.Core
             public bool tutorialDone;
             public bool liveHintsDone;
             public MapSnapshot[] maps = Array.Empty<MapSnapshot>();
+            public string controls = string.Empty;
+            public float controlsScale;
+            public int difficulty = (int)Difficulty.Normal;
+            public bool hardcoreConfirmed;
+            public Checkpoint[] checkpoints = Array.Empty<Checkpoint>();
+            public string[] achieved = Array.Empty<string>();
+            public string[] claimed = Array.Empty<string>();
+            public int dailyDay;
+            public int dailyDate = -1;
+            public int freeCases;
         }
 
         [Serializable]
@@ -283,6 +534,16 @@ namespace ZombiCar.Core
                     map = m, beaten = IsBeaten(m), bestTime = BestTime(m), runs = GetRecord(m, "runs"), wins = GetRecord(m, "wins"),
                     wave = GetRecord(m, "wave"), kills = GetRecord(m, "kills"), bosses = GetRecord(m, "bosses"),
                 }).ToArray(),
+                controls = ControlsLayout,
+                controlsScale = ControlsScale,
+                difficulty = (int)LastDifficulty,
+                hardcoreConfirmed = HardcoreConfirmed,
+                checkpoints = AllCheckpoints().ToArray(),
+                achieved = List(c_AchievedKey).OrderBy(id => id).ToArray(),
+                claimed = List(c_ClaimedKey).OrderBy(id => id).ToArray(),
+                dailyDay = DailyDay,
+                dailyDate = DailyLastDate,
+                freeCases = FreeCases,
             };
         }
 
@@ -342,6 +603,39 @@ namespace ZombiCar.Core
                 for (int i = 0; i < s_RecordNames.Length; i++)
                     KeepMax(m.map, s_RecordNames[i], values[i]);
             }
+            // The touch controls: the newer copy's, or the cloud's where this device has none.
+            if (!string.IsNullOrEmpty(cloud.controls) && (cloudNewer || string.IsNullOrEmpty(local.controls)))
+                PlayerPrefs.SetString(c_ControlsKey, cloud.controls);
+            if (cloud.controlsScale > 0f && (cloudNewer || local.controlsScale <= 0f))
+                PlayerPrefs.SetFloat(c_ControlsScaleKey, cloud.controlsScale);
+            // Difficulty, checkpoints, the daily row and its free cases: the newer copy's (a checkpoint only this device has stays).
+            if (cloudNewer)
+            {
+                PlayerPrefs.SetInt(c_DifficultyKey, (int)DifficultyRules.Clamp(cloud.difficulty));
+                PlayerPrefs.SetInt(c_DailyDayKey, Mathf.Clamp(cloud.dailyDay, 0, 6));
+                PlayerPrefs.SetInt(c_DailyDateKey, cloud.dailyDate);
+                PlayerPrefs.SetInt(c_FreeCasesKey, Mathf.Max(0, cloud.freeCases));
+            }
+            foreach (Checkpoint cp in cloud.checkpoints ?? Array.Empty<Checkpoint>())
+            {
+                if (cp == null || string.IsNullOrEmpty(cp.map) || cp.wave <= 1)
+                    continue;
+                Difficulty d = DifficultyRules.Clamp(cp.difficulty);
+                if (cloudNewer || GetCheckpoint(cp.map, d) == null)
+                {
+                    RememberMap(cp.map);
+                    PlayerPrefs.SetString(CheckpointKey(cp.map, d), JsonUtility.ToJson(cp));
+                }
+            }
+            // Achievements and the warning seen: joined (nothing is lost on either device).
+            if (cloud.hardcoreConfirmed)
+                PlayerPrefs.SetInt(c_HardcoreOkKey, 1);
+            foreach (string id in cloud.achieved ?? Array.Empty<string>())
+                if (!string.IsNullOrEmpty(id))
+                    AddToList(c_AchievedKey, id);
+            foreach (string id in cloud.claimed ?? Array.Empty<string>())
+                if (!string.IsNullOrEmpty(id))
+                    AddToList(c_ClaimedKey, id);
             PlayerPrefs.SetInt(c_RevisionKey, Mathf.Max(local.revision, cloud.revision));
             WriteCollection();
             PlayerPrefs.Save();

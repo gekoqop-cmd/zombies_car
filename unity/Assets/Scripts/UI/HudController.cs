@@ -53,6 +53,8 @@ namespace ZombiCar.UI
         [Header("Texts")]
         [SerializeField] private string m_LevelFormat = "УРОВЕНЬ {0}";
         [SerializeField] private string m_WaveFormat = "ВОЛНА {0}";
+        [Tooltip("The wave plate's title in the break after a cleared wave (the timer counts down to the next one).")]
+        [SerializeField] private string m_BreakText = "ПЕРЕРЫВ";
         [SerializeField] private string m_ValueFormat = "{0} / {1}";
         [SerializeField] private string m_TimerFormat = "{0:00}:{1:00}";
         [SerializeField] private string m_BossTimer = string.Empty;
@@ -114,7 +116,8 @@ namespace ZombiCar.UI
         {
             if (m_WaveState == null)
                 return;
-            m_WaveLabel.SetText(string.Format(m_WaveFormat, m_WaveState.Wave));
+            // In a break the next wave has not started: "ПЕРЕРЫВ", not its number (the banner names it when it comes).
+            m_WaveLabel.SetText(m_WaveState.InBreak ? m_BreakText : string.Format(m_WaveFormat, m_WaveState.Wave));
             if (m_WaveState.IsWaveRunning && !string.IsNullOrEmpty(m_WaveState.BossName))
             {
                 m_WaveTimer.SetText(m_BossTimer);                     // a boss wave lasts until the boss is dead
@@ -130,10 +133,11 @@ namespace ZombiCar.UI
                 return;
             if (m_MoneyValue != null)
             {
-                if (m_ShownMoney >= 0 && m_Run.Money > m_ShownMoney)
+                int shown = m_Run.MoneyShown;                      // picked-up scrap counts when its icon lands
+                if (m_ShownMoney >= 0 && shown > m_ShownMoney)
                     m_MoneyPunch = Time.unscaledTime;
-                m_ShownMoney = m_Run.Money;
-                m_MoneyValue.SetText(m_Run.Money.ToString());
+                m_ShownMoney = shown;
+                m_MoneyValue.SetText(shown.ToString());
             }
         }
 

@@ -4,17 +4,15 @@ using UnityEngine;
 namespace ZombiCar.Progression
 {
     /// <summary>
-    /// One thing sold in the workshop: a car upgrade with a price per level — and after its last level endless
-    /// master levels (a small bonus each, the price growing ×<see cref="CarUpgradeCatalog.MasterCostGrowth"/> every
-    /// time) — or a repeatable supply (first-aid kit, repair, ammo, mines) whose price grows with every purchase in
-    /// the run.
+    /// One thing sold in the workshop: a car upgrade with a price per level up to its top (МАКС), or a repeatable
+    /// supply (first-aid kit, repair, mines) bought again and again in the run.
     /// </summary>
     [Serializable]
     public sealed class CarUpgrade
     {
         [SerializeField] private string m_Id;
         [SerializeField] private string m_Title;
-        [Tooltip("What one level gives; {0} is replaced by the value per level, {1} by it in percent.")]
+        [Tooltip("What one level gives; {0} is replaced by the value per level, {1} by it in percent (4.5 for 0.045).")]
         [SerializeField] private string m_Description;
         [SerializeField] private Sprite m_Icon;
         [SerializeField] private StatEffect m_Effect;
@@ -76,7 +74,7 @@ namespace ZombiCar.Progression
         public string DescriptionAt(int level)
         {
             float value = ValueAt(level);
-            return string.Format(m_Description, Format(value), Mathf.RoundToInt(value * 100f));
+            return string.Format(m_Description, Format(value), Format(Mathf.Round(value * 1000f) / 10f));
         }
 
         private static string Format(float value) => Mathf.Approximately(value, Mathf.Round(value)) ? Mathf.RoundToInt(value).ToString()

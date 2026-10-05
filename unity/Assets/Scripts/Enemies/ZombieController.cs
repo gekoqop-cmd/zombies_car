@@ -51,6 +51,7 @@ namespace ZombiCar.Enemies
         private State m_State = State.Dead;
         private float m_StateTime;
         private int m_Health;
+        private int m_MaxHealth;
         private bool m_Silent;                    // removed by a cheat: no kill reward
         private float m_NextRepath;
         private float m_NextAttack;
@@ -68,7 +69,7 @@ namespace ZombiCar.Enemies
         public ZombieConfig Config => m_Config;
         public bool IsAlive => m_State != State.Dead;
         public int Health => m_Health;
-        public int MaxHealth => m_Config != null ? m_Config.MaxHealth : 1;
+        public int MaxHealth => m_MaxHealth > 0 ? m_MaxHealth : m_Config != null ? m_Config.MaxHealth : 1;
         public NavMeshAgent Agent => m_Agent;
         public SpriteAnimator Animator => m_Animator;
         public ZombieSpawner Owner => m_Owner;
@@ -127,7 +128,8 @@ namespace ZombiCar.Enemies
         {
             m_Config = config;
             m_Owner = owner;
-            m_Health = config.MaxHealth;
+            m_MaxHealth = Mathf.Max(1, Mathf.RoundToInt(config.MaxHealth * owner.HealthScale));   // the run's difficulty
+            m_Health = m_MaxHealth;
             m_Silent = false;
             m_ChasingPlayer = false;
             m_NextAttack = 0f;
@@ -138,7 +140,7 @@ namespace ZombiCar.Enemies
             m_Agent.Warp(position);
             m_BaseSpeed = config.MoveSpeed * UnityEngine.Random.Range(1f - config.SpeedVariation, 1f + config.SpeedVariation);
             m_SpeedScale = 1f;
-            DamageScale = 1f;
+            DamageScale = owner.DamageScale;
             DamageTakenScale = 1f;
             m_Agent.speed = m_BaseSpeed;
             m_Agent.avoidancePriority = config.IsBoss ? 10 : UnityEngine.Random.Range(30, 70);

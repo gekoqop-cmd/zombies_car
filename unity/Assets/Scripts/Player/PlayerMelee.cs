@@ -112,6 +112,7 @@ namespace ZombiCar.Player
                 return;
             AudioManager.PlaySfx(Sound.AxeHit);
             CameraShake.Add(0.12f);
+            GameFeel.Impact();                                           // the blow has weight: a hit stop, a buzz
             Hit?.Invoke(landed);
         }
     }

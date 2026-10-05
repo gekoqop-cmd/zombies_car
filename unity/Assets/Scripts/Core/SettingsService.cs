@@ -4,7 +4,7 @@ using UnityEngine;
 namespace ZombiCar.Core
 {
     /// <summary>
-    /// Loads, applies and saves user settings (quality tier; master, music and effects volume).
+    /// Loads, applies and saves user settings (quality tier; music and effects volume; the master stays at the default).
     /// Loaded once by the Boot scene; scenes started directly in the Editor call <see cref="EnsureLoaded"/>.
     /// </summary>
     public static class SettingsService
@@ -14,6 +14,7 @@ namespace ZombiCar.Core
         private const string c_MusicVolumeKey = "settings.volume.music";
         private const string c_SfxVolumeKey = "settings.volume.sfx";
         private const string c_ControlsScaleKey = "settings.controls.scale";
+        private const string c_ShakeKey = "settings.shake";
         public const float c_MinControlsScale = 0.7f;
         public const float c_MaxControlsScale = 1.4f;
         private const QualityTier c_FallbackDesktopQuality = QualityTier.Medium;
@@ -40,6 +41,16 @@ namespace ZombiCar.Core
         public static float MusicVolume { get; private set; } = c_FallbackVolume;
         public static float SfxVolume { get; private set; } = c_FallbackVolume;
 
+        /// <summary>Screen shake, hit stops and vibration (off for players who get dizzy from them).</summary>
+        public static bool ShakeEnabled { get; private set; } = true;
+
+        public static void SetShakeEnabled(bool enabled)
+        {
+            ShakeEnabled = enabled;
+            PlayerPrefs.SetInt(c_ShakeKey, enabled ? 1 : 0);
+            PlayerPrefs.Save();
+        }
+
         /// <summary>Size multiplier of the on-screen touch controls.</summary>
         public static float ControlsScale { get; private set; } = 1f;
         public static event Action<float> ControlsScaleChanged;
@@ -56,10 +67,13 @@ namespace ZombiCar.Core
 
             int maxTier = Mathf.Max(0, QualitySettings.names.Length - 1);
             Quality = Allowed((QualityTier)Mathf.Clamp(PlayerPrefs.GetInt(c_QualityKey, (int)defaultTier), 0, maxTier));
-            MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_VolumeKey, defaultVolume));
+            // No master slider any more: the master stays at the default even where an old one was turned down.
+            MasterVolume = Mathf.Clamp01(defaultVolume);
+            PlayerPrefs.DeleteKey(c_VolumeKey);
             MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_MusicVolumeKey, c_FallbackVolume));
             SfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(c_SfxVolumeKey, c_FallbackVolume));
             ControlsScale = Mathf.Clamp(PlayerPrefs.GetFloat(c_ControlsScaleKey, 1f), c_MinControlsScale, c_MaxControlsScale);
+            ShakeEnabled = PlayerPrefs.GetInt(c_ShakeKey, 1) == 1;
 
             // Let the browser drive the frame pacing on the Web (requestAnimationFrame).
             Application.targetFrameRate = -1;
@@ -76,9 +90,9 @@ namespace ZombiCar.Core
                 Load(null);
         }
 
-        /// <summary>Every tier is offered on every device (Ultra on phones is the player's choice; the first run on a
-        /// phone picks a tier by measuring the frame rate, <see cref="QualityAutoTuner"/>).</summary>
-        public static bool IsUltraAllowed => true;
+        /// <summary>Ultra is for computers: phones get up to High (a phone that had Ultra stored plays High; the first
+        /// run on a phone picks a tier by measuring the frame rate, <see cref="QualityAutoTuner"/>).</summary>
+        public static bool IsUltraAllowed => !DeviceInfo.IsMobile;
 
         public static void SetQuality(QualityTier tier)
         {
@@ -90,15 +104,6 @@ namespace ZombiCar.Core
             PlayerPrefs.Save();
             ApplyQuality(tier);
             QualityChanged?.Invoke(tier);
-        }
-
-        public static void SetMasterVolume(float volume)
-        {
-            MasterVolume = Mathf.Clamp01(volume);
-            PlayerPrefs.SetFloat(c_VolumeKey, MasterVolume);
-            PlayerPrefs.Save();
-            VolumeChanged?.Invoke(MasterVolume);
-            VolumesChanged?.Invoke();
         }
 
         public static void SetMusicVolume(float volume)

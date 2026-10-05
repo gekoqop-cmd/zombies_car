@@ -20,7 +20,8 @@ namespace ZombiCar.DevTools
     /// <summary>
     /// Developer cheats for testing, opened and closed with Insert or F8: every workshop upgrade of the car one level
     /// up or to the maximum for free, a jump to wave 10 / 20 / 30 (the boss waves) or the next one, scrap, ammo,
-    /// healing, clearing the zombies, coins for the cases and the tutorial again. The game keeps running (clicks on the
+    /// healing, clearing the zombies, coins for the cases, the tutorial again; in the menu the daily bonus rewards (the
+    /// black bullets, a free case, the legendary case) and the daily bonus again. The game keeps running (clicks on the
     /// panel never shoot: the player's input ignores clicks over the UI). A uGUI panel with the game's TextMeshPro font
     /// (Cyrillic in the WebGL build too), built at runtime. Exists only in the editor and in development builds — the
     /// release build for Yandex Games has no cheats. Created by itself before the first scene.
@@ -204,6 +205,30 @@ namespace ZombiCar.DevTools
                 MetaProgress.TutorialDone = false;
                 Object.FindAnyObjectByType<TutorialDirector>()?.Restart();
                 Done("Обучение начнётся заново");
+            });
+            // The daily bonus's rewards without waiting for the days (the skins are in the menu's catalog).
+            CasesScreen cases = Object.FindAnyObjectByType<CasesScreen>(FindObjectsInactive.Include);
+            if (cases == null)
+                return;
+            Button(Row(), "ЧЁРНЫЕ ПУЛИ: ПОЛУЧИТЬ И НАДЕТЬ", 0f, s_Accent, () =>
+            {
+                CosmeticItem black = cases.Catalog.Exclusive(CosmeticSlot.Bullet);
+                if (black == null)
+                    return;
+                MetaProgress.Grant(black);
+                MetaProgress.Equip(black);
+                Done("Чёрные пули получены и надеты");
+            });
+            Button(Row(), "+1 БЕСПЛАТНЫЙ КЕЙС", 0f, s_ButtonColor, () => { MetaProgress.AddFreeCase(); Done("+1 бесплатный кейс (в «КЕЙСАХ»)"); });
+            Button(Row(), "ОТКРЫТЬ ЛЕГЕНДАРНЫЙ КЕЙС", 0f, s_ButtonColor, () =>
+            {
+                SetOpen(false);
+                cases.OpenLegendaryCase();
+            });
+            Button(Row(), "ЕЖЕДНЕВНЫЙ БОНУС СНОВА ДОСТУПЕН", 0f, s_ButtonColor, () =>
+            {
+                MetaProgress.SetDaily(MetaProgress.DailyDay, MetaProgress.Today - 1);
+                Done($"Бонус дня {MetaProgress.DailyDay + 1} можно забрать");
             });
         }
 

@@ -6,7 +6,8 @@ namespace ZombiCar.UI
 {
     /// <summary>
     /// One card of the map selection: title, picture, a Day / Night switch (cross-fades the day and night pictures)
-    /// and Play, which loads the day or the night map; "РЕКОРДЫ" under it opens the shown map's records. A locked card ("coming soon") has no maps, no Day / Night
+    /// and Play, which opens the difficulty choice for the day or the night map (<see cref="DifficultyScreen"/>);
+    /// "РЕКОРДЫ" under it opens the shown map's records. A locked card ("coming soon") has no maps, no Day / Night
     /// switch and a disabled Play (its references are [OptionalReference]).
     /// </summary>
     public sealed class MapCard : MonoBehaviour
@@ -24,6 +25,8 @@ namespace ZombiCar.UI
         [Tooltip("\"РЕКОРДЫ\" under the card: the records of the map shown (day or night).")]
         [SerializeField, OptionalReference] private Button m_RecordsButton;
         [SerializeField, OptionalReference] private MapRecordsPanel m_Records;
+        [Tooltip("\"ИГРАТЬ\" opens the difficulty choice for the map shown (without it the map loads at once).")]
+        [SerializeField, OptionalReference] private DifficultyScreen m_Difficulty;
         [SerializeField] private string m_Title = "ГОРОД";
         [SerializeField] private Color m_OnColor = new Color(0.93f, 0.47f, 0.13f, 1f);
         [SerializeField] private Color m_OffColor = new Color(0.12f, 0.13f, 0.16f, 0.95f);
@@ -94,6 +97,11 @@ namespace ZombiCar.UI
             MapConfig map = m_Night ? m_NightMap : m_DayMap;
             if (map == null)
                 return;
+            if (m_Difficulty != null)
+            {
+                m_Difficulty.Open(map, $"{m_Title}  •  {(m_Night ? "НОЧЬ" : "ДЕНЬ")}");
+                return;
+            }
             m_PlayButton.interactable = false;
             // Between the menu and the map: a logical break for a fullscreen ad (the platform limits how often).
             YandexSdk.ShowFullscreenAd(() => SceneLoader.EnsureExists().LoadMap(map));

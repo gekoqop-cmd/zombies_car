@@ -13,7 +13,8 @@ namespace ZombiCar.EditorTools
         /// <summary>
         /// The run's legendary card: not offered before level 5, then in every hand until taken (and never shown when
         /// the pool draws at random); it is dressed up on the card, taken once it is at its maximum ("MAX" on the HUD at
-        /// once) and it gives both of its stats.
+        /// once) and it gives both of its stats. Then the vampire card for an ad: offered now and then from its level,
+        /// with the ad disc, taken after the ad at its maximum.
         /// </summary>
         private static void Legendary()
         {
@@ -74,7 +75,48 @@ namespace ZombiCar.EditorTools
                     Check(!levelUp.Hand.Contains(legend), "the next hands go without it");
                 Shot("16_Legendary_Taken");
             });
-            At(8.3f, Finish);
+
+            // The legendary card for an ad: now and then from its level, taken after the ad, at its maximum at once.
+            Perk vampire = pool.AdLegendary;
+            float healBefore = 0f;
+            bool shown = false;
+            At(8.4f, () =>
+            {
+                Check(vampire != null && vampire.ForAd && vampire.MaxStacks == 1 && vampire.Effect == StatEffect.KillHeal,
+                    $"the pool has a legendary card for an ad: {vampire?.Title}");
+                for (int i = 0; i < 6; i++)
+                    s_Progression.AddXp(400);                                    // plenty of level-ups past its level
+            });
+            for (float x = 9.0f; x < 15.0f; x += 0.4f)
+                At(x, () =>
+                {
+                    if (!levelUp.IsOpen || levelUp.Hand.Contains(vampire))
+                        return;
+                    if (s_Stats.Level >= pool.AdLegendaryFromLevel)
+                        levelUp.Reroll();
+                    else
+                        levelUp.Pick(0);
+                });
+            At(15.2f, () =>
+            {
+                shown = levelUp.IsOpen && levelUp.Hand.Contains(vampire);
+                Check(shown, $"level {s_Stats.Level}: the vampire card comes now and then");
+                if (!shown)
+                    return;
+                Check(Object.FindObjectsByType<PerkCardView>(FindObjectsSortMode.None)
+                        .Any(c => c.IsLegendary && c.transform.Find("Body/AdBadge")?.gameObject.activeSelf == true),
+                    "it wears the ad disc");
+                Shot("16_Legendary_Vampire");
+                healBefore = s_Run.Modifiers[StatEffect.KillHeal];
+                levelUp.Pick(levelUp.Hand.ToList().IndexOf(vampire));
+            });
+            At(16.2f, () =>
+            {
+                if (shown)
+                    Check(s_Run.StacksOf(vampire) == 1 && s_Run.Modifiers[StatEffect.KillHeal] >= healBefore + 6f - 0.01f,
+                        "taken after the ad: 6 health per kill at once");
+            });
+            At(16.5f, Finish);
         }
     }
 }

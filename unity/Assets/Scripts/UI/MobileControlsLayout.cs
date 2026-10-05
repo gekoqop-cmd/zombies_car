@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -12,8 +13,9 @@ namespace ZombiCar.UI
     /// panels, so they never cover health, wave or ammo. The default places are the designed distances from the area's
     /// corners, worked out again whenever the area changes size (a resize, a rotation), so the controls never slide
     /// into each other; a control the player moved keeps its place as a fraction of the area. Moved places and the
-    /// size are saved per player. In edit mode (from the settings) the game pauses and the controls can be dragged;
-    /// Done keeps the layout, Reset restores the defaults.
+    /// size are saved with the progress (<see cref="MetaProgress.ControlsLayout"/>, the cloud too), so a layout set
+    /// once stays. In edit mode (from the settings) the game pauses and the controls can be dragged; "СОХРАНИТЬ" keeps
+    /// the layout, Reset restores the defaults.
     /// </summary>
     public sealed class MobileControlsLayout : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
@@ -57,6 +59,9 @@ namespace ZombiCar.UI
                 return;
             }
             Instance = this;
+            if (MetaProgress.ControlsScale > 0f && !Mathf.Approximately(MetaProgress.ControlsScale, SettingsService.ControlsScale))
+                SettingsService.SetControlsScale(MetaProgress.ControlsScale);   // the saved size (cloud) wins over the device's
+            string layout = MetaProgress.ControlsLayout;
             int n = m_Controls.Length;
             m_Corner = new Vector2[n];
             m_Offset = new Vector2[n];
@@ -68,7 +73,7 @@ namespace ZombiCar.UI
                 RectTransform rt = m_Controls[i].Rect;
                 m_Corner[i] = rt.anchorMin;
                 m_Offset[i] = rt.anchoredPosition + Vector2.Scale(new Vector2(0.5f, 0.5f) - rt.pivot, rt.rect.size);
-                m_Custom[i] = TryLoad(m_Controls[i].Id, out Vector2 saved);
+                m_Custom[i] = TryLoad(layout, m_Controls[i].Id, out Vector2 saved);
                 m_Position[i] = m_Custom[i] ? saved : DefaultFraction(i);
                 rt.anchorMin = rt.anchorMax = m_Position[i];
                 rt.pivot = new Vector2(0.5f, 0.5f);
@@ -149,13 +154,26 @@ namespace ZombiCar.UI
             GamePause.Set(GamePause.Reason.ControlsLayout, false);
             if (m_EditOverlay != null)
                 m_EditOverlay.SetActive(false);
+            SaveLayout();
+        }
+
+        /// <summary>The layout and size go with the progress (device and cloud): set once, kept for good.</summary>
+        public void SaveLayout()
+        {
+            var parts = new System.Text.StringBuilder();
             for (int i = 0; i < m_Controls.Length; i++)
             {
-                if (m_Custom[i])
-                    Save(m_Controls[i].Id, m_Position[i]);
-                else
-                    Forget(m_Controls[i].Id);
+                Forget(m_Controls[i].Id);                          // the old per-device keys
+                if (!m_Custom[i])
+                    continue;
+                if (parts.Length > 0)
+                    parts.Append(';');
+                parts.Append(m_Controls[i].Id).Append('=')
+                    .Append(m_Position[i].x.ToString("0.####", CultureInfo.InvariantCulture)).Append(',')
+                    .Append(m_Position[i].y.ToString("0.####", CultureInfo.InvariantCulture));
             }
+            MetaProgress.ControlsLayout = parts.ToString();
+            MetaProgress.ControlsScale = SettingsService.ControlsScale;
             PlayerPrefs.Save();
         }
 
@@ -246,8 +264,22 @@ namespace ZombiCar.UI
                 g.color = new Color(color.r, color.g, color.b, g.color.a);
         }
 
-        private static bool TryLoad(string id, out Vector2 value)
+        // The saved layout ("id=x,y;..."), or the old per-device keys of a layout saved before it went with the progress.
+        private static bool TryLoad(string layout, string id, out Vector2 value)
         {
+            foreach (string part in (layout ?? string.Empty).Split(';'))
+            {
+                int eq = part.IndexOf('=');
+                if (eq <= 0 || part.Substring(0, eq) != id)
+                    continue;
+                string[] xy = part.Substring(eq + 1).Split(',');
+                if (xy.Length == 2 && float.TryParse(xy[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x) &&
+                    float.TryParse(xy[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y))
+                {
+                    value = new Vector2(x, y);
+                    return true;
+                }
+            }
             string key = c_KeyPrefix + id;
             bool saved = PlayerPrefs.HasKey(key + ".x");
             value = saved ? new Vector2(PlayerPrefs.GetFloat(key + ".x"), PlayerPrefs.GetFloat(key + ".y")) : Vector2.zero;
@@ -258,12 +290,6 @@ namespace ZombiCar.UI
         {
             PlayerPrefs.DeleteKey(c_KeyPrefix + id + ".x");
             PlayerPrefs.DeleteKey(c_KeyPrefix + id + ".y");
-        }
-
-        private static void Save(string id, Vector2 value)
-        {
-            PlayerPrefs.SetFloat(c_KeyPrefix + id + ".x", value.x);
-            PlayerPrefs.SetFloat(c_KeyPrefix + id + ".y", value.y);
         }
     }
 }

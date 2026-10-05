@@ -45,6 +45,10 @@ namespace ZombiCar.Core
         [SerializeField] private float m_BonusValue;
         [Tooltip("The bonus in words: \"+15% к скорострельности\".")]
         [SerializeField] private string m_BonusText;
+        [Tooltip("Never in a case: a reward of its own (the 7th day's daily bonus).")]
+        [SerializeField] private bool m_Exclusive;
+        [Tooltip("Bullets: a glowing outline in the second colour around the tracer.")]
+        [SerializeField] private bool m_Outline;
 
         public CosmeticItem(string id, string title, CosmeticSlot slot, Rarity rarity, Color color, Color color2,
             float size = 1f, bool trail = false, bool isDefault = false)
@@ -73,6 +77,8 @@ namespace ZombiCar.Core
         public ZombiCar.Progression.StatEffect Bonus => m_Bonus;
         public float BonusValue => m_BonusValue;
         public string BonusText => m_BonusText;
+        public bool IsExclusive => m_Exclusive;
+        public bool Outline => m_Outline;
 
         /// <summary>Gives the skin a bonus for the runs it is worn in (builders).</summary>
         public CosmeticItem WithBonus(ZombiCar.Progression.StatEffect effect, float value, string text)
@@ -81,6 +87,20 @@ namespace ZombiCar.Core
             m_Bonus = effect;
             m_BonusValue = value;
             m_BonusText = text;
+            return this;
+        }
+
+        /// <summary>Bullets: a glowing outline around the tracer (builders).</summary>
+        public CosmeticItem WithOutline()
+        {
+            m_Outline = true;
+            return this;
+        }
+
+        /// <summary>Never dropped by a case (builders).</summary>
+        public CosmeticItem AsExclusive()
+        {
+            m_Exclusive = true;
             return this;
         }
     }

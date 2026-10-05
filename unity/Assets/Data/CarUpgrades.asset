@@ -18,12 +18,12 @@ MonoBehaviour:
     m_Description: "\u041C\u0430\u0448\u0438\u043D\u0430 \u043F\u043E\u043B\u0443\u0447\u0430\u0435\u0442 \u043D\u0430 {1}% \u043C\u0435\u043D\u044C\u0448\u0435 \u0443\u0440\u043E\u043D\u0430"
     m_Icon: {fileID: 21300000, guid: 4436bcd2f14aa054586693af57cf0859, type: 3}
     m_Effect: 15
-    m_ValuePerLevel: 0.06
-    m_Costs: 3c0000006e000000b40000009501000058020000i
+    m_ValuePerLevel: 0.04
+    m_Costs: 3c0000006e000000b40000002c010000c20100008a02000084030000b0040000i
     m_Repeatable: 0
     m_RepeatCostStep: 0
     m_RepeatCostMax: 0
-    m_ValueStep: 0.01
+    m_ValueStep: 0.005
     m_AdUsesPerRun: 0
   - m_Id: hull
     m_Title: "\u0423\u0421\u0418\u041B\u0415\u041D\u041D\u042B\u0419 \u041A\u041E\u0420\u041F\u0423\u0421"
@@ -31,11 +31,11 @@ MonoBehaviour:
     m_Icon: {fileID: 21300000, guid: 95cb8dd75689a53418e522e6331b079a, type: 3}
     m_Effect: 14
     m_ValuePerLevel: 40
-    m_Costs: 3200000064000000a0000000680100000d020000i
+    m_Costs: 3200000064000000a000000018010000a401000058020000520300007e040000i
     m_Repeatable: 0
     m_RepeatCostStep: 0
     m_RepeatCostMax: 0
-    m_ValueStep: 10
+    m_ValueStep: 5
     m_AdUsesPerRun: 0
   - m_Id: spikes
     m_Title: "\u0428\u0418\u041F\u042B"
@@ -43,7 +43,7 @@ MonoBehaviour:
     m_Icon: {fileID: 21300000, guid: 95fbb7e752cde444494e0a467d209f0f, type: 3}
     m_Effect: 17
     m_ValuePerLevel: 8
-    m_Costs: 460000008c000000590100000d020000i
+    m_Costs: 460000008c00000004010000a40100008a020000b6030000i
     m_Repeatable: 0
     m_RepeatCostStep: 0
     m_RepeatCostMax: 0
@@ -55,7 +55,7 @@ MonoBehaviour:
     m_Icon: {fileID: 21300000, guid: 6e7368b1a0bf3574f94dc263e1a29e8f, type: 3}
     m_Effect: 18
     m_ValuePerLevel: 20
-    m_Costs: 96000000a4010000a3020000i
+    m_Costs: 960000007c0100006c020000b603000046050000i
     m_Repeatable: 0
     m_RepeatCostStep: 0
     m_RepeatCostMax: 0
@@ -67,7 +67,7 @@ MonoBehaviour:
     m_Icon: {fileID: 21300000, guid: 9130ae1461f42f64ea65910ada540f3b, type: 3}
     m_Effect: 4
     m_ValuePerLevel: 30
-    m_Costs: 3c0000006e0000000e01000086010000i
+    m_Costs: 3c0000006e000000dc000000680100002602000020030000i
     m_Repeatable: 0
     m_RepeatCostStep: 0
     m_RepeatCostMax: 0

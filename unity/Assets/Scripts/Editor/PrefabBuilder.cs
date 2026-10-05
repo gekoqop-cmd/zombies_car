@@ -633,11 +633,23 @@ namespace ZombiCar.EditorTools
             visual.layer = Layers.c_ProjectileIndex;
             visual.GetComponent<MeshRenderer>().receiveShadows = false;
 
+            // The outline of some bullet skins (off by default; Bullet.ApplySkin colours and enables it): the same
+            // sphere a little larger around the tracer, only its back faces drawn, so it shows as a rim around it.
+            GameObject outline = MeshObject("Outline", Resources.GetBuiltinResource<Mesh>("Sphere.fbx"), BulletOutlineMaterial(), false);
+            outline.transform.SetParent(visual.transform, false);
+            outline.transform.localScale = new Vector3(1.7f, 1.7f, 1.3f);
+            outline.layer = Layers.c_ProjectileIndex;
+            var outlineRenderer = outline.GetComponent<MeshRenderer>();
+            outlineRenderer.receiveShadows = false;
+            outlineRenderer.shadowCastingMode = ShadowCastingMode.Off;
+            outlineRenderer.enabled = false;
+
             // Trail of the bullet skins (off by default; Bullet.ApplySkin colours and enables it).
             var trailGo = new GameObject("Trail") { layer = Layers.c_ProjectileIndex };
             trailGo.transform.SetParent(go.transform, false);
             var trail = trailGo.AddComponent<TrailRenderer>();
             trail.sharedMaterial = FxBuilder.Material("M_FX_BulletTrail", "T_BulletGlow", Color.white, true);
+            AfterGroundDecals(trail.sharedMaterial);
             trail.time = 0.12f;
             trail.minVertexDistance = 0.15f;
             trail.widthMultiplier = 0.12f;
@@ -649,9 +661,36 @@ namespace ZombiCar.EditorTools
             trail.enabled = false;
 
             var bulletComponent = go.AddComponent<Bullet>();
-            Wire(bulletComponent, ("m_Visual", visual.GetComponent<MeshRenderer>()), ("m_Trail", trail));
+            Wire(bulletComponent, ("m_Visual", visual.GetComponent<MeshRenderer>()), ("m_Trail", trail), ("m_Outline", outlineRenderer));
             GameObject saved = SavePrefab(go, $"{EditorPaths.c_PrefabsCharacters}/Bullet.prefab");
             return saved.GetComponent<Bullet>();
+        }
+
+        // The ground's cracks, potholes and shadow blobs are big transparent quads sorted by their centres: one whose
+        // centre is nearer the camera would draw after a bullet's trail (which writes no depth) and cover it. The trail
+        // goes after every one of them.
+        private static void AfterGroundDecals(Material material)
+        {
+            material.SetFloat("_QueueOffset", 50f);
+            material.renderQueue = (int)RenderQueue.Transparent + 50;
+            EditorUtility.SetDirty(material);
+        }
+
+        private const string c_BulletOutlineMaterial = EditorPaths.c_Materials + "/VFX/M_BulletOutline.mat";
+
+        // Unlit, front faces culled: of a shell around the tracer only the rim behind it shows.
+        private static Material BulletOutlineMaterial()
+        {
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(c_BulletOutlineMaterial);
+            if (mat == null)
+            {
+                mat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+                AssetDatabase.CreateAsset(mat, c_BulletOutlineMaterial);
+            }
+            mat.SetColor("_BaseColor", Color.white);
+            mat.SetFloat("_Cull", (float)CullMode.Front);
+            EditorUtility.SetDirty(mat);
+            return mat;
         }
 
         private const string c_AimLineMaterial = EditorPaths.c_Materials + "/VFX/M_AimLine.mat";
@@ -690,7 +729,7 @@ namespace ZombiCar.EditorTools
             Wire(weapon, ("m_Config", weaponConfig),
                 ("m_InputProvider", provider), ("m_Pool", pool),
                 ("m_Ammo", DataAssetsBuilder.Load<AmmoState>(DataAssetsBuilder.c_AmmoState)), ("m_Run", run));
-            Wire(mobile, ("m_Weapon", weapon));
+            Wire(mobile, ("m_Weapon", weapon), ("m_Melee", melee));
             Wire(interactor, ("m_InputProvider", provider), ("m_Run", run),
                 ("m_State", DataAssetsBuilder.Load<InteractionState>(DataAssetsBuilder.c_InteractionState)));
             PlayerHealth health = PlayerBuilder.BuildView(root, provider, weapon, desktop, melee);

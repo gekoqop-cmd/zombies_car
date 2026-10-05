@@ -13,10 +13,13 @@ namespace ZombiCar.UI
     public sealed class CaseCardRefs
     {
         public TMP_Text Title;
-        public TMP_Text Chances;
         public Image Icon;
         public Button OpenButton;
         public TMP_Text OpenLabel;
+        [Tooltip("The coin after the price: hidden while a free case waits.")]
+        public GameObject PriceCoin;
+        [Tooltip("\"ОТКРЫТЬ\" in place of the price while a free case waits.")]
+        public GameObject FreeLabel;
         public Button AdButton;
         [Tooltip("The legendary skin's run bonus, on its own plate between the open and the ad buttons.")]
         public TMP_Text Bonus;
@@ -26,7 +29,8 @@ namespace ZombiCar.UI
 
     /// <summary>
     /// Main menu cases (<see cref="CosmeticCatalog"/>): a case of rifle, axe or bullet skins opens for coins (earned at
-    /// the end of every run) or for a rewarded video. The drop chances of every rarity are written on the case. Opening
+    /// the end of every run) or for a rewarded video. The drop chances of every rarity (the same for all) are under the
+    /// one "?" between the cases. Opening
     /// spins a roulette strip ("ПРОПУСТИТЬ" under it) that stops on the prize, then the prize alone comes out
     /// big (<see cref="SkinRevealView"/>); a new skin goes to the collection (and can be put on at once),
     /// a repeat pays part of the price back. The collections themselves are in the menu's "СКИНЫ" (<see cref="SkinsPanel"/>).
@@ -42,6 +46,15 @@ namespace ZombiCar.UI
         [SerializeField] private TMP_Text m_Coins;
         [SerializeField] private Button m_CloseButton;
         [SerializeField] private CaseCardRefs[] m_Cards = Array.Empty<CaseCardRefs>();
+        [Tooltip("The one \"?\" between the cases: the drop chances (the same for every case) in a pop-up.")]
+        [SerializeField] private Button m_InfoButton;
+        [Tooltip("The drop chances' pop-up (a tap on it closes it).")]
+        [SerializeField] private Button m_InfoPopup;
+        [SerializeField] private TMP_Text m_Chances;
+        [Tooltip("\"БЕСПЛАТНЫЙ КЕЙС\" over the cases while the daily bonus's free cases wait (in place of the hint).")]
+        [SerializeField, OptionalReference] private TMP_Text m_FreeNote;
+        [SerializeField, OptionalReference] private GameObject m_Hint;
+        [SerializeField] private Color m_FreeColor = new Color(0.35f, 0.85f, 0.35f, 1f);
         [Tooltip("Pictograms of the slots (rifle, axe, bullets), tinted by each skin's colour.")]
         [SerializeField] private Sprite[] m_SlotIcons = Array.Empty<Sprite>();
 
@@ -55,6 +68,8 @@ namespace ZombiCar.UI
         [SerializeField] private ItemTile m_StripTemplate;
         [SerializeField, Min(1f)] private float m_TileStep = 236f;
         [SerializeField, Min(0.5f)] private float m_SpinTime = 4.2f;
+        [Tooltip("\"ЛЕГЕНДАРНЫЙ КЕЙС\" in gold over the strip (the daily bonus's legendary case).")]
+        [SerializeField, OptionalReference] private GameObject m_LegendaryTitle;
         [SerializeField] private GameObject m_ResultPanel;
         [SerializeField] private TMP_Text m_ResultRarity;
         [SerializeField] private TMP_Text m_ResultName;
@@ -71,8 +86,11 @@ namespace ZombiCar.UI
         private CosmeticItem m_Prize;
         private bool m_PrizeNew;
         private float m_CoinsFlashUntil;
+        private Color[] m_OpenColors;
+        private int m_Refund;
 
         public bool IsOpen => m_Open;
+        public CosmeticCatalog Catalog => m_Catalog;
         public bool IsSpinning => m_Spinning;
         public CosmeticItem LastPrize => m_Prize;
 
@@ -87,12 +105,17 @@ namespace ZombiCar.UI
                 CaseDef def = m_Catalog.Cases[i];
                 CaseCardRefs card = m_Cards[i];
                 card.Title.SetText(def.Title);
-                card.Chances.SetText(ChancesText());
                 card.Icon.sprite = SlotIcon(def.Slot);
-                card.OpenLabel.SetText($"ОТКРЫТЬ ЗА {def.Price}");
                 card.OpenButton.onClick.AddListener(() => BuyCase(def));
                 card.AdButton.onClick.AddListener(() => AdCase(def));
             }
+            m_OpenColors = new Color[m_Cards.Length];
+            for (int i = 0; i < m_Cards.Length; i++)
+                m_OpenColors[i] = m_Cards[i].OpenButton.image.color;
+            m_Chances.SetText(ChancesText());
+            m_InfoButton.onClick.AddListener(ToggleChances);
+            m_InfoPopup.onClick.AddListener(ToggleChances);
+            m_InfoPopup.gameObject.SetActive(false);
             m_OkButton.onClick.AddListener(CloseRoulette);
             m_SkipButton.onClick.AddListener(SkipSpin);
             m_EquipButton.onClick.AddListener(() =>
@@ -131,6 +154,17 @@ namespace ZombiCar.UI
             Closed?.Invoke();
         }
 
+        /// <summary>"?": the drop chances (the same for every case) open over the cases, or close.</summary>
+        public void ToggleChances()
+        {
+            bool open = !m_InfoPopup.gameObject.activeSelf;
+            AudioManager.PlaySfx(open ? Sound.UiOpen : Sound.UiClose);
+            m_InfoPopup.gameObject.SetActive(open);
+        }
+
+        /// <summary>The drop chances are shown (tests).</summary>
+        public bool ChancesShown => m_InfoPopup.gameObject.activeSelf;
+
         private string ChancesText()
         {
             var parts = new List<string> { "<size=80%>ШАНСЫ ВЫПАДЕНИЯ:</size>" };
@@ -147,7 +181,7 @@ namespace ZombiCar.UI
         {
             foreach (CosmeticItem item in m_Catalog.Items)
             {
-                if (item.Slot == slot && item.Rarity == Rarity.Legendary && item.HasBonus)
+                if (item.Slot == slot && item.Rarity == Rarity.Legendary && item.HasBonus && !item.IsExclusive)
                     return $"ЛЕГЕНДАРНЫЙ СКИН ДАЁТ БОНУС:\n<size=120%>{(MetaProgress.Owns(item) ? item.BonusText.ToUpperInvariant() : "???")}</size>";
             }
             return string.Empty;
@@ -161,20 +195,40 @@ namespace ZombiCar.UI
             if (m_Spinning)
                 return;
             m_Coins.SetText(MetaProgress.Coins.ToString());
+            int free = MetaProgress.FreeCases;
             for (int i = 0; i < m_Cards.Length && i < m_Catalog.Cases.Count; i++)
             {
-                if (m_Cards[i].Bonus != null)
-                    m_Cards[i].Bonus.SetText(BonusText(m_Catalog.Cases[i].Slot));
+                CaseCardRefs card = m_Cards[i];
+                if (card.Bonus != null)
+                    card.Bonus.SetText(BonusText(m_Catalog.Cases[i].Slot));
+                // A free case waits: every case opens with it ("ОТКРЫТЬ", green, no price).
+                card.OpenLabel.SetText(m_Catalog.Cases[i].Price.ToString());
+                card.OpenLabel.gameObject.SetActive(free <= 0);
+                if (card.PriceCoin != null)
+                    card.PriceCoin.SetActive(free <= 0);
+                if (card.FreeLabel != null)
+                    card.FreeLabel.SetActive(free > 0);
+                card.OpenButton.image.color = free > 0 ? m_FreeColor : m_OpenColors[i];
             }
+            if (m_FreeNote != null)
+            {
+                m_FreeNote.gameObject.SetActive(free > 0);
+                m_FreeNote.SetText(free > 1 ? $"БЕСПЛАТНЫЕ КЕЙСЫ: {free} — ВЫБЕРИ ЛЮБОЙ!" : "БЕСПЛАТНЫЙ КЕЙС — ВЫБЕРИ ЛЮБОЙ!");
+            }
+            if (m_Hint != null)
+                m_Hint.SetActive(free <= 0);
         }
 
         // ---------------------------------------------------------------- opening
-        /// <summary>Opens a case for its price in coins (buttons, tests); false when the coins are not enough.</summary>
+        /// <summary>
+        /// Opens a case (buttons, tests): with a free case when one waits, else for its price in coins; false when the
+        /// coins are not enough.
+        /// </summary>
         public bool BuyCase(CaseDef def)
         {
             if (m_Spinning)
                 return false;
-            if (!MetaProgress.TrySpend(def.Price))
+            if (!MetaProgress.TryUseFreeCase() && !MetaProgress.TrySpend(def.Price))
             {
                 AudioManager.PlaySfx(Sound.UiDenied);
                 m_CoinsFlashUntil = Time.unscaledTime + 0.6f;
@@ -196,22 +250,57 @@ namespace ZombiCar.UI
             });
         }
 
+        /// <summary>
+        /// The 5th day's bonus: the legendary case — a gold roulette of every legendary skin (all slots), stopping on
+        /// one the player does not have yet; when they have them all, it pays <see cref="c_LegendaryRefund"/> coins.
+        /// </summary>
+        public void OpenLegendaryCase()
+        {
+            List<CosmeticItem> pool = m_Catalog.LegendaryPool();
+            if (m_Spinning || pool.Count == 0)
+                return;
+            List<CosmeticItem> fresh = pool.FindAll(i => !MetaProgress.Owns(i));
+            CosmeticItem prize = fresh.Count > 0 ? fresh[UnityEngine.Random.Range(0, fresh.Count)] : pool[UnityEngine.Random.Range(0, pool.Count)];
+            Show();
+            SpinTo(prize, () => pool[UnityEngine.Random.Range(0, pool.Count)], c_LegendaryRefund, true);
+        }
+
+        /// <summary>The legendary case's coins when every legendary skin is owned already.</summary>
+        public const int c_LegendaryRefund = 300;
+
+        /// <summary>The 7th day's bonus: the exclusive skin (black bullets) comes out big on the cases screen.</summary>
+        public void GiveExclusive(CosmeticItem item)
+        {
+            if (item == null)
+                return;
+            Show();
+            ShowPrize(item);
+        }
+
         private void Spin(CaseDef def)
         {
-            m_Prize = m_Catalog.Roll(def.Slot);
-            if (m_Prize == null)
-                return;
+            CosmeticItem prize = m_Catalog.Roll(def.Slot);
+            if (prize != null)
+                SpinTo(prize, () => m_Catalog.Roll(def.Slot), Mathf.RoundToInt(def.Price * m_Catalog.DuplicateRefund), false);
+        }
+
+        private void SpinTo(CosmeticItem prize, Func<CosmeticItem> filler, int refund, bool legendary)
+        {
+            m_Prize = prize;
+            m_Refund = refund;
             m_PrizeNew = MetaProgress.Grant(m_Prize);
             if (!m_PrizeNew)
-                MetaProgress.AddCoins(Mathf.RoundToInt(def.Price * m_Catalog.DuplicateRefund));
+                MetaProgress.AddCoins(refund);
+            if (m_LegendaryTitle != null)
+                m_LegendaryTitle.SetActive(legendary);
 
             // The strip: random skins of the case, the prize at c_PrizeIndex.
             EnsureTiles(m_StripTiles, m_StripTemplate, m_Strip, c_StripTiles);
             for (int i = 0; i < c_StripTiles; i++)
             {
-                CosmeticItem item = i == c_PrizeIndex ? m_Prize : m_Catalog.Roll(def.Slot);
+                CosmeticItem item = i == c_PrizeIndex ? m_Prize : filler();
                 ItemTile tile = m_StripTiles[i];
-                tile.Set(item, SlotIcon(def.Slot), true, false, bonusKnown: false);     // the strip keeps the secret
+                tile.Set(item, SlotIcon(item.Slot), true, false, bonusKnown: false);     // the strip keeps the secret
                 ((RectTransform)tile.transform).anchoredPosition = new Vector2(i * m_TileStep, 0f);
             }
             // Stop somewhere on the prize tile, not always dead centre.
@@ -243,6 +332,9 @@ namespace ZombiCar.UI
         {
             foreach (CaseCardRefs card in m_Cards)
                 card.Title.transform.parent.gameObject.SetActive(visible);
+            m_InfoButton.gameObject.SetActive(visible);
+            if (!visible)
+                m_InfoPopup.gameObject.SetActive(false);
         }
 
         private void Update()
@@ -261,6 +353,10 @@ namespace ZombiCar.UI
                 glow.a = 0.55f + 0.45f * Mathf.Sin(Time.unscaledTime * 3f);
                 card.BonusGlow.color = glow;
             }
+            // A free case waits: the open buttons beat to be pressed.
+            float pulse = MetaProgress.FreeCases > 0 ? 1f + 0.05f * Mathf.Sin(Time.unscaledTime * 5f) : 1f;
+            foreach (CaseCardRefs card in m_Cards)
+                card.OpenButton.transform.localScale = Vector3.one * pulse;
             if (m_Coins != null)
                 m_Coins.color = Time.unscaledTime < m_CoinsFlashUntil ? new Color(1f, 0.35f, 0.3f, 1f) : new Color(1f, 0.85f, 0.4f, 1f);
             if (!m_Spinning)
@@ -292,7 +388,10 @@ namespace ZombiCar.UI
             if (m_Spinning || item == null)
                 return;
             m_Prize = item;
+            m_Refund = 0;
             m_PrizeNew = MetaProgress.Grant(item);
+            if (m_LegendaryTitle != null)
+                m_LegendaryTitle.SetActive(false);
             SetCasesVisible(false);
             ShowGroup(m_Roulette, true);
             FinishSpin();
@@ -309,14 +408,10 @@ namespace ZombiCar.UI
             m_ResultRarity.SetText(CosmeticCatalog.RarityName(m_Prize.Rarity));
             m_ResultRarity.color = CosmeticCatalog.RarityColor(m_Prize.Rarity);
             m_ResultName.SetText(m_Prize.Title);
-            m_ResultName.color = m_Prize.Color;
-            int refund = 0;
-            foreach (CaseDef def in m_Catalog.Cases)
-            {
-                if (def.Slot == m_Prize.Slot)
-                    refund = Mathf.RoundToInt(def.Price * m_Catalog.DuplicateRefund);
-            }
-            string note = m_PrizeNew ? "НОВЫЙ СКИН В КОЛЛЕКЦИИ!" : $"УЖЕ ЕСТЬ: +{refund} МОНЕТ";
+            // A black skin's name in its second colour: black text would vanish on the dark screen.
+            m_ResultName.color = m_Prize.Color.maxColorComponent < 0.15f ? m_Prize.Color2 : m_Prize.Color;
+            string note = m_Prize.IsExclusive ? "ЭКСКЛЮЗИВ: ЕГО НЕТ В КЕЙСАХ!"
+                : m_PrizeNew ? "НОВЫЙ СКИН В КОЛЛЕКЦИИ!" : $"УЖЕ ЕСТЬ: +{m_Refund} МОНЕТ";
             if (m_Prize.HasBonus)
             {
                 string hex = ColorUtility.ToHtmlStringRGB(CosmeticCatalog.RarityColor(Rarity.Legendary));
