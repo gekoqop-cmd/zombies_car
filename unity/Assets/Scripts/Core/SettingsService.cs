@@ -41,15 +41,12 @@ namespace ZombiCar.Core
         public static float MusicVolume { get; private set; } = c_FallbackVolume;
         public static float SfxVolume { get; private set; } = c_FallbackVolume;
 
-        /// <summary>
-        /// Screen shake, hit stops and vibration. Only a phone has the switch (vibration is a phone thing, and some
-        /// players get dizzy there); on a computer they are always on.
-        /// </summary>
-        public static bool ShakeEnabled => !DeviceInfo.IsMobile || s_ShakeSetting;
+        /// <summary>Screen shake, hit stops and vibration: the settings' "ТРЯСКА" switch (some players get dizzy).</summary>
+        public static bool ShakeEnabled => s_ShakeSetting;
 
         private static bool s_ShakeSetting = true;
 
-        /// <summary>The phone's "ТРЯСКА И ВИБРАЦИЯ" switch (a computer keeps shaking whatever it is).</summary>
+        /// <summary>The settings' "ТРЯСКА" switch.</summary>
         public static void SetShakeEnabled(bool enabled)
         {
             s_ShakeSetting = enabled;

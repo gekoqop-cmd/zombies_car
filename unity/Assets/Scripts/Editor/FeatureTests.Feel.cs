@@ -40,18 +40,10 @@ namespace ZombiCar.EditorTools
             {
                 Shot("21_Settings_Shake");
                 var settings = Find<SettingsPanel>();
-                if (DeviceInfo.IsMobile)
-                {
-                    settings.ToggleShake();
-                    Check(!SettingsService.ShakeEnabled, "ТРЯСКА И ВИБРАЦИЯ: ВЫКЛ");
-                }
-                else
-                {
-                    SettingsService.SetShakeEnabled(false);                    // even a switch saved off somewhere
-                    bool shown = settings.GetComponentsInChildren<Transform>(true)
-                        .Any(t => t.name == "ShakeButton" && t.gameObject.activeInHierarchy);
-                    Check(SettingsService.ShakeEnabled && !shown, "a computer has no ТРЯСКА switch: the shake is always on");
-                }
+                bool shown = settings.GetComponentsInChildren<Transform>(true)
+                    .Any(t => t.name == "ShakeButton" && t.gameObject.activeInHierarchy);
+                settings.ToggleShake();
+                Check(shown && !SettingsService.ShakeEnabled, "ТРЯСКА И ВИБРАЦИЯ: the switch is there (every device), ВЫКЛ");
                 settings.Hide();
             });
             At(2.0f, () =>
@@ -59,11 +51,8 @@ namespace ZombiCar.EditorTools
                 float kick = CameraShake.LastKick, stop = GameFeel.LastStop;
                 GameFeel.Hurt(40);
                 CameraShake.Add(0.9f);
-                if (DeviceInfo.IsMobile)
-                    Check(Mathf.Approximately(CameraShake.LastKick, kick) && Mathf.Approximately(GameFeel.LastStop, stop) &&
-                          Mathf.Approximately(GamePause.SlowMotion, 1f), "with it off: no shake, no hit stop");
-                else
-                    Check(CameraShake.LastKick > 0.5f, $"a computer shakes anyway ({CameraShake.LastKick:F2})");
+                Check(Mathf.Approximately(CameraShake.LastKick, kick) && Mathf.Approximately(GameFeel.LastStop, stop) &&
+                      Mathf.Approximately(GamePause.SlowMotion, 1f), "with it off: no shake, no hit stop");
                 SettingsService.SetShakeEnabled(true);
                 s_PlayerHealth.Heal(1000);
             });

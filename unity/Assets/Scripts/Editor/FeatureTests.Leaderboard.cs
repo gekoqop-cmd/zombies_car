@@ -12,7 +12,7 @@ namespace ZombiCar.EditorTools
     {
         // ================================================================== 15. leaderboard
         /// <summary>
-        /// The Yandex "best_time" leaderboard through the SDK stand-in (no SDK in the editor): a defeat sends nothing,
+        /// The Yandex best-time leaderboard through the SDK stand-in (no SDK in the editor): a defeat sends nothing,
         /// a victory sends the run's time once; the victory screen's "ТАБЛИЦА ЛИДЕРОВ" opens the panel, which says
         /// there is nothing to show without the SDK and closes again; with stub entries it lists the top 10 and the
         /// player's own line under them.

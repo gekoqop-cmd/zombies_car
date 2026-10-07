@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f47b2ec55600cc4f9404bdfc72d9389, type: 3}
   m_Name: MeleeConfig_Axe
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Player.MeleeConfig
-  m_Damage: 40
+  m_Damage: 20
   m_Range: 2
   m_Arc: 160
   m_Interval: 0.5
-  m_Windup: 0.1
+  m_Windup: 0.22
   m_Knockback: 0.8

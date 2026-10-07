@@ -1,0 +1,63 @@
+{
+ "name": "Hound",
+ "standingHeightPx": 130,
+ "pixelScale": 1.3,
+ "strikeMoment": 0.531,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Hound_Idle_00",
+    "Hound_Idle_01",
+    "Hound_Idle_02",
+    "Hound_Idle_03",
+    "Hound_Idle_04"
+   ],
+   "fps": 10.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Hound_Move_00",
+    "Hound_Move_01",
+    "Hound_Move_02",
+    "Hound_Move_03",
+    "Hound_Move_04",
+    "Hound_Move_05",
+    "Hound_Move_06",
+    "Hound_Move_07",
+    "Hound_Move_08",
+    "Hound_Move_09"
+   ],
+   "fps": 14.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Hound_Attack_00",
+    "Hound_Attack_01",
+    "Hound_Attack_02",
+    "Hound_Attack_03",
+    "Hound_Attack_04",
+    "Hound_Attack_05",
+    "Hound_Attack_06",
+    "Hound_Attack_07",
+    "Hound_Attack_08",
+    "Hound_Attack_09",
+    "Hound_Attack_10",
+    "Hound_Attack_11",
+    "Hound_Attack_12",
+    "Hound_Attack_13",
+    "Hound_Attack_14",
+    "Hound_Attack_15"
+   ],
+   "fps": 20.0,
+   "loop": false,
+   "strike": 0.531
+  }
+ ]
+}

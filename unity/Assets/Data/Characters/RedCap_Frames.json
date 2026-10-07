@@ -1,0 +1,66 @@
+{
+ "name": "RedCap",
+ "standingHeightPx": 176,
+ "pixelScale": 1.3134328358208955,
+ "strikeMoment": 0.265,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "RedCap_Idle_00",
+    "RedCap_Idle_01",
+    "RedCap_Idle_02",
+    "RedCap_Idle_03"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "RedCap_Move_00",
+    "RedCap_Move_01",
+    "RedCap_Move_02",
+    "RedCap_Move_03",
+    "RedCap_Move_04",
+    "RedCap_Move_05",
+    "RedCap_Move_06",
+    "RedCap_Move_07",
+    "RedCap_Move_08",
+    "RedCap_Move_09",
+    "RedCap_Move_10",
+    "RedCap_Move_11",
+    "RedCap_Move_12"
+   ],
+   "fps": 14.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "RedCap_Attack_00",
+    "RedCap_Attack_01",
+    "RedCap_Attack_02",
+    "RedCap_Attack_03",
+    "RedCap_Attack_04",
+    "RedCap_Attack_05",
+    "RedCap_Attack_06",
+    "RedCap_Attack_07",
+    "RedCap_Attack_08",
+    "RedCap_Attack_09",
+    "RedCap_Attack_10",
+    "RedCap_Attack_11",
+    "RedCap_Attack_12",
+    "RedCap_Attack_13",
+    "RedCap_Attack_14",
+    "RedCap_Attack_15",
+    "RedCap_Attack_16"
+   ],
+   "fps": 18.0,
+   "loop": false,
+   "strike": 0.265
+  }
+ ]
+}

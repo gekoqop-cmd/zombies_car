@@ -103,6 +103,7 @@ GameObject:
   - component: {fileID: 309330480622338666}
   - component: {fileID: 6802247235435349196}
   - component: {fileID: 5596770323178279545}
+  - component: {fileID: 3603717339928620855}
   m_Layer: 13
   m_Name: Zombie_RedCap
   m_TagString: Untagged
@@ -213,9 +214,47 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.ZombieController
   m_Animator: {fileID: 6198726011079667333}
   m_Shadow: {fileID: 604955688997402865}
-  m_StrikeMoment: 0.5
+  m_StrikeMoment: 0.265
   m_ShotHitbox: {fileID: 6430429154773846714}
-  m_VisualHeight: 2.648935
+  m_VisualHeight: 2.6506553
+  m_Gibs: {fileID: 3603717339928620855}
+--- !u!114 &3603717339928620855
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2171835897240272259}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95cff9a96b7da8342ba07606821abbd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.ZombieGibs
+  m_View: {fileID: 6288106488283900290}
+  m_Pieces:
+  - {fileID: 21300000, guid: ff2b5f47cae24bf4dab0c92c7fea8252, type: 3}
+  - {fileID: 21300000, guid: 49463a2414ad4174aa3b6eafb034be52, type: 3}
+  - {fileID: 21300000, guid: 03cee7e82e33fac4ba0651a144e3e99f, type: 3}
+  - {fileID: 21300000, guid: 9b85d5f7ada8d9642bec5615d3cc7d44, type: 3}
+  - {fileID: 21300000, guid: 167086d2fdf7b334c8d683817159b2eb, type: 3}
+  - {fileID: 21300000, guid: 941a741b5684c7b47b0570a9caa4c39b, type: 3}
+  - {fileID: 21300000, guid: 8ed9717ce7b283446a95ed89ad9ffcd9, type: 3}
+  - {fileID: 21300000, guid: 298aea717b2ca554b9b5c780f88c103e, type: 3}
+  m_Offsets:
+  - {x: -0.12500769, y: 2.0312088}
+  - {x: 0.18982647, y: 2.0960345}
+  - {x: -0.37965295, y: 1.4981965}
+  - {x: 0.14815725, y: 1.1884732}
+  - {x: -0.61577857, y: 1.087633}
+  - {x: -0.31020424, y: 0.95077854}
+  - {x: -0.050929055, y: 0.38175198}
+  - {x: -0.5833692, y: 0.35294053}
+  m_Scale: {x: 0.92598283, y: 1.4405736}
+  m_Tint: {r: 1, g: 0.93, b: 0.85, a: 1}
+  m_SpriteMaterial: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_DropMaterial: {fileID: 2100000, guid: ef7e42de9558fbd42b55cc4fbfd11e3c, type: 2}
+  m_SplatMaterial: {fileID: 2100000, guid: 4d460388e1c52bc4dbb892798f66c4fc, type: 2}
+  m_Size: 1
 --- !u!1 &5715540817665608673
 GameObject:
   m_ObjectHideFlags: 0
@@ -346,7 +385,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.2162162, y: 1.8920965, z: 1}
+  m_LocalScale: {x: 0.92598283, y: 1.4405736, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 6288106488283900290}
@@ -400,12 +439,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 424e73ebb58a909468bd984fe216f384, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 5ed60feada487154c8a7d41b93993bbc, type: 3}
   m_Color: {r: 1, g: 0.93, b: 0.85, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.2, y: 1.4}
+  m_Size: {x: 1.92, y: 1.84}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -424,17 +463,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Characters.SpriteAnimator
   m_Sprites: {fileID: 11400000, guid: 40344e22cebf96743b781212a19e507f, type: 2}
-  m_Scale: {x: 1.2162162, y: 1.8920965}
+  m_Scale: {x: 0.92598283, y: 1.4405736}
   m_Tint: {r: 1, g: 0.93, b: 0.85, a: 1}
-  m_StepBounce: 0.05
-  m_StepSway: 4
+  m_StepBounce: 0.015
+  m_StepSway: 1
   m_Procedural: 1
-  m_Breath: 0.03
+  m_Breath: 0.01
   m_BreathRate: 0.55
-  m_StepSquash: 0.06
-  m_WalkLean: 5
-  m_AttackLean: 12
-  m_AttackLunge: 0.18
+  m_StepSquash: 0.02
+  m_WalkLean: 1.5
+  m_AttackLean: 4
+  m_AttackLunge: 0.06
   m_HitLean: 14
   m_HitTime: 0.28
   m_DeathThud: 0.14

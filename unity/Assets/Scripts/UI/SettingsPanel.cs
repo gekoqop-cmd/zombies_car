@@ -38,7 +38,6 @@ namespace ZombiCar.UI
         [SerializeField, OptionalReference] private Button m_EditControlsButton;
         [Tooltip("The window; it is this much shorter when the phone-only section is hidden.")]
         [SerializeField] private RectTransform m_Window;
-        [SerializeField, Min(0f)] private float m_MobileSectionHeight;
 
         [SerializeField] private Button m_CloseButton;
         [Tooltip("Leaves the map for the main menu (only the HUD's pop-up has it).")]
@@ -78,10 +77,12 @@ namespace ZombiCar.UI
             if (m_TutorialButton != null)
                 m_TutorialButton.onClick.AddListener(ReplayTutorial);
             bool mobile = DeviceInfo.IsMobile && m_MobileSection != null;
+            // The shake switch is for every device: out of the phone-only part, into the window itself.
+            if (m_ShakeButton != null && m_Window != null && m_ShakeButton.transform.parent != null)
+                m_ShakeButton.transform.parent.SetParent(m_Window, false);
             if (m_MobileSection != null)
                 m_MobileSection.SetActive(mobile);
-            if (!mobile && m_Window != null)
-                m_Window.sizeDelta -= new Vector2(0f, m_MobileSectionHeight);
+            Layout(mobile);
             if (m_ControlsSizeSlider != null)
             {
                 m_ControlsSizeSlider.minValue = SettingsService.c_MinControlsScale;
@@ -94,6 +95,31 @@ namespace ZombiCar.UI
             if (m_ShakeButton != null)
                 m_ShakeButton.onClick.AddListener(ToggleShake);
             m_SfxSlider.onValueChanged.AddListener(SettingsService.SetSfxVolume);
+        }
+
+        // Rows from the top of the window (centres, px): the quality caption clear of the tier buttons below it, the
+        // shake row, the touch controls row on a phone, then the bottom buttons with room above them.
+        private const float c_QualityLabelY = -318f;
+        private const float c_TiersY = -412f;
+        private const float c_ShakeY = -572f;
+        private const float c_TouchY = -672f;
+        private const float c_BottomRoom = 245f;          // the bottom buttons (40 + 110) and a gap above them
+
+        private void Layout(bool mobile)
+        {
+            if (m_Window == null)
+                return;
+            void Place(string path, float y)
+            {
+                if (m_Window.Find(path) is RectTransform rt)
+                    rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
+            }
+            Place("QualityLabel", c_QualityLabelY);
+            Place("TierButtons", c_TiersY);
+            Place("Shake", c_ShakeY);
+            Place("PhoneOnly/TouchControls", c_TouchY);
+            float lowest = mobile ? c_TouchY - 45f : c_ShakeY - 42f;
+            m_Window.sizeDelta = new Vector2(m_Window.sizeDelta.x, -lowest + c_BottomRoom);
         }
 
         public bool IsOpen => gameObject.activeSelf && m_Target > 0f;

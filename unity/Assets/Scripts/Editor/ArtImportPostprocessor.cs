@@ -200,8 +200,10 @@ namespace ZombiCar.EditorTools
             importer.ReadTextureSettings(settings);
             settings.textureType = TextureImporterType.Sprite;
             settings.spriteMode = (int)SpriteImportMode.Single;
-            // Frames have the feet on the bottom row; the muzzle flash / glow / smoke are centred on the gun tip.
-            settings.spriteAlignment = (int)(file.Contains("Muzzle") ? SpriteAlignment.Center : SpriteAlignment.BottomCenter);
+            // Frames have the feet on the bottom row; the muzzle flash / glow / smoke are centred on the gun tip, the
+            // death chunks (_Gib_) spin around their centre.
+            bool centred = file.Contains("Muzzle") || file.Contains("_Gib_");
+            settings.spriteAlignment = (int)(centred ? SpriteAlignment.Center : SpriteAlignment.BottomCenter);
             settings.spritePixelsPerUnit = c_CharacterPixelsPerUnit;
             settings.spriteMeshType = SpriteMeshType.Tight;           // less overdraw when zombies crowd
             settings.spriteGenerateFallbackPhysicsShape = false;

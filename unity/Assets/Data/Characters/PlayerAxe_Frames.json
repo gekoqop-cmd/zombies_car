@@ -1,0 +1,149 @@
+{
+ "name": "PlayerAxe",
+ "standingHeightPx": 192,
+ "pixelScale": 1.0,
+ "strikeMoment": 0.5,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "PlayerAxe_Idle_00",
+    "PlayerAxe_Idle_01",
+    "PlayerAxe_Idle_02",
+    "PlayerAxe_Idle_03",
+    "PlayerAxe_Idle_04",
+    "PlayerAxe_Idle_05",
+    "PlayerAxe_Idle_06",
+    "PlayerAxe_Idle_07",
+    "PlayerAxe_Idle_08",
+    "PlayerAxe_Idle_09",
+    "PlayerAxe_Idle_10",
+    "PlayerAxe_Idle_11",
+    "PlayerAxe_Idle_12",
+    "PlayerAxe_Idle_13",
+    "PlayerAxe_Idle_14",
+    "PlayerAxe_Idle_15",
+    "PlayerAxe_Idle_16",
+    "PlayerAxe_Idle_17",
+    "PlayerAxe_Idle_18"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "SwingA",
+   "frames": [
+    "PlayerAxe_SwingA_00",
+    "PlayerAxe_SwingA_01",
+    "PlayerAxe_SwingA_02",
+    "PlayerAxe_SwingA_03",
+    "PlayerAxe_SwingA_04",
+    "PlayerAxe_SwingA_05",
+    "PlayerAxe_SwingA_06",
+    "PlayerAxe_SwingA_07",
+    "PlayerAxe_SwingA_08",
+    "PlayerAxe_SwingA_09",
+    "PlayerAxe_SwingA_10",
+    "PlayerAxe_SwingA_11",
+    "PlayerAxe_SwingA_12",
+    "PlayerAxe_SwingA_13"
+   ],
+   "fps": 26.0,
+   "loop": false,
+   "strike": 0.536
+  },
+  {
+   "name": "SwingB",
+   "frames": [
+    "PlayerAxe_SwingB_00",
+    "PlayerAxe_SwingB_01",
+    "PlayerAxe_SwingB_02",
+    "PlayerAxe_SwingB_03",
+    "PlayerAxe_SwingB_04",
+    "PlayerAxe_SwingB_05",
+    "PlayerAxe_SwingB_06",
+    "PlayerAxe_SwingB_07",
+    "PlayerAxe_SwingB_08",
+    "PlayerAxe_SwingB_09",
+    "PlayerAxe_SwingB_10",
+    "PlayerAxe_SwingB_11"
+   ],
+   "fps": 26.0,
+   "loop": false,
+   "strike": 0.542
+  },
+  {
+   "name": "Run",
+   "frames": [
+    "PlayerAxe_Run_00",
+    "PlayerAxe_Run_01",
+    "PlayerAxe_Run_02",
+    "PlayerAxe_Run_03",
+    "PlayerAxe_Run_04",
+    "PlayerAxe_Run_05",
+    "PlayerAxe_Run_06",
+    "PlayerAxe_Run_07",
+    "PlayerAxe_Run_08",
+    "PlayerAxe_Run_09"
+   ],
+   "fps": 12.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Raise",
+   "frames": [
+    "PlayerAxe_Raise_00",
+    "PlayerAxe_Raise_01",
+    "PlayerAxe_Raise_02",
+    "PlayerAxe_Raise_03",
+    "PlayerAxe_Raise_04",
+    "PlayerAxe_Raise_05",
+    "PlayerAxe_Raise_06",
+    "PlayerAxe_Raise_07",
+    "PlayerAxe_Raise_08",
+    "PlayerAxe_Raise_09",
+    "PlayerAxe_Raise_10"
+   ],
+   "fps": 16.0,
+   "loop": false,
+   "strike": 0.955
+  },
+  {
+   "name": "Hold",
+   "frames": [
+    "PlayerAxe_Hold_00",
+    "PlayerAxe_Hold_01",
+    "PlayerAxe_Hold_02",
+    "PlayerAxe_Hold_03",
+    "PlayerAxe_Hold_04",
+    "PlayerAxe_Hold_05",
+    "PlayerAxe_Hold_06",
+    "PlayerAxe_Hold_07",
+    "PlayerAxe_Hold_08",
+    "PlayerAxe_Hold_09",
+    "PlayerAxe_Hold_10"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Slam",
+   "frames": [
+    "PlayerAxe_Slam_00",
+    "PlayerAxe_Slam_01",
+    "PlayerAxe_Slam_02",
+    "PlayerAxe_Slam_03",
+    "PlayerAxe_Slam_04",
+    "PlayerAxe_Slam_05",
+    "PlayerAxe_Slam_06",
+    "PlayerAxe_Slam_07"
+   ],
+   "fps": 22.0,
+   "loop": false,
+   "strike": 0.188
+  }
+ ]
+}

@@ -1,0 +1,59 @@
+{
+ "name": "Brute",
+ "pieces": [
+  {
+   "sprite": "Brute_Gib_0",
+   "x": -15.5,
+   "y": 168.0,
+   "area": 3890
+  },
+  {
+   "sprite": "Brute_Gib_1",
+   "x": 46.0,
+   "y": 158.0,
+   "area": 4272
+  },
+  {
+   "sprite": "Brute_Gib_2",
+   "x": 73.0,
+   "y": 87.0,
+   "area": 3768
+  },
+  {
+   "sprite": "Brute_Gib_3",
+   "x": -68.5,
+   "y": 144.5,
+   "area": 3578
+  },
+  {
+   "sprite": "Brute_Gib_4",
+   "x": 11.5,
+   "y": 88.0,
+   "area": 3618
+  },
+  {
+   "sprite": "Brute_Gib_5",
+   "x": -41.0,
+   "y": 99.5,
+   "area": 3351
+  },
+  {
+   "sprite": "Brute_Gib_6",
+   "x": 29.0,
+   "y": 33.0,
+   "area": 2092
+  },
+  {
+   "sprite": "Brute_Gib_7",
+   "x": -80.0,
+   "y": 72.5,
+   "area": 3049
+  },
+  {
+   "sprite": "Brute_Gib_8",
+   "x": -52.5,
+   "y": 34.0,
+   "area": 3153
+  }
+ ]
+}

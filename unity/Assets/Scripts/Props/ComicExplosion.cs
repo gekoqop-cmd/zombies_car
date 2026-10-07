@@ -20,6 +20,8 @@ namespace ZombiCar.Props
         [SerializeField] private Renderer m_Text;
         [Tooltip("Lettering variants, one picked per explosion.")]
         [SerializeField] private Material[] m_TextMaterials = System.Array.Empty<Material>();
+        [Tooltip("The lettering in English (BOOM!, BANG!, KABOOM!).")]
+        [SerializeField] private Material[] m_TextMaterialsEnglish = System.Array.Empty<Material>();
         [SerializeField] private Renderer m_Ring;
         [SerializeField] private Renderer m_Scorch;
         [SerializeField] private ParticleSystem m_Stars;
@@ -77,8 +79,9 @@ namespace ZombiCar.Props
             m_Size = size;
             m_Start = Time.time;
             gameObject.SetActive(true);
-            if (m_TextMaterials.Length > 0)
-                m_Text.sharedMaterial = m_TextMaterials[Random.Range(0, m_TextMaterials.Length)];
+            Material[] words = Loc.IsEnglish && m_TextMaterialsEnglish.Length > 0 ? m_TextMaterialsEnglish : m_TextMaterials;
+            if (words.Length > 0)
+                m_Text.sharedMaterial = words[Random.Range(0, words.Length)];
             m_TextTilt = Random.Range(-10f, 10f);
             m_Stars.Emit(Mathf.RoundToInt(14 * size));
             m_Clouds.Emit(Mathf.RoundToInt(7 * size));

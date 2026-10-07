@@ -1,0 +1,169 @@
+{
+ "name": "Boss3",
+ "standingHeightPx": 240,
+ "pixelScale": 1.4545454545454546,
+ "strikeMoment": 0.469,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Boss3_Idle_00",
+    "Boss3_Idle_01",
+    "Boss3_Idle_02",
+    "Boss3_Idle_03",
+    "Boss3_Idle_04",
+    "Boss3_Idle_05",
+    "Boss3_Idle_06",
+    "Boss3_Idle_07",
+    "Boss3_Idle_08",
+    "Boss3_Idle_09"
+   ],
+   "fps": 6.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Boss3_Move_00",
+    "Boss3_Move_01",
+    "Boss3_Move_02",
+    "Boss3_Move_03",
+    "Boss3_Move_04",
+    "Boss3_Move_05",
+    "Boss3_Move_06",
+    "Boss3_Move_07",
+    "Boss3_Move_08",
+    "Boss3_Move_09",
+    "Boss3_Move_10"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Boss3_Attack_00",
+    "Boss3_Attack_01",
+    "Boss3_Attack_02",
+    "Boss3_Attack_03",
+    "Boss3_Attack_04",
+    "Boss3_Attack_05",
+    "Boss3_Attack_06",
+    "Boss3_Attack_07",
+    "Boss3_Attack_08",
+    "Boss3_Attack_09",
+    "Boss3_Attack_10",
+    "Boss3_Attack_11",
+    "Boss3_Attack_12",
+    "Boss3_Attack_13",
+    "Boss3_Attack_14",
+    "Boss3_Attack_15"
+   ],
+   "fps": 14.0,
+   "loop": false,
+   "strike": 0.469
+  },
+  {
+   "name": "Cracks",
+   "frames": [
+    "Boss3_Cracks_00",
+    "Boss3_Cracks_01",
+    "Boss3_Cracks_02",
+    "Boss3_Cracks_03",
+    "Boss3_Cracks_04",
+    "Boss3_Cracks_05",
+    "Boss3_Cracks_06",
+    "Boss3_Cracks_07",
+    "Boss3_Cracks_08",
+    "Boss3_Cracks_09",
+    "Boss3_Cracks_10",
+    "Boss3_Cracks_11",
+    "Boss3_Cracks_12",
+    "Boss3_Cracks_13",
+    "Boss3_Cracks_14",
+    "Boss3_Cracks_15",
+    "Boss3_Cracks_16",
+    "Boss3_Cracks_17",
+    "Boss3_Cracks_18",
+    "Boss3_Cracks_19",
+    "Boss3_Cracks_20",
+    "Boss3_Cracks_21",
+    "Boss3_Cracks_22",
+    "Boss3_Cracks_23",
+    "Boss3_Cracks_24"
+   ],
+   "fps": 14.0,
+   "loop": false,
+   "strike": 0.38
+  },
+  {
+   "name": "Vanish",
+   "frames": [
+    "Boss3_Vanish_00",
+    "Boss3_Vanish_01",
+    "Boss3_Vanish_02",
+    "Boss3_Vanish_03",
+    "Boss3_Vanish_04",
+    "Boss3_Vanish_05",
+    "Boss3_Vanish_06",
+    "Boss3_Vanish_07",
+    "Boss3_Vanish_08",
+    "Boss3_Vanish_09",
+    "Boss3_Vanish_10",
+    "Boss3_Vanish_11",
+    "Boss3_Vanish_12",
+    "Boss3_Vanish_13"
+   ],
+   "fps": 10.0,
+   "loop": false,
+   "strike": 0.964
+  },
+  {
+   "name": "Appear",
+   "frames": [
+    "Boss3_Appear_00",
+    "Boss3_Appear_01",
+    "Boss3_Appear_02",
+    "Boss3_Appear_03",
+    "Boss3_Appear_04",
+    "Boss3_Appear_05",
+    "Boss3_Appear_06",
+    "Boss3_Appear_07",
+    "Boss3_Appear_08",
+    "Boss3_Appear_09",
+    "Boss3_Appear_10",
+    "Boss3_Appear_11",
+    "Boss3_Appear_12",
+    "Boss3_Appear_13"
+   ],
+   "fps": 14.0,
+   "loop": false,
+   "strike": -1
+  },
+  {
+   "name": "Dead",
+   "frames": [
+    "Boss3_Dead_00",
+    "Boss3_Dead_01",
+    "Boss3_Dead_02",
+    "Boss3_Dead_03",
+    "Boss3_Dead_04",
+    "Boss3_Dead_05",
+    "Boss3_Dead_06",
+    "Boss3_Dead_07",
+    "Boss3_Dead_08",
+    "Boss3_Dead_09",
+    "Boss3_Dead_10",
+    "Boss3_Dead_11",
+    "Boss3_Dead_12",
+    "Boss3_Dead_13",
+    "Boss3_Dead_14"
+   ],
+   "fps": 9.0,
+   "loop": false,
+   "strike": -1
+  }
+ ]
+}

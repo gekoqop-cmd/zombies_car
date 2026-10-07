@@ -41,7 +41,8 @@ namespace ZombiCar.Enemies
 
         private const float c_SweepFlashTime = 0.3f;
         private const float c_CracksBurnTime = 0.8f;
-        private const float c_ReapStrikeWindup = 0.35f;      // the sweep right after a reap comes out quicker
+        private const float c_ReapStrikeWindup = 0.6f;       // rise out of the ground + the quick sweep after a reap
+        private const float c_ReapRiseShare = 0.4f;          // of it: coming up out of the ground
 
         [SerializeField] private BossConfig m_Config;
         [SerializeField] private AcidGlob m_GlobPrefab;
@@ -207,7 +208,7 @@ namespace ZombiCar.Enemies
             float now = Time.time;
             if (m_Enraged && m_Config.Slam && now >= m_NextSlam && PlayerDistance() <= m_Config.SlamRadius * 1.6f)
             {
-                Begin(Ability.Slam, CharacterAnim.Attack, 0.45f);
+                Begin(Ability.Slam, CharacterAnim.Attack, Strike(CharacterAnim.Attack, m_Config.SlamWindup));
                 AudioManager.PlaySfx(Sound.BossRoar, 0.6f, Pitch * 1.1f);
                 return;
             }
@@ -234,13 +235,13 @@ namespace ZombiCar.Enemies
             }
             if (m_Config.Summon && now >= m_NextSummon && MinionsAlive < m_Config.MaxMinions)
             {
-                Begin(Ability.Summon, CharacterAnim.Attack, 0.6f);
+                Begin(Ability.Summon, CharacterAnim.Summon, Strike(CharacterAnim.Summon, m_Config.SummonWindup));
                 Voice(m_Config.SpecialClip, Sound.BossSummon, 1f, 1f);
                 return;
             }
             if (m_Config.Spit && now >= m_NextSpit && player <= m_Config.SpitRange)
             {
-                Begin(Ability.Spit, CharacterAnim.Attack, 0.9f);
+                Begin(Ability.Spit, CharacterAnim.Spit, Strike(CharacterAnim.Spit, m_Config.SpitWindup));
                 m_Fired = 0;
                 m_Volley = Mathf.RoundToInt(m_Config.SpitVolley * (m_Enraged ? m_Config.EnrageVolley : 1f));
                 if (m_Volley > 6)
@@ -263,6 +264,12 @@ namespace ZombiCar.Enemies
             Ability.Slam => m_AbilityTime < m_Config.SlamWindup,
             _ => false,
         };
+
+        /// <summary>Playback speed that lands the blow of <paramref name="anim"/> after <paramref name="seconds"/>.</summary>
+        private float Strike(CharacterAnim anim, float seconds) => m_Zombie.Animator.SpeedToStrike(anim, seconds);
+
+        /// <summary>The boss has a clip of its own for <paramref name="anim"/> (not a stand-in).</summary>
+        private bool Has(CharacterAnim anim) => m_Zombie.Animator.ClipOf(anim)?.Anim == anim;
 
         private void Begin(Ability ability, CharacterAnim anim, float animSpeed)
         {
@@ -362,7 +369,8 @@ namespace ZombiCar.Enemies
                     float k = Mathf.Clamp01(m_AbilityTime / m_Config.ReapWindup);
                     ShowRing(m_Telegraph, m_ReapTarget, 3.2f * Mathf.Lerp(1.3f, 0.9f, k), m_DangerColor,
                         0.5f + 0.5f * Mathf.Abs(Mathf.Sin(m_AbilityTime * 18f)));
-                    m_Zombie.Animator.SetAlpha(1f - k);
+                    // Sinking into the ground (its own clip) fades only at the very end; without one it fades away.
+                    m_Zombie.Animator.SetAlpha(1f - (Has(CharacterAnim.Vanish) ? Mathf.Clamp01((k - 0.8f) / 0.2f) : k));
                     if (m_AbilityTime >= m_Config.ReapWindup)
                         ReapNow();
                     break;
@@ -374,7 +382,7 @@ namespace ZombiCar.Enemies
                         m_Ability = Ability.Dash;
                         m_AbilityTime = 0f;
                         m_Dashed = 0f;
-                        m_Zombie.Animator.Play(CharacterAnim.Move, 3f);
+                        m_Zombie.Animator.Play(CharacterAnim.Charge, Has(CharacterAnim.Charge) ? 1.3f : 3f);
                         if (m_ChargeLine != null)
                             m_ChargeLine.enabled = false;
                     }
@@ -448,7 +456,7 @@ namespace ZombiCar.Enemies
         // ---------------------------------------------------------------- scythe sweep
         private void BeginSweep(float windup)
         {
-            Begin(Ability.Sweep, CharacterAnim.Attack, 0.8f / Mathf.Max(0.2f, windup));
+            Begin(Ability.Sweep, CharacterAnim.Attack, Strike(CharacterAnim.Attack, windup));
             if (m_Ability != Ability.Sweep)
                 return;
             m_AbilityTime = m_Config.SweepWindup - windup;
@@ -488,7 +496,7 @@ namespace ZombiCar.Enemies
         // ---------------------------------------------------------------- fire cracks
         private void BeginCracks()
         {
-            Begin(Ability.Cracks, CharacterAnim.Attack, 0.7f);
+            Begin(Ability.Cracks, CharacterAnim.Cracks, Strike(CharacterAnim.Cracks, m_Config.CracksWindup));
             if (m_Ability != Ability.Cracks)
                 return;
             // A fan of lines centred on the player.
@@ -599,7 +607,7 @@ namespace ZombiCar.Enemies
             Vector3 target = player.transform.position - DirectionToPlayer() * 2f;     // lands just in front of the player
             if (!NavMesh.SamplePosition(target, out NavMeshHit hit, 3f, NavMesh.AllAreas))
                 return;
-            Begin(Ability.Reap, CharacterAnim.Idle, 1f);
+            Begin(Ability.Reap, CharacterAnim.Vanish, Strike(CharacterAnim.Vanish, m_Config.ReapWindup));
             if (m_Ability != Ability.Reap)
                 return;
             m_ReapTarget = hit.position;
@@ -613,13 +621,25 @@ namespace ZombiCar.Enemies
             m_Zombie.Animator.SetAlpha(1f);
             m_Zombie.Animator.Flash(new Color(1f, 0.55f, 0.2f, 1f), 0.3f);
             CameraShake.AddAt(transform.position, 0.4f);
+            if (m_Config.AppearClip != null && AudioManager.Instance != null)
+                AudioManager.Instance.Play(m_Config.AppearClip, 1f, 0.04f);
             if (m_Telegraph != null)
                 m_Telegraph.enabled = false;
             // Straight into a quick sweep.
             m_Ability = Ability.Sweep;
             m_AbilityTime = m_Config.SweepWindup - c_ReapStrikeWindup;
             m_SweepDirection = DirectionToPlayer();
-            m_Zombie.Animator.Play(CharacterAnim.Attack, 0.8f / c_ReapStrikeWindup, true);
+            // Up out of the ground (its own clip), straight into the sweep.
+            if (Has(CharacterAnim.Appear))
+            {
+                float rise = c_ReapStrikeWindup * c_ReapRiseShare;
+                m_Zombie.Animator.Play(CharacterAnim.Appear, Strike(CharacterAnim.Appear, rise), true);
+                m_Zombie.Animator.Queue(CharacterAnim.Attack, Strike(CharacterAnim.Attack, c_ReapStrikeWindup - rise));
+            }
+            else
+            {
+                m_Zombie.Animator.Play(CharacterAnim.Attack, Strike(CharacterAnim.Attack, c_ReapStrikeWindup), true);
+            }
             FaceTarget();
         }
 
@@ -662,11 +682,14 @@ namespace ZombiCar.Enemies
             // Stop at the edge of the walkable area (fences, buildings).
             if (NavMesh.Raycast(transform.position, transform.position + m_ChargeDirection * m_ChargeLength, out NavMeshHit hit, NavMesh.AllAreas))
                 m_ChargeLength = Mathf.Max(1f, hit.distance - 0.3f);
-            Begin(Ability.Charge, CharacterAnim.Idle, 1.5f);
+            Begin(Ability.Charge, CharacterAnim.ChargeWindup, Strike(CharacterAnim.ChargeWindup, m_Config.ChargeWindup));
             if (m_Ability != Ability.Charge)
                 return;
             m_HitPlayer = m_HitCar = false;
-            AudioManager.PlaySfx(Sound.BossCharge, 1f, Pitch);
+            if (m_Config.ChargeClip != null && AudioManager.Instance != null)
+                AudioManager.Instance.Play(m_Config.ChargeClip, 1f, 0.04f);
+            else
+                AudioManager.PlaySfx(Sound.BossCharge, 1f, Pitch);
             ShowChargeLine(1f);
         }
 
@@ -705,7 +728,8 @@ namespace ZombiCar.Enemies
             m_Ability = Ability.Stunned;
             m_AbilityTime = 0f;
             m_Zombie.DamageTakenScale = m_Config.StunDamageTaken;
-            m_Zombie.Animator.Play(CharacterAnim.Hit, 1f, true);
+            m_Zombie.Animator.Play(CharacterAnim.Stun, 1f, true);
+            AudioManager.PlaySfx(Sound.BossStun, 1f, Pitch);
         }
 
         private void SlamNow()

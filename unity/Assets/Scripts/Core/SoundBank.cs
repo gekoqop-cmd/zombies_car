@@ -54,6 +54,10 @@ namespace ZombiCar.Core
 
         // Cases.
         LegendaryDrop,
+
+        // Zombies (appended: the values above are serialized in the sound bank).
+        ZombieSplat,
+        BossStun,
     }
 
     /// <summary>

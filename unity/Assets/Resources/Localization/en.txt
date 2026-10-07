@@ -1,0 +1,349 @@
+  (ЛУЧШЕЕ {0})	  (BEST {0})
+  <color=#{0}>БОНУС В ЗАБЕГЕ: {1}</color>	  <color=#{0}>RUN BONUS: {1}</color>
+  РЕКОРД!	  RECORD!
++{0} к запасу патронов (вместимость)	+{0} ammo reserve (capacity)
++{0} к запасу патронов,\nсразу пополняется	+{0} ammo reserve,\nrefilled at once
++{0} к максимуму здоровья\nи лечение на {1}	+{0} max health\nand heals {1}
++{0} к пробитию зомби	+{0} zombie pierce
++{0} к прочности машины (и ремонт)	+{0} car durability (and a repair)
++{0} патронов в магазине	+{0} rounds in the magazine
++{0} — ЗАБЕРИ В МЕНЮ «ДОСТИЖЕНИЯ»	+{0}: CLAIM IT IN «ACHIEVEMENTS»
++{0}% к дальности удара топором	+{0}% axe reach
++{0}% к скорострельности	+{0}% fire rate
++{0}% к урону пуль	+{0}% bullet damage
++{0}% шанс\nдвойного урона	+{0}% chance\nof double damage
+<size={0}%>ШАНСЫ ВЫПАДЕНИЯ:</size>	<size={0}%>DROP CHANCES:</size>
+E / ESC: ЗАКРЫТЬ	E / ESC: CLOSE
+WASD · МЫШЬ · {0} / {1} / {2}	WASD · MOUSE · {0} / {1} / {2}
+WASD — ДВИЖЕНИЕ	WASD: MOVE
+WASD: идти. Мышь: целиться. Левая кнопка: атака.\n{0} / {1}: автомат и топор, {2}: аптечка из запаса.	WASD: move. Mouse: aim. Left button: attack.\n{0} / {1}: rifle and axe, {2}: a medkit from your stock.
+{0}  •  ВОЛНА {1} ИЗ {2}\n	{0}  •  WAVE {1} OF {2}\n
+{0} ВОЛН  •  {1} БОССА	{0} WAVES  •  {1} BOSSES
+{0} ВОЛН  •  {1} БОССА  •  {2}	{0} WAVES  •  {1} BOSSES  •  {2}
+{0} ВОЛН · {1} БОССА	{0} WAVES · {1} BOSSES
+{0} ФАЗА	PHASE {0}
+{0}:{1}  (ЛУЧШЕЕ {2}:{3})	{0}:{1}  (BEST {2}:{3})
+{0}:{1}  РЕКОРД!	{0}:{1}  RECORD!
+«НОВОЕ»: ЕЩЁ НЕ БРАЛ	«NEW»: NOT TAKEN YET
+АВТОМАТ · ТОПОР	RIFLE · AXE
+АПТЕЧКА	MEDKIT
+БАРАХОЛЬЩИК	SCAVENGER
+БЕЗ СОХРАНЕНИЙ	NO SAVES
+БЕЗУМЕЦ!	MADMAN!
+БЕЛЫЕ	WHITE
+БЕСПЛАТНЫЕ КЕЙСЫ: {0} — ВЫБЕРИ ЛЮБОЙ!	FREE CASES: {0}. PICK ANY!
+БЕСПЛАТНЫЙ КЕЙС — ВЫБЕРИ ЛЮБОЙ!	FREE CASE: PICK ANY!
+БОЛЬШЕ ЗОМБИ, БОЛЬШЕ НАГРАДЫ	MORE ZOMBIES, BIGGER REWARD
+БОЛЬШОЙ МАГАЗИН	BIG MAGAZINE
+БОНУС ЗА СЕГОДНЯ ПОЛУЧЕН. ЗАХОДИ ЗАВТРА!	TODAY'S BONUS IS CLAIMED. COME BACK TOMORROW!
+БОНУС: ???	BONUS: ???
+БОСС	BOSS
+БОСС  •  ВОЛНА {0}	BOSS  •  WAVE {0}
+БОСС!	BOSS!
+БОССОВ ЗА ЗАБЕГ	BOSSES IN A RUN
+БОССЫ	BOSSES
+БОССЫ И НАГРАДА	BOSSES AND REWARDS
+БРОНЕБОЙНЫЕ ПУЛИ	PIERCING ROUNDS
+БРОНЯ	ARMOR
+БЫСТРЫЕ РУКИ	QUICK HANDS
+Боссы приходят на {0}, {1} и {2} волне, их метки на полосе сверху.\nЗа победу дают монеты на кейсы и скины.	Bosses come on waves {0}, {1} and {2}, marked on the bar at the top.\nWinning gives coins for cases and skins.
+Бьёт дугой перед собой\nи отбрасывает. Не стой рядом.	Swings an arc in front\nand knocks you back. Don't stand close.
+Бьёт о землю, по кругу идёт волна.\nДержи дистанцию.	Slams the ground, a wave rolls out.\nKeep your distance.
+В БОЙ!	FIGHT!
+В ЗАПАСЕ: {0}/{1}	IN STOCK: {0}/{1}
+В МЕНЮ	MENU
+В РАЗРАБОТКЕ :)	IN DEVELOPMENT :)
+В ЭТОМ РЕЖИМЕ НЕТ СОХРАНЕНИЙ:\nВСЕ {0} ВОЛН ЗА ОДИН РАЗ.\nВЫ УВЕРЕНЫ?	THIS MODE HAS NO SAVES:\nALL {0} WAVES IN ONE GO.\nARE YOU SURE?
+В инвентарь (до {0}), лечит полностью: клавиша {1}	To the inventory (up to {0}), heals fully: key {1}
+ВАМПИРИЗМ	VAMPIRISM
+ВКЛ	ON
+ВОЛН	WAVES
+ВОЛНА	WAVE
+ВОЛНА {0}	WAVE {0}
+ВОЛНА ПРОЙДЕНА!	WAVE CLEARED!
+ВОЛНЫ	WAVES
+ВОЛНЫ {0} · {1} · {2}	WAVES {0} · {1} · {2}
+ВОСКРЕСНУТЬ	REVIVE
+ВРЕМЯ	TIME
+ВСЕ БОССЫ ПОВЕРЖЕНЫ!	ALL BOSSES DEFEATED!
+ВСЕ ВОЛНЫ ОТБИТЫ, ГОРОД СПАСЁН!	ALL WAVES HELD OFF, THE CITY IS SAVED!
+ВЫБЕРИ СЛОЖНОСТЬ	CHOOSE DIFFICULTY
+ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ»: ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА	PICK AN UPGRADE. «NEW»: NOT TAKEN YET, TAKEN ONES ARE ON THE LEFT
+ВЫБЕРИТЕ УЛУЧШЕНИЕ	CHOOSE AN UPGRADE
+ВЫБОР КАРТЫ	CHOOSE A MAP
+ВЫБРАН	EQUIPPED
+ВЫВОДОК	BROOD
+ВЫЖИВШИЙ	SURVIVOR
+ВЫКЛ	OFF
+ВЫСОКОЕ	HIGH
+Взрывы бочек: радиус +{0}%,\nурон +{1}%	Barrel blasts: radius +{0}%,\ndamage +{1}%
+Все {0} мин вокруг машины	All {0} mines around the car
+ГОРОД	CITY
+ГОРОД  •  ДЕНЬ	CITY  •  DAY
+ГОРОД СПАСЁН!	THE CITY IS SAVED!
+ГОТОВО	DONE
+ГРАФИТ	GRAPHITE
+ДА	YES
+ДАЛЕЕ	NEXT
+ДАЛЬНОБОЙ	LONG RANGE
+ДЕНЬ	DAY
+ДЕНЬ {0}	DAY {0}
+ДЕТАЛИ	PARTS
+ДЖОЙСТИКИ	JOYSTICKS
+ДЖОЙСТИКИ · КНОПКИ	JOYSTICKS · BUTTONS
+ДО БОССА: {0} {1}	TO THE BOSS: {0} {1}
+ДО БОССА: {0} ВОЛНЫ	TO THE BOSS: {0} WAVES
+ДОСТИЖЕНИЕ ПОЛУЧЕНО!	ACHIEVEMENT UNLOCKED!
+ДОСТИЖЕНИЯ	ACHIEVEMENTS
+ДОШЁЛ ДО ВОЛНЫ {0} ИЗ {1}	REACHED WAVE {0} OF {1}
+Дальность стрельбы +{0}%	Shooting range +{0}%
+Дальность удара\nтопором +{0}%	Axe reach\n+{0}%
+ЕЖЕДНЕВНЫЕ БОНУСЫ	DAILY BONUSES
+ЕСТЬ СОХРАНЕНИЕ	SAVE FOUND
+ЕСТЬ СОХРАНЕНИЯ	SAVES FOUND
+ЖАТВА	HARVEST
+ЖИВУЧЕСТЬ	TOUGHNESS
+ЖНЕЦ	REAPER
+ЗАБЕГОВ	RUNS
+ЗАБРАТЬ	CLAIM
+ЗАВТРА	TOMORROW
+ЗАГРУЗКА…	LOADING…
+ЗАКРЫТЬ	CLOSE
+ЗАНОВО	RESTART
+ЗАПАСЛИВЫЙ	HOARDER
+ЗАЩИЩАЙ МАШИНУ	PROTECT THE CAR
+ЗДОРОВЬЕ	HEALTH
+ЗЕЛЁНЫЕ	GREEN
+ЗЕМЛЕТРЯСЕНИЕ	EARTHQUAKE
+ЗОЛОТАЯ ЛИХОРАДКА	GOLD RUSH
+ЗОЛОТО	GOLD
+ЗОЛОТЫЕ	GOLDEN
+ЗОМБИ	ZOMBIES
+ЗОМБИ ЗА ЗАБЕГ	ZOMBIES IN A RUN
+ЗОМБИ ИДУТ!	ZOMBIES INCOMING!
+ЗОМБИ СИЛЬНЕЕ	STRONGER ZOMBIES
+ЗОМБИ СЛАБЕЕ	WEAKER ZOMBIES
+ЗОМБИ! ТЯНИ ПРАВЫЙ ДЖОЙСТИК, ЧТОБЫ ЦЕЛИТЬСЯ И СТРЕЛЯТЬ	ZOMBIES! DRAG THE RIGHT JOYSTICK TO AIM AND SHOOT
+ЗОМБИ! ЦЕЛЬСЯ МЫШЬЮ, СТРЕЛЯЙ ЛЕВОЙ КНОПКОЙ	ZOMBIES! AIM WITH THE MOUSE, SHOOT WITH THE LEFT BUTTON
+За опыт выбираешь улучшение. «НОВОЕ» значит, что такую карточку\nты ещё не брал. Взятые видны слева.	Experience earns you upgrades. «NEW» means you have not taken\nthat card yet. Taken ones are shown on the left.
+Защищай машину: зомби идут и к ней. Между волнами открыта мастерская\nи патроны у машины. Готов раньше? Жми E, чтобы пропустить перерыв.	Protect the car: zombies go for it too. Between waves the workshop is open\nand ammo is at the car. Ready early? Press E to skip the break.
+Земля горит по линиям.\nУходи с линий, пока горят.	The ground burns along lines.\nStay off them while they burn.
+Зовёт зомби вокруг себя.\nСначала руби мелочь.	Calls zombies around her.\nCut down the small fry first.
+Зомби, бьющий машину, получает +{0} урона	A zombie hitting the car takes +{0} damage
+ИГРА ОКОНЧЕНА	GAME OVER
+ИГРАТЬ	PLAY
+ИГРАТЬ!	PLAY!
+ИГРОК	PLAYER
+ИГРОК {0}	PLAYER {0}
+ИСПОЛЬЗОВАНО	USED
+ИТОГО	TOTAL
+Идёт к машине. Подойдёшь близко, и он переключится на тебя!	Goes for the car. Get close and it turns on you!
+К КЕЙСАМ	TO CASES
+КАК РАБОТАЮТ СОХРАНЕНИЯ?	HOW DO SAVES WORK?
+КАЧЕСТВО ГРАФИКИ	GRAPHICS QUALITY
+КЕЙС	CASE
+КЕЙС ТОПОРОВ	AXE CASE
+КЕЙС ЭФФЕКТОВ ПУЛЬ	BULLET EFFECTS CASE
+КЕЙСЫ	CASES
+КИСЛОТА	ACID
+КИСЛОТНЫЙ ДОЖДЬ	ACID RAIN
+КОБАЛЬТ	COBALT
+КОСА	SCYTHE
+КРОВЬ	BLOOD
+КРУПНЫЙ КАЛИБР	BIG CALIBER
+КУПЛЕНО: {0}	BOUGHT: {0}
+Каждое убийство\nлечит {0} здоровья	Every kill\nheals {0} health
+Капли падают вокруг тебя.\nУходи из кругов.	Drops fall around you.\nGet out of the circles.
+ЛЁГКИЕ НОГИ	LIGHT FEET
+ЛЁГКИЙ	EASY
+ЛЁГКИЙ  •  ВОЛНА {0} ИЗ {1}	EASY  •  WAVE {0} OF {1}
+ЛЁД	ICE
+ЛЕГЕНДАРНАЯ • СРАЗУ МАКС.	LEGENDARY • MAXED AT ONCE
+ЛЕГЕНДАРНОЕ	LEGENDARY
+ЛЕГЕНДАРНОЕ {0}%	LEGENDARY {0}%
+ЛЕГЕНДАРНЫЙ КЕЙС	LEGENDARY CASE
+ЛЕГЕНДАРНЫЙ СКИН ДАЁТ БОНУС:\n<size={0}%>{1}</size>	A LEGENDARY SKIN GIVES A BONUS:\n<size={0}%>{1}</size>
+ЛЕГЕНДАРНЫЙ СКИН ДАЁТ БОНУС:\n???	A LEGENDARY SKIN GIVES A BONUS:\n???
+ЛИДЕРЫ	LEADERS
+ЛУЧШАЯ ВОЛНА	BEST WAVE
+ЛУЧШЕЕ ВРЕМЯ	BEST TIME
+Левый джойстик: идти. Правый: целиться и стрелять.\nКнопки рядом: автомат, топор и аптечка.	Left joystick: move. Right: aim and shoot.\nButtons next to it: rifle, axe and medkit.
+МАСТЕРСКАЯ	WORKSHOP
+МАСТЕРСКАЯ ОТКРОЕТСЯ ПОСЛЕ ВОЛНЫ	THE WORKSHOP OPENS AFTER THE WAVE
+МАСТЕРСКАЯ ОТКРЫТА! НАЖМИ E У ГАРАЖА И УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ	WORKSHOP OPEN! PRESS E AT THE GARAGE TO UPGRADE THE CAR WITH SCRAP
+МАСТЕРСКАЯ ОТКРЫТА! ПОДОЙДИ К ГАРАЖУ И УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ	WORKSHOP OPEN! GO TO THE GARAGE TO UPGRADE THE CAR WITH SCRAP
+МАСТЕРСКАЯ: ПРОКАЧКА МАШИНЫ	WORKSHOP: CAR UPGRADES
+МАТКА	BROODMOTHER
+МАШИНА И МАСТЕРСКАЯ	THE CAR AND THE WORKSHOP
+МАШИНА УНИЧТОЖЕНА	THE CAR IS DESTROYED
+МАШИНУ АТАКУЮТ!	THE CAR IS UNDER ATTACK!
+МЕНЬШЕ ЗОМБИ, МЕНЬШЕ НАГРАДА	FEWER ZOMBIES, SMALLER REWARD
+МИНЫ	MINES
+МОНЕТЫ	COINS
+МОНЕТЫ ДАЮТСЯ В КОНЦЕ КАЖДОГО ЗАБЕГА	COINS ARE GIVEN AT THE END OF EVERY RUN
+МОНЕТЫ ЗА ВОЛНЫ	COINS FOR WAVES
+МОНЕТЫ ЗА ЗОМБИ	COINS FOR ZOMBIES
+МУЗЫКА	MUSIC
+Машина получает на {0}% меньше урона	The car takes {0}% less damage
+Металлолома +{0}%	Scrap +{0}%
+НАГРАДА ЗА ПОБЕДУ	VICTORY REWARD
+НАДЕТЬ	EQUIP
+НАЖМИТЕ	TAP
+НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ	TAP A SKIN TO EQUIP IT
+НАЗАД	BACK
+НАЗВАНИЕ	NAME
+НАСТРОЙКИ	SETTINGS
+НЕ НУЖНО	NO NEED
+НЕ УДАЛОСЬ ЗАГРУЗИТЬ ТАБЛИЦУ	COULD NOT LOAD THE LEADERBOARD
+НЕОН	NEON
+НИЗКОЕ	LOW
+НОВОЕ	NEW
+НОВЫЙ	NEW
+НОВЫЙ СКИН В КОЛЛЕКЦИИ!	NEW SKIN IN THE COLLECTION!
+НОВЫЙ УРОВЕНЬ!	LEVEL UP!
+НОЧЬ	NIGHT
+НУ ЛАДНО...	OH WELL...
+ОБУЧЕНИЕ	TUTORIAL
+ОБУЧЕНИЕ {0}/{1}	TUTORIAL {0}/{1}
+ОБЫЧНОЕ	COMMON
+ОБЫЧНОЕ {0}%	COMMON {0}%
+ОБЫЧНЫЕ	STANDARD
+ОБЫЧНЫЕ ЗОМБИ	REGULAR ZOMBIES
+ОГНЕННЫЕ	FIERY
+ОГНЕННЫЕ ТРЕЩИНЫ	FIRE CRACKS
+ОК	OK
+ОЛИВА	OLIVE
+ОРУЖЕЙНЫЙ КЕЙС	WEAPON CASE
+ОРУЖЕЙНЫЙ ЯЩИК	AMMO CRATE
+ОРУЖИЕ	WEAPONS
+ОСТАЛОСЬ: {0}	LEFT: {0}
+ОСТАТОК ДЕТАЛЕЙ {0} →	PARTS LEFT {0} →
+ОСТРЫЙ ТОПОР	SHARP AXE
+ОТКРЫТЬ	OPEN
+Описание	Description
+Опыта +{0}%	Experience +{0}%
+ПАТРОНЫ	AMMO
+ПАТРОНЫ КОНЧИЛИСЬ! БЕЙ ТОПОРОМ, ПАТРОНЫ У МАШИНЫ	OUT OF AMMO! USE THE AXE, AMMO AT THE CAR
+ПАТРОНЫ КОНЧИЛИСЬ! ТОПОР НА КЛАВИШЕ {0}, ПАТРОНЫ У МАШИНЫ (E)	OUT OF AMMO! THE AXE IS ON KEY {0}, AMMO AT THE CAR (E)
+ПАТРОНЫ КОНЧИЛИСЬ: ТОПОР	OUT OF AMMO: AXE
+ПАТРОНЫ У МАШИНЫ — ПОСЛЕ СЛЕДУЮЩЕЙ ВОЛНЫ	AMMO AT THE CAR: AFTER THE NEXT WAVE
+ПАТРОНЫ У МАШИНЫ — ТОЛЬКО МЕЖДУ ВОЛНАМИ	AMMO AT THE CAR: BETWEEN WAVES ONLY
+ПАТРОНЫ — У МАШИНЫ, ПРОКАЧКА — В МАСТЕРСКОЙ	AMMO AT THE CAR, UPGRADES IN THE WORKSHOP
+ПЕРЕЗАРЯДКА	RELOADING
+ПЕРЕРЫВ	BREAK
+ПЕРЕТАЩИТЕ ДЖОЙСТИКИ И КНОПКИ	DRAG THE JOYSTICKS AND BUTTONS
+ПЕРСОНАЖИ	CHARACTERS
+ПЕСОК	SAND
+ПИРОТЕХНИК	PYROTECHNIC
+ПЛАЗМА	PLASMA
+ПОБЕД	WINS
+ПОБЕДА!	VICTORY!
+ПОДСКАЗКА	TIP
+ПОКА НИКТО НЕ ПРОШЁЛ ВСЕ {0} ВОЛН\nНА СЛОЖНОСТИ «{1}».\nСТАНЬ ПЕРВЫМ!	NOBODY HAS CLEARED ALL {0} WAVES\nON «{1}» YET.\nBE THE FIRST!
+ПОЛУЧЕНО	CLAIMED
+ПОМЕНЯТЬ	SWAP
+ПОНЯТНО	GOT IT
+ПОПОЛНИ ПАТРОНЫ У МАШИНЫ :)	REFILL AMMO AT THE CAR :)
+ПОПОЛНИТЬ ПАТРОНЫ	REFILL AMMO
+ПОСЛЕДНЯЯ ВОЛНА!	FINAL WAVE!
+ПРОГРЕСС СОХРАНЁН	PROGRESS SAVED
+ПРОГРЕСС СОХРАНЁН • ДАЛЬШЕ ВОЛНЫ {0}–{1}	PROGRESS SAVED • NEXT: WAVES {0}–{1}
+ПРОДОЛЖИТЬ	CONTINUE
+ПРОЙДЕНО	CLEARED
+ПРОКАЧКА МАШИНЫ ЗА МЕТАЛЛОЛОМ	UPGRADE THE CAR WITH SCRAP
+ПРОПУСТИТЬ	SKIP
+ПРОПУСТИТЬ ПЕРЕРЫВ	SKIP BREAK
+ПРОПУСТИТЬ ПЕРЕРЫВ  •  {0} С	SKIP BREAK  •  {0} S
+ПРОЧНОСТЬ {0} / {1}	DURABILITY {0} / {1}
+ПРОЧНОСТЬ {0} / {1}    БРОНЯ {2}%    	DURABILITY {0} / {1}    ARMOR {2}%    
+ПРОЧНОСТЬ {0} / {1}    БРОНЯ {2}%    ШИПЫ {3}    РАЗРЯД {4}	DURABILITY {0} / {1}    ARMOR {2}%    SPIKES {3}    SHOCK {4}
+Патроны заканчиваются, пополняй их у машины между волнами.\nТопор: клик для быстрого удара, зажми и отпусти для мощного.	Ammo runs out, refill it at the car between waves.\nAxe: click for a quick hit, hold and release for a heavy one.
+Патроны заканчиваются, пополняй их у машины между волнами.\nТопор: тап для быстрого удара, зажми джойстик и отпусти для мощного.	Ammo runs out, refill it at the car between waves.\nAxe: tap for a quick hit, hold the joystick and release for a heavy one.
+Перезарядка быстрее на {0}%	Reload {0}% faster
+Плюётся кислотой, остаются лужи.\nНе стой в зелёном.	Spits acid that leaves puddles.\nDon't stand in the green.
+Полностью восстанавливает прочность машины	Fully restores the car's durability
+Продержись {0} волн и убей {1} боссов.	Survive {0} waves and kill {1} bosses.
+Пройди все {0} волн	Clear all {0} waves
+Пройди все {0} волн на сложности «ХАРДКОР»	Clear all {0} waves on «HARDCORE»
+Прокачано до максимума	Fully upgraded
+Прокачка, карточки и детали сохранены	Upgrades, cards and parts are saved
+Пуля пробивает\nещё одного зомби	A bullet pierces\none more zombie
+РАСПОЛОЖЕНИЕ	LAYOUT
+РАСХОДНИКИ (МЕЖДУ ВОЛНАМИ)	SUPPLIES (BETWEEN WAVES)
+РЕДКОЕ	RARE
+РЕДКОЕ {0}%	RARE {0}%
+РЕЖИМ: {0}	MODE: {0}
+РЕЖИМ: СРЕДНИЙ	MODE: NORMAL
+РЕКОРДЫ	RECORDS
+РЕМОНТ МАШИНЫ	CAR REPAIR
+РЖАВЧИНА	RUST
+РОЙ	SWARM
+РЫВОК	CHARGE
+Раз в {0} с бьёт током зомби рядом: +{1} урона	Every {0} s shocks nearby zombies: +{1} damage
+Рисует линию и несётся по ней.\nОтойди, потом он оглушён. Бей!	Marks a line and rushes along it.\nStep aside, then he's stunned. Hit him!
+С ВОЛНЫ {0}	FROM WAVE {0}
+С НАЧАЛА	FROM THE START
+СБРОС	RESET
+СЕГОДНЯ — ДЕНЬ {0}	TODAY IS DAY {0}
+СЕРИЯ {0}	STREAK {0}
+СКИН	SKIN
+СКИНЫ	SKINS
+СКОРО БУДЕТ	COMING SOON
+СКОРОСТРЕЛ	RAPID FIRE
+СМЕКАЛКА	QUICK WIT
+СОХРАНЕНИЕ: ВОЛНА {0}	SAVED: WAVE {0}
+СОХРАНЕНИЯ	SAVES
+СОХРАНИТЬ	SAVE
+СРЕДНЕЕ	MEDIUM
+СРЕДНИЙ	NORMAL
+СТАЛЬ	STEEL
+СТАНДАРТ	STANDARD
+Скорострельность +{0}%	Fire rate +{0}%
+Скорость бега +{0}%	Run speed +{0}%
+Со злости зовёт чаще,\nвместе с гончими.	Enraged, she calls more often,\nhounds included.
+Ставит метку и прыгает к тебе.\nБеги от метки!	Marks a spot and leaps to you.\nRun from the mark!
+ТАБЛИЦА ДОСТУПНА В ЯНДЕКС ИГРАХ\nПОСЛЕ ВХОДА В АККАУНТ	THE LEADERBOARD IS AVAILABLE ON YANDEX GAMES\nAFTER YOU SIGN IN
+ТАБЛИЦА ЛИДЕРОВ	LEADERBOARD
+ТАРАН	RAM
+ТОПОР	AXE
+ТОПОР! КЛИКНИ ДЛЯ БЫСТРОГО УДАРА. ЗАЖМИ И ОТПУСТИ ДЛЯ МОЩНОГО	AXE! CLICK FOR A QUICK HIT. HOLD AND RELEASE FOR A HEAVY ONE
+ТОПОР! ТАПНИ ДЛЯ БЫСТРОГО УДАРА. ЗАЖМИ ДЖОЙСТИК, НАВЕДИ И ОТПУСТИ ДЛЯ МОЩНОГО	AXE! TAP FOR A QUICK HIT. HOLD THE JOYSTICK, AIM AND RELEASE FOR A HEAVY ONE
+ТОЧНО?)	REALLY?)
+ТОЧНЫЙ ГЛАЗ	SHARP EYE
+ТРЯСКА И ВИБРАЦИЯ	SHAKE AND VIBRATION
+ТЫ БУДЕШЬ БЕЗ ПАТРОНОВ?	GOING WITHOUT AMMO?
+ТЫ ДОБРАЛСЯ ДО БОССА!	YOU REACHED THE BOSS!
+ТЫ ПОГИБ	YOU DIED
+УБИТО ЗОМБИ	ZOMBIES KILLED
+УЖЕ ЕСТЬ: +{0} МОНЕТ	ALREADY OWNED: +{0} COINS
+УЛУЧШЕНИЯ МАШИНЫ	CAR UPGRADES
+УЛЬТРА	ULTRA
+УПРАВЛЕНИЕ	CONTROLS
+УРОВЕНЬ	LEVEL
+УРОВЕНЬ {0}	LEVEL {0}
+УРОВНИ И КАРТОЧКИ	LEVELS AND CARDS
+УСИЛЕННЫЙ КОРПУС	REINFORCED HULL
+Урон оружия +{0}%	Weapon damage +{0}%
+Урон оружия +{0}%\nи скорострельность +{1}%	Weapon damage +{0}%\nand fire rate +{1}%
+Урон топора +{0}%	Axe damage +{0}%
+ФЕРМА	FARM
+ФИОЛЕТОВЫЕ	PURPLE
+ХАРДКОР	HARDCORE
+ЦЕЛЬ	GOAL
+ЧЁРНЫЕ	BLACK
+ЧЁРНЫЕ ПУЛИ	BLACK BULLETS
+ЧЕСТНЫЙ БОЙ	A FAIR FIGHT
+ШИПЫ	SPIKES
+ШИПЫ {0}    РАЗРЯД {1}	SPIKES {0}    SHOCK {1}
+ШИРОКИЙ ЗАМАХ	WIDE SWING
+ЭКСКЛЮЗИВ: ЕГО НЕТ В КЕЙСАХ!	EXCLUSIVE: NOT IN ANY CASE!
+ЭЛЕКТРОРАЗРЯД	ELECTRIC SHOCK
+ЭПИЧЕСКОЕ	EPIC
+ЭПИЧЕСКОЕ {0}%	EPIC {0}%
+ЭТАП {0} ИЗ {1} ПРОЙДЕН!	STAGE {0} OF {1} CLEARED!
+ЭТО Я	THAT'S ME
+ЭФФЕКТ ПУЛЬ	BULLET EFFECT
+ЭФФЕКТЫ	EFFECTS
+ЯД	VENOM
+ЯДОВИТЫЕ	TOXIC
+• На <color=#{0}CE{1}B>ЛЁГКОМ</color> и <color=#FFA{2}>СРЕДНЕМ</color> игра сохраняется <b>сама</b> — нажимать ничего не надо.\n• Сохранение — после босса {3}-й и {4}-й волны: появится «ЭТАП ПРОЙДЕН!».\n• Сохраняются прокачка, карточки и детали.\n• Проиграл или вышел? Выбери ту же сложность и жми «ПРОДОЛЖИТЬ» — игра пойдёт с {5}-й или {6}-й волны.\n• На <color=#FF{7}A{8}A>ХАРДКОРЕ</color> сохранений нет: все {9} волн за один раз.	• On <color=#{0}CE{1}B>EASY</color> and <color=#FFA{2}>NORMAL</color> the game saves <b>by itself</b>, nothing to press.\n• It saves after the boss of wave {3} and wave {4}: you will see «STAGE CLEARED!».\n• Upgrades, cards and parts are saved.\n• Lost or left? Pick the same difficulty and press «CONTINUE»: the game goes on from wave {5} or {6}.\n• <color=#FF{7}A{8}A>HARDCORE</color> has no saves: all {9} waves in one go.

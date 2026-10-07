@@ -405,6 +405,55 @@ def Player_Hurt2():
     return player_hurt(102, 0.9)
 
 
+def gore_splat(seed, pitch):
+    """A zombie bursting: a wet thump, the crack of the body tearing, a squelch and pieces slapping down."""
+    rnd = np.random.RandomState(seed)
+    t = times(0.55)
+    thump = kick(0.25, 150 * pitch, 55 * pitch, 0.02)
+    tear = bandpass(noise(0.12, rnd), 700 * pitch, 4200) * np.exp(-times(0.12) / 0.03)
+    squelch = lowpass(noise(0.55, rnd), 1100 * pitch) * (0.5 + 0.5 * np.sin(2 * np.pi * rnd.uniform(28, 40) * t))         * np.exp(-t / 0.13)
+    slaps = np.zeros(len(t))
+    for _ in range(4):
+        i = int(rnd.uniform(0.12, 0.42) * len(t))
+        s = lowpass(noise(0.05, rnd), 2200) * np.exp(-times(0.05) / 0.012)
+        slaps[i:i + len(s)] += s[:len(slaps) - i] * rnd.uniform(0.25, 0.5)
+    x = mix(0.55, [(0, thump, 0.9), (0, tear, 0.7), (0.01, squelch, 0.8), (0, slaps, 1.0)])
+    return finish(drive(x * 1.4, 1.6), -3)
+
+
+@sound
+def Zombie_Splat1():
+    return gore_splat(201, 1.0)
+
+
+@sound
+def Zombie_Splat2():
+    return gore_splat(202, 0.88)
+
+
+@sound
+def Zombie_Splat3():
+    return gore_splat(203, 1.12)
+
+
+@sound
+def Boss_Stun():
+    """The ram dazed after its charge: a heavy armoured clang into the ground, a dizzy groan sliding down, and the
+    cartoon whirl of stars (two wobbling whistles circling) over it."""
+    rnd = np.random.RandomState(301)
+    t = times(1.6)
+    clang = metal_hit(0.9, 160, 0.25, rnd, bright=1800.0) * 0.8
+    thud = kick(0.4, 90, 40, 0.03)
+    groan = growl(1.2, 95, 60, seed=31, rough=0.35, flutter=9) * adsr(1.2, 0.08, 0.3, 0.6, 0.4)
+    whirl = np.zeros(len(t))
+    for k, (f, ph) in enumerate(((1900.0, 0.0), (2400.0, 1.7))):
+        wob = f * (1.0 + 0.12 * np.sin(2 * np.pi * 5.5 * t + ph))
+        tone = np.sin(2 * np.pi * np.cumsum(wob) / SR) * (0.5 + 0.5 * np.sin(2 * np.pi * 3.2 * t + ph))
+        whirl += tone * 0.18 * np.clip((t - 0.25) / 0.2, 0, 1) * np.exp(-np.maximum(t - 0.4, 0) / 0.9)
+    x = mix(1.6, [(0, thud, 0.9), (0, clang, 0.6), (0.12, groan, 0.7), (0, whirl, 1.0)])
+    return finish(x, -3)
+
+
 def main(names):
     todo = names or list(SOUNDS)
     for name in todo:

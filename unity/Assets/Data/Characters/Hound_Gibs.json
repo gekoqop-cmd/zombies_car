@@ -1,0 +1,41 @@
+{
+ "name": "Hound",
+ "pieces": [
+  {
+   "sprite": "Hound_Gib_0",
+   "x": -76.0,
+   "y": 71.5,
+   "area": 3150
+  },
+  {
+   "sprite": "Hound_Gib_1",
+   "x": -11.0,
+   "y": 93.0,
+   "area": 3219
+  },
+  {
+   "sprite": "Hound_Gib_2",
+   "x": 43.5,
+   "y": 77.5,
+   "area": 2961
+  },
+  {
+   "sprite": "Hound_Gib_3",
+   "x": -23.5,
+   "y": 40.5,
+   "area": 3343
+  },
+  {
+   "sprite": "Hound_Gib_4",
+   "x": 59.0,
+   "y": 33.0,
+   "area": 1838
+  },
+  {
+   "sprite": "Hound_Gib_5",
+   "x": -105.0,
+   "y": 37.5,
+   "area": 1730
+  }
+ ]
+}

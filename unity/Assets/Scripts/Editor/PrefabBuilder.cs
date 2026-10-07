@@ -696,6 +696,17 @@ namespace ZombiCar.EditorTools
         private const string c_AimLineMaterial = EditorPaths.c_Materials + "/VFX/M_AimLine.mat";
         private static readonly Color s_AimLineColor = new Color(1f, 0.55f, 0.18f, 1f);
 
+        /// <summary>Only the player: its animations and prefab (the axe frames, the view), with the bullet as it is.</summary>
+        [MenuItem("Tools/Build Player Prefab")]
+        public static void RebuildPlayer()
+        {
+            var bullet = AssetDatabase.LoadAssetAtPath<Bullet>($"{EditorPaths.c_PrefabsCharacters}/Bullet.prefab");
+            PlayerBuilder.BuildAssets();
+            BuildPlayer(bullet);
+            AssetDatabase.SaveAssets();
+            Debug.Log("[PrefabBuilder] Player rebuilt.");
+        }
+
         private static void BuildPlayer(Bullet bulletPrefab)
         {
             var root = new GameObject("Player") { layer = Layers.c_PlayerIndex, tag = "Player" };
@@ -739,7 +750,7 @@ namespace ZombiCar.EditorTools
             Wire(switcher, ("m_InputProvider", provider), ("m_Gun", weapon), ("m_Axe", melee),
                 ("m_State", DataAssetsBuilder.Load<WeaponState>(DataAssetsBuilder.c_WeaponState)), ("m_Run", run));
             Wire(controller, ("m_Config", DataAssetsBuilder.Load<PlayerConfig>(DataAssetsBuilder.c_PlayerConfig)),
-                ("m_InputProvider", provider), ("m_Interactor", interactor), ("m_Health", health), ("m_Run", run));
+                ("m_InputProvider", provider), ("m_Interactor", interactor), ("m_Health", health), ("m_Run", run), ("m_Melee", melee));
             SetLayerRecursively(root, Layers.c_PlayerIndex);
 
             // Touch-controls aim line (Brawl Stars style); placed in world space by the component, off on desktop.

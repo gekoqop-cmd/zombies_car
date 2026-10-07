@@ -61,6 +61,8 @@ namespace ZombiCar.EditorTools
             RectTransform logo = UiFactory.Rect("Logo", main, topRight, topRight, new Vector2(-margin, -30f),
                 new Vector2(logoWidth, logoWidth / c_LogoAspect));
             UiFactory.Image(logo, UiFactory.Sprite("UI_Logo"), Color.white, false).preserveAspect = true;
+            LocalizeLogo(logo.gameObject);
+            BuildLanguageSwitch(main, outline);
             float columnX = -margin - (logoWidth - buttonWidth) * 0.5f;
             float y = -30f - logoWidth / c_LogoAspect - 30f;
             Button play = HudButton("PlayButton", main, topRight, new Vector2(columnX, y), new Vector2(buttonWidth, buttonHeight),
@@ -540,6 +542,59 @@ namespace ZombiCar.EditorTools
         }
 
         /// <summary>Menu button in the HUD style: the dark rounded plate of the reference, tinted, with an outlined label.</summary>
+        // ------------------------------------------------------------------ language
+        private static readonly Vector2 s_LanguageButton = new Vector2(120f, 84f);
+
+        /// <summary>The RU / EN switch in the main screen's top left corner (the logo and the buttons are on the right).</summary>
+        private static LanguageSwitch BuildLanguageSwitch(Transform main, Material outline)
+        {
+            var topLeft = new Vector2(0f, 1f);
+            RectTransform root = UiFactory.Rect("LanguageSwitch", main, topLeft, topLeft, new Vector2(40f, -36f),
+                new Vector2(s_LanguageButton.x * 2f + 12f, s_LanguageButton.y));
+            root.pivot = topLeft;
+            var left = new Vector2(0f, 0.5f);
+            var right = new Vector2(1f, 0.5f);
+            Color dark = new Color(0.16f, 0.17f, 0.2f, 0.95f);
+            // The rects pivot on their anchor: RU sits on the left edge, EN on the right one.
+            Button ru = HudButton("Russian", root, left, Vector2.zero, s_LanguageButton, "RU", 38f, dark, outline);
+            Button en = HudButton("English", root, right, Vector2.zero, s_LanguageButton, "EN", 38f, dark, outline);
+            var view = root.gameObject.AddComponent<LanguageSwitch>();
+            PrefabBuilder.Wire(view, ("m_Russian", ru), ("m_English", en));
+            return view;
+        }
+
+        /// <summary>The logo with its words in the player's language (UI_Logo_EN.png in English, when there is one).</summary>
+        private static void LocalizeLogo(GameObject logo)
+        {
+            LocalizedImage image = logo.GetComponent<LocalizedImage>() ?? logo.AddComponent<LocalizedImage>();
+            PrefabBuilder.Wire(image, ("m_Russian", UiFactory.Sprite("UI_Logo")), ("m_English", UiFactory.Sprite("UI_Logo_EN")));
+        }
+
+        /// <summary>Adds the language switch and the localized logo to the main menu prefab in place (the rest untouched).</summary>
+        [MenuItem("Tools/Setup/Add Language Switch To Menu")]
+        public static void AddLanguageSwitchToMenu()
+        {
+            string path = $"{EditorPaths.c_PrefabsUi}/MainMenu.prefab";
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                Transform main = root.GetComponentsInChildren<Transform>(true).First(t => t.name == "MainScreen");
+                Transform logo = main.Find("Logo");
+                if (logo != null)
+                    LocalizeLogo(logo.gameObject);
+                Transform old = main.Find("LanguageSwitch");
+                if (old != null)
+                    Object.DestroyImmediate(old.gameObject);
+                BuildLanguageSwitch(main, TmpSetup.OutlineMaterial());
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+            Debug.Log("[SceneBuilder] Language switch added to the main menu.");
+        }
+
         private static Button HudButton(string name, Transform parent, Vector2 anchor, Vector2 pos, Vector2 size, string label,
             float fontSize, Color tint, Material outline)
         {
@@ -627,7 +682,7 @@ namespace ZombiCar.EditorTools
             group.alpha = 0f;
             var center = new Vector2(0.5f, 0.5f);
             var top = new Vector2(0.5f, 1f);
-            // Taller by the phone-only rows (shake switch, touch controls); SettingsPanel removes that height on a computer.
+            // SettingsPanel sizes the window to its rows (shorter on a computer, without the touch controls).
             RectTransform window = UiFactory.Rect("Window", root, center, center, Vector2.zero,
                 new Vector2(1060f, 720f + c_PhoneOnlySettingsHeight));
             UiFactory.Image(window, UiFactory.Sprite("UI_GearButton"), Color.white, true, true);
@@ -656,7 +711,8 @@ namespace ZombiCar.EditorTools
             Button high = TierButton("HighButton", row, size, "ВЫСОКОЕ", normal, outline);
             Button ultra = TierButton("UltraButton", row, size, "УЛЬТРА", normal, outline);
 
-            // Phone only (hidden on a computer, the window then shorter): the shake switch and the touch controls.
+            // Phone only (hidden on a computer): the touch controls; the shake switch is moved out of it for every device
+            // and the rows are laid out by SettingsPanel.Layout.
             RectTransform phoneOnly = UiFactory.Stretch("PhoneOnly", window);
             var midLeft = new Vector2(0f, 0.5f);
             var midRight = new Vector2(1f, 0.5f);
@@ -693,7 +749,6 @@ namespace ZombiCar.EditorTools
                 ("m_ControlsSizeSlider", controlsSize), ("m_EditControlsButton", editControls), ("m_Window", window),
                 ("m_TutorialButton", tutorial),
                 ("m_Tutorial", DataAssetsBuilder.Load<ZombiCar.Progression.TutorialState>(DataAssetsBuilder.c_TutorialState)));
-            CharacterBuilder.SetProps(settings, ("m_MobileSectionHeight", c_PhoneOnlySettingsHeight));
             root.gameObject.SetActive(false);
             return settings;
         }

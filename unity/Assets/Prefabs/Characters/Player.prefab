@@ -866,6 +866,7 @@ MonoBehaviour:
   m_Interactor: {fileID: 1520311216230528941}
   m_Health: {fileID: 3697103502134594972}
   m_Run: {fileID: 11400000, guid: d2ebfb2a82ca83848b664c9e51f4a8a8, type: 2}
+  m_Melee: {fileID: 6366682696340025211}
 --- !u!114 &2196967554506101149
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1424,6 +1425,211 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 49703e8fa1c250a41a6104bf6e27d84b, type: 3}
   m_GunOverlay: {fileID: 6690552580799790395}
   m_Cosmetics: {fileID: 11400000, guid: 624c593853a05c64392c3d47c24bb6d9, type: 2}
+  m_AxeIdle:
+    Frames:
+    - {fileID: 21300000, guid: 92176e92b86d0a640b3db25830819490, type: 3}
+    - {fileID: 21300000, guid: e4bec257a209ad046a72035bac548b72, type: 3}
+    - {fileID: 21300000, guid: c2cb6c38e7d882f46bb28006021aae94, type: 3}
+    - {fileID: 21300000, guid: aea5faa5c08ea9745a0f5b88cf1991a1, type: 3}
+    - {fileID: 21300000, guid: 4ed5b09b0e97f5849b74d4ea4a226238, type: 3}
+    - {fileID: 21300000, guid: 98736b71da16b9b4a930d12ac2acd19f, type: 3}
+    - {fileID: 21300000, guid: ba1fcab9749a98d43b845baa6df57ca1, type: 3}
+    - {fileID: 21300000, guid: 2bbe6293955e778478f8bb79b28dce35, type: 3}
+    - {fileID: 21300000, guid: 03b6ed4a0e2bcc44f9db3c09a276674c, type: 3}
+    - {fileID: 21300000, guid: 5ce8a69294161734190d5031077f330f, type: 3}
+    - {fileID: 21300000, guid: 1dd5c4edc3f91be48b2a1476bcfbfb0a, type: 3}
+    - {fileID: 21300000, guid: 9a5cba6745d16f04598bc1fed0684601, type: 3}
+    - {fileID: 21300000, guid: a4a13f9dd0ba6db48a1ef91ec206be86, type: 3}
+    - {fileID: 21300000, guid: 8fc53cbaf94855c4c90243fccfc61d77, type: 3}
+    - {fileID: 21300000, guid: a89c1ba9e10aeb74fb5e2ee9499c5cff, type: 3}
+    - {fileID: 21300000, guid: 31b44ac4c87abc243a118f6e4f77ebd8, type: 3}
+    - {fileID: 21300000, guid: 92a51d3120f99a8499f62a1665b85769, type: 3}
+    - {fileID: 21300000, guid: 0a91d8dc7c7f7c6458be638498cfb932, type: 3}
+    - {fileID: 21300000, guid: 4d35fec1310dd6d489f9908536a9bf6a, type: 3}
+    Blades:
+    - {fileID: 21300000, guid: c16103bd600e4a34f8fddecfee5ba970, type: 3}
+    - {fileID: 21300000, guid: 8017f5213d9d80c439e65f15acb1d0c5, type: 3}
+    - {fileID: 21300000, guid: 5480b237b6ef36847ab573bb80dfb911, type: 3}
+    - {fileID: 21300000, guid: 13efd7d7893cc3a4a8049eb941f3fef3, type: 3}
+    - {fileID: 21300000, guid: 17f6ec9e93c12db40aa0238f5c5a6282, type: 3}
+    - {fileID: 21300000, guid: 85ac94494a6db4745862d730bce04728, type: 3}
+    - {fileID: 21300000, guid: a74e8c812af24764e802303311e2e8de, type: 3}
+    - {fileID: 21300000, guid: e1de3386a96972c4eb3d97f87b75334b, type: 3}
+    - {fileID: 21300000, guid: 0829f7d98b57863418d81b8df3b014fa, type: 3}
+    - {fileID: 21300000, guid: a6010aa2b583c7248b17bebd3f0ae033, type: 3}
+    - {fileID: 21300000, guid: 8f6aa534a1f7d8f449c31874c6d4fe6d, type: 3}
+    - {fileID: 21300000, guid: 1f706a3eda8ded44eb613ffbc0039588, type: 3}
+    - {fileID: 21300000, guid: 108a3637ff697af408a03c7f939f2d09, type: 3}
+    - {fileID: 21300000, guid: 75dbbd002bc24dc49b41459d1fad0f85, type: 3}
+    - {fileID: 21300000, guid: 79bacfc6ba7d01f479f0385d220305b2, type: 3}
+    - {fileID: 21300000, guid: 0cc4d08de4b4cc542b6de7328d766ce3, type: 3}
+    - {fileID: 21300000, guid: 5a82d3b4594d8894d9a4daedf6e17898, type: 3}
+    - {fileID: 21300000, guid: ca26331e93db25d45bc1f3ba866eb711, type: 3}
+    - {fileID: 21300000, guid: ce0818c80f1fae34481419163af1393c, type: 3}
+    Fps: 8
+    Strike: 0.5
+  m_AxeRun:
+    Frames:
+    - {fileID: 21300000, guid: 7071720678db14947a2a99ea1b9ff052, type: 3}
+    - {fileID: 21300000, guid: 83ed74f8d21437e418f32c6f601fdf7f, type: 3}
+    - {fileID: 21300000, guid: 5b38abf36518bf34bb921eb18a9dd3a8, type: 3}
+    - {fileID: 21300000, guid: d36f966dd36a34849b1efe6043724b1d, type: 3}
+    - {fileID: 21300000, guid: 54c08cf5259bf704fa018c67434b1d7e, type: 3}
+    - {fileID: 21300000, guid: e5b3a01dd4fb4ea46a404a0aa0ee5ecb, type: 3}
+    - {fileID: 21300000, guid: 3fb10747359dbf543b4c8abf08ac6216, type: 3}
+    - {fileID: 21300000, guid: f564671a524609b4c8c4a91b251518cf, type: 3}
+    - {fileID: 21300000, guid: 2e77bb10f452abb41a62acca4c7e8f09, type: 3}
+    - {fileID: 21300000, guid: 1d27c1a2b500df248bc58f0587853230, type: 3}
+    Blades:
+    - {fileID: 21300000, guid: b9479caaeb51da24c84a19aa64213d9b, type: 3}
+    - {fileID: 21300000, guid: 44c7577b94576cc4e9e3514fad49da7e, type: 3}
+    - {fileID: 21300000, guid: 1d071f4beb82fd345a750ed570712d6e, type: 3}
+    - {fileID: 21300000, guid: cec4e72c6ac78964dbdc3131f2e93b09, type: 3}
+    - {fileID: 21300000, guid: 4b55b44f0b6019e4f8e106b2e2b2ade7, type: 3}
+    - {fileID: 21300000, guid: 86bb5774f7ee58945b20055d8ab50883, type: 3}
+    - {fileID: 21300000, guid: 1e88fb822e42fe74cb95dcc0f60a6600, type: 3}
+    - {fileID: 21300000, guid: eebeb00ddeffb0848bdfacbf5a142126, type: 3}
+    - {fileID: 21300000, guid: f0a027224a6d320409ef76d8cafbda57, type: 3}
+    - {fileID: 21300000, guid: 3ae89ae7e6b124542a0a5f2aed673179, type: 3}
+    Fps: 12
+    Strike: 0.5
+  m_AxeSwingA:
+    Frames:
+    - {fileID: 21300000, guid: d5c63f16e73d10f4c9e4f85023b8d78e, type: 3}
+    - {fileID: 21300000, guid: 09546deb0fc9c94489ea56a4ca9a82ff, type: 3}
+    - {fileID: 21300000, guid: 762867589993a0c458948ccd68f204e7, type: 3}
+    - {fileID: 21300000, guid: c52da46231004c44d9837fd008c020e8, type: 3}
+    - {fileID: 21300000, guid: 974eb161aed25ec4fb65c3ed142c0ac2, type: 3}
+    - {fileID: 21300000, guid: 64befcc93fbc5f840bca2e3322313092, type: 3}
+    - {fileID: 21300000, guid: a4383e8ef3bf96740a8e6b2555a0c4c5, type: 3}
+    - {fileID: 21300000, guid: a3b1f4fce1c80af409a5387950f5c0eb, type: 3}
+    - {fileID: 21300000, guid: 3a6be0a02b037874296433269fc94f86, type: 3}
+    - {fileID: 21300000, guid: a4362d24850131446a9f1aba4c413640, type: 3}
+    - {fileID: 21300000, guid: 59955ceaa69f8e942937160e47da7611, type: 3}
+    - {fileID: 21300000, guid: 4019e0a06bf55f84eb0c692a6984c2be, type: 3}
+    - {fileID: 21300000, guid: e0ce48486868b0746b514ad6e8daa975, type: 3}
+    - {fileID: 21300000, guid: abf98382b018d214ba10f3bd48bd33f8, type: 3}
+    Blades:
+    - {fileID: 21300000, guid: c05a886e925d178479fbd67700c9bd1b, type: 3}
+    - {fileID: 21300000, guid: d8c5e08b50ebb8144a30315602518586, type: 3}
+    - {fileID: 21300000, guid: a938a5a17b6c4ba4fa52eee67fafcf36, type: 3}
+    - {fileID: 21300000, guid: fa5b590d1e3c4b6458c414d4736b1248, type: 3}
+    - {fileID: 21300000, guid: 1a34a6b47c82c3e4599d7bbfdf7663bd, type: 3}
+    - {fileID: 21300000, guid: fcdc37af87684c249966d612febfd6da, type: 3}
+    - {fileID: 21300000, guid: 48f53bf66dadd794ebfd42c90fa948f6, type: 3}
+    - {fileID: 21300000, guid: 2f0dce2674d5d344f990dfb2115135ed, type: 3}
+    - {fileID: 21300000, guid: 9afe73081e389d74d91622ac6df20237, type: 3}
+    - {fileID: 21300000, guid: d6667098eb355734d9aa364cc866ebdb, type: 3}
+    - {fileID: 21300000, guid: 5a1a49bc0d0c38f4791a698f9b7c971f, type: 3}
+    - {fileID: 21300000, guid: 1b44b7c6587a97c4282f243b3b10747c, type: 3}
+    - {fileID: 21300000, guid: e57a381b55f2f7448bacacd098def459, type: 3}
+    - {fileID: 21300000, guid: 0cb6c472c3c37534ca4024e5cf440b0f, type: 3}
+    Fps: 26
+    Strike: 0.536
+  m_AxeSwingB:
+    Frames:
+    - {fileID: 21300000, guid: 6ae7eeb170d0d4a47aa3858e42037473, type: 3}
+    - {fileID: 21300000, guid: d92dad029a971e74091c07fd2e8241b8, type: 3}
+    - {fileID: 21300000, guid: 819917c5fa15526498d4e7cabc4794c5, type: 3}
+    - {fileID: 21300000, guid: 2ee5d84c56b2d3e49bcdb13905f91c2b, type: 3}
+    - {fileID: 21300000, guid: 8dd1b3625eaffef46a5c07ef84a584e5, type: 3}
+    - {fileID: 21300000, guid: b5c34e09a40d69747aef5b23da226222, type: 3}
+    - {fileID: 21300000, guid: 344ddb152f90a444cb04e0190b73bcec, type: 3}
+    - {fileID: 21300000, guid: 5fbc94d29cdc7574a95498698c3d902f, type: 3}
+    - {fileID: 21300000, guid: 4c0f4b0041738ff42a5f6bed87762dd1, type: 3}
+    - {fileID: 21300000, guid: e4f202d5811281146a8c2620defa1c09, type: 3}
+    - {fileID: 21300000, guid: 88ecdcdd65465a54d81c6ad5e2632d95, type: 3}
+    - {fileID: 21300000, guid: d83efe5f462df614f857e7d3fe05539d, type: 3}
+    Blades:
+    - {fileID: 21300000, guid: a8a84844031d2714c89e381a041aaed0, type: 3}
+    - {fileID: 21300000, guid: 85f21cc0e7962ba429b2095347865eee, type: 3}
+    - {fileID: 21300000, guid: 29a5b4f78ada28d40b99be3161ed3183, type: 3}
+    - {fileID: 21300000, guid: 0a373a56612630f4781092e8d3eece1b, type: 3}
+    - {fileID: 21300000, guid: c425694ceb9b3e3468be9192bd16dc61, type: 3}
+    - {fileID: 21300000, guid: 7dd130ec59730c349affb82051faa916, type: 3}
+    - {fileID: 21300000, guid: 56f6ceb41413cb1428720847856c1c1e, type: 3}
+    - {fileID: 21300000, guid: c934266b172fa394aa7d716a1c549c1a, type: 3}
+    - {fileID: 21300000, guid: 8640d707853303e409d056a62b723978, type: 3}
+    - {fileID: 21300000, guid: 14ff227e3fcdb5740a62196212d33d28, type: 3}
+    - {fileID: 21300000, guid: 94d76ba0397bdca438d53a17cf793477, type: 3}
+    - {fileID: 21300000, guid: c2ba7db38feddaf4d9bd98f69880ea86, type: 3}
+    Fps: 26
+    Strike: 0.542
+  m_AxeRaise:
+    Frames:
+    - {fileID: 21300000, guid: d531e5e1283fd8a4b97668f93c3014c3, type: 3}
+    - {fileID: 21300000, guid: ac8c28917b6856043b5b1cbf02bb0393, type: 3}
+    - {fileID: 21300000, guid: 223ac25bc64b1034e973276e4b2d1c49, type: 3}
+    - {fileID: 21300000, guid: fd37860be6b7e584c80a67c8d3011281, type: 3}
+    - {fileID: 21300000, guid: 18f9928aa3da7b04988203c0e117829a, type: 3}
+    - {fileID: 21300000, guid: 2606c5ffa5b1cbe42b3b381fce45080d, type: 3}
+    - {fileID: 21300000, guid: 91e5f608cf445e747bf7eaf6d3276d76, type: 3}
+    - {fileID: 21300000, guid: d661c9cb3d56982439f877039dc2eec1, type: 3}
+    - {fileID: 21300000, guid: ac7f5ed72ec376f4dba746626fd2b448, type: 3}
+    - {fileID: 21300000, guid: 5cbdf2d437f0c6e469b9bea24a775209, type: 3}
+    - {fileID: 21300000, guid: 3fbca4ba5ab7d4d4f8c38c4e97b93373, type: 3}
+    Blades:
+    - {fileID: 21300000, guid: ff0a8942d926c63499872d1c27706405, type: 3}
+    - {fileID: 21300000, guid: f8808b26df68f3e46bb30a7d1cb36525, type: 3}
+    - {fileID: 21300000, guid: 56161bb1f9c66be409b56be398c5c07a, type: 3}
+    - {fileID: 21300000, guid: c279f0ce1934ab74a8824772c3a03c5a, type: 3}
+    - {fileID: 21300000, guid: e445d0590354461458079f3fddf8df99, type: 3}
+    - {fileID: 21300000, guid: 39c78d771d33ffa4c9d6d0af5c39c628, type: 3}
+    - {fileID: 21300000, guid: 496a735b3951b2444852968f4428f577, type: 3}
+    - {fileID: 21300000, guid: c744c986791ab6448a66cd55472d65a6, type: 3}
+    - {fileID: 21300000, guid: cdc970f28556b5945a86f287b48b3237, type: 3}
+    - {fileID: 21300000, guid: cd3a053027aef72438f8c5291527ca91, type: 3}
+    - {fileID: 21300000, guid: 5d1aff741fadc79428316c42a2b75840, type: 3}
+    Fps: 16
+    Strike: 0.955
+  m_AxeHold:
+    Frames:
+    - {fileID: 21300000, guid: 72fd6af72c055ad4299b720f2e60e7f9, type: 3}
+    - {fileID: 21300000, guid: 049e2dc8b1e942540a957224463928b7, type: 3}
+    - {fileID: 21300000, guid: 6ad798cc2ddc4f04a974fa0d58fa6f8e, type: 3}
+    - {fileID: 21300000, guid: 61fca619d186f434088808d8cb551eb6, type: 3}
+    - {fileID: 21300000, guid: ca6bf90f2551b8c4c8e01e261d8d5d18, type: 3}
+    - {fileID: 21300000, guid: 5a500808ead2c6142b437d9ad61430fc, type: 3}
+    - {fileID: 21300000, guid: 61792d033f648b841a5e626d769e3322, type: 3}
+    - {fileID: 21300000, guid: e43432ed70a6ecf438b4d47c265199de, type: 3}
+    - {fileID: 21300000, guid: a22834e05dd6ea743940351907d1d7fc, type: 3}
+    - {fileID: 21300000, guid: f05f5395306d8f34f8c779466d0b534b, type: 3}
+    - {fileID: 21300000, guid: 14ce2a0584bb3714288abb33ed7bb82b, type: 3}
+    Blades:
+    - {fileID: 21300000, guid: 9a9675a908d870347a70db4d3277ef43, type: 3}
+    - {fileID: 21300000, guid: 565ac9e287e76d24b9aa54e790ec8c56, type: 3}
+    - {fileID: 21300000, guid: 92b23d764d60ac94090304178ae18cf3, type: 3}
+    - {fileID: 21300000, guid: 882fb9cd4ffdbd44b801eb15198ce91b, type: 3}
+    - {fileID: 21300000, guid: 020269ed1ca32e24884eaad056295473, type: 3}
+    - {fileID: 21300000, guid: efc7f9611419a62478fdea8b983bcda5, type: 3}
+    - {fileID: 21300000, guid: 2562e783312da4a4f8951ab4b0063258, type: 3}
+    - {fileID: 21300000, guid: 15e55300e3d71ac408ca91ad835b82e2, type: 3}
+    - {fileID: 21300000, guid: 7715daecaf1340c458e3d0ec22f38a9f, type: 3}
+    - {fileID: 21300000, guid: 42f33918a0307274e8b89937f90103fa, type: 3}
+    - {fileID: 21300000, guid: e380f1e71fc39b8468916a9f5f12121c, type: 3}
+    Fps: 8
+    Strike: 0.5
+  m_AxeSlam:
+    Frames:
+    - {fileID: 21300000, guid: 5fab8b7d385120741821d129b36fffb8, type: 3}
+    - {fileID: 21300000, guid: 1d6ecfbf372d0ae48bc1a0cc508ff81c, type: 3}
+    - {fileID: 21300000, guid: 9160dcd21705a484b8ee19bc1864068c, type: 3}
+    - {fileID: 21300000, guid: 216989d46b84c1e43adc1f0b540003a3, type: 3}
+    - {fileID: 21300000, guid: 90000b93f08005e45be9fca4ea527b57, type: 3}
+    - {fileID: 21300000, guid: f2b1119a84dd7da4d80a6e9f5ef2f0ee, type: 3}
+    - {fileID: 21300000, guid: 6c8450f72f0e8c749a60e25a2b30ec3a, type: 3}
+    - {fileID: 21300000, guid: 3e5844a2c6040224794b0d9187aec7b1, type: 3}
+    Blades:
+    - {fileID: 21300000, guid: cc2bb54f15f3cbd4aba39b7aed21f246, type: 3}
+    - {fileID: 21300000, guid: 43e45218d537e5249b69a4317c5d7d51, type: 3}
+    - {fileID: 21300000, guid: 2f67dd3bbc3b98c439bb5268dbbe3b57, type: 3}
+    - {fileID: 21300000, guid: feeccce03de2fad44b8c02fc1ca7b0d7, type: 3}
+    - {fileID: 21300000, guid: b61346e6ea6f6034d96ec09342bba384, type: 3}
+    - {fileID: 21300000, guid: 1e760f813a7d41e4492e65569f3243cb, type: 3}
+    - {fileID: 21300000, guid: 104196a71b1435745b16af02dfaba4a8, type: 3}
+    - {fileID: 21300000, guid: e1b367a965f26c3448fc7a52f6a6d346, type: 3}
+    Fps: 22
+    Strike: 0.188
 --- !u!1 &8549933687757608099
 GameObject:
   m_ObjectHideFlags: 0

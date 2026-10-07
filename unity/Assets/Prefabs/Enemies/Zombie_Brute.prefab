@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 2952985308960021741}
   - component: {fileID: 5875598082197224584}
   - component: {fileID: 2646993501067429854}
+  - component: {fileID: 8782213166152594809}
   m_Layer: 13
   m_Name: Zombie_Brute
   m_TagString: Untagged
@@ -56,10 +57,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 0.75
-  m_Height: 2.6
+  m_Radius: 0.6
+  m_Height: 2.1
   m_Direction: 1
-  m_Center: {x: 0, y: 1.3, z: 0}
+  m_Center: {x: 0, y: 1.05, z: 0}
 --- !u!54 &2952985308960021741
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -96,7 +97,7 @@ NavMeshAgent:
   m_GameObject: {fileID: 1107384180964313262}
   m_Enabled: 0
   m_AgentTypeID: 0
-  m_Radius: 0.75
+  m_Radius: 0.6
   m_Speed: 0.95
   m_Acceleration: 14
   avoidancePriority: 50
@@ -105,7 +106,7 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 2.6
+  m_Height: 2.1
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 1
@@ -123,9 +124,49 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.ZombieController
   m_Animator: {fileID: 3767788887575188110}
   m_Shadow: {fileID: 8464757128178689729}
-  m_StrikeMoment: 0.5
+  m_StrikeMoment: 0.395
   m_ShotHitbox: {fileID: 736144567572113873}
-  m_VisualHeight: 4.3934484
+  m_VisualHeight: 3.3921509
+  m_Gibs: {fileID: 8782213166152594809}
+--- !u!114 &8782213166152594809
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1107384180964313262}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95cff9a96b7da8342ba07606821abbd4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.ZombieGibs
+  m_View: {fileID: 3299068378775936486}
+  m_Pieces:
+  - {fileID: 21300000, guid: 653bddc779f539a44bb11351336cdb80, type: 3}
+  - {fileID: 21300000, guid: 7a5e282b43860334bab853dca3bfc6c4, type: 3}
+  - {fileID: 21300000, guid: 516ed97a1ea96e345b3e5c448552c50e, type: 3}
+  - {fileID: 21300000, guid: 444c63e9f4a28c24b964c93e58c8ecbd, type: 3}
+  - {fileID: 21300000, guid: 43203b267d78f924998b1d2f212483cb, type: 3}
+  - {fileID: 21300000, guid: 7bb92f6db00846c4fb5d289eb6c63010, type: 3}
+  - {fileID: 21300000, guid: 89fb401fbdb45fa4fb590e1d302a7c36, type: 3}
+  - {fileID: 21300000, guid: 684e139e80c90fc4595a53d5e34154fe, type: 3}
+  - {fileID: 21300000, guid: 37871ddf94ee4074abc2e2fbd584b8c7, type: 3}
+  m_Offsets:
+  - {x: -0.15646622, y: 2.6383395}
+  - {x: 0.46435136, y: 2.4812956}
+  - {x: 0.73690546, y: 1.3662829}
+  - {x: -0.69147974, y: 2.2692862}
+  - {x: 0.11608784, y: 1.3819873}
+  - {x: -0.41387838, y: 1.562588}
+  - {x: 0.29274327, y: 0.5182453}
+  - {x: -0.8075676, y: 1.1385691}
+  - {x: -0.52996624, y: 0.5339497}
+  m_Scale: {x: 1.0094595, y: 1.5704402}
+  m_Tint: {r: 1, g: 0.93, b: 0.85, a: 1}
+  m_SpriteMaterial: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
+  m_DropMaterial: {fileID: 2100000, guid: ef7e42de9558fbd42b55cc4fbfd11e3c, type: 2}
+  m_SplatMaterial: {fileID: 2100000, guid: 4d460388e1c52bc4dbb892798f66c4fc, type: 2}
+  m_Size: 1.05
 --- !u!1 &1545795736567639213
 GameObject:
   m_ObjectHideFlags: 0
@@ -154,7 +195,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.641892, y: 2.5543303, z: 1}
+  m_LocalScale: {x: 1.0094595, y: 1.5704402, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3299068378775936486}
@@ -208,12 +249,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: d2684f43d0195894d9cdbd85b46df568, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 3c9701202da46cf4bb9076a2f5931adc, type: 3}
   m_Color: {r: 1, g: 0.93, b: 0.85, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 2.36, y: 1.72}
+  m_Size: {x: 2.36, y: 2.16}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -232,17 +273,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Characters.SpriteAnimator
   m_Sprites: {fileID: 11400000, guid: 9283b42b00f50414f92792f311dd6076, type: 2}
-  m_Scale: {x: 1.641892, y: 2.5543303}
+  m_Scale: {x: 1.0094595, y: 1.5704402}
   m_Tint: {r: 1, g: 0.93, b: 0.85, a: 1}
-  m_StepBounce: 0.05
-  m_StepSway: 4
+  m_StepBounce: 0.015
+  m_StepSway: 1
   m_Procedural: 1
-  m_Breath: 0.03
+  m_Breath: 0.01
   m_BreathRate: 0.55
-  m_StepSquash: 0.06
-  m_WalkLean: 5
-  m_AttackLean: 12
-  m_AttackLunge: 0.18
+  m_StepSquash: 0.02
+  m_WalkLean: 1.5
+  m_AttackLean: 4
+  m_AttackLunge: 0.06
   m_HitLean: 14
   m_HitTime: 0.28
   m_DeathThud: 0.14
@@ -323,7 +364,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.08, z: 0}
-  m_LocalScale: {x: 2.7, y: 1, z: 1.2825}
+  m_LocalScale: {x: 2.1, y: 1, z: 0.99749994}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 3299068378775936486}
@@ -436,7 +477,7 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1
-  m_Height: 3.1
+  m_Radius: 0.85
+  m_Height: 2.6
   m_Direction: 1
-  m_Center: {x: 0, y: 1.3, z: 0}
+  m_Center: {x: 0, y: 1.05, z: 0}

@@ -122,6 +122,10 @@ namespace ZombiCar.Enemies
         [SerializeField] private AudioClip m_DeathClip;
         [Tooltip("Its signature ability: the brood's call, the acid rain, the reap.")]
         [SerializeField] private AudioClip m_SpecialClip;
+        [Tooltip("The charge's own sound (from the boss's video take); none: the shared charge sound.")]
+        [SerializeField] private AudioClip m_ChargeClip;
+        [Tooltip("Coming back up out of the ground after the reap's teleport; none: silent.")]
+        [SerializeField] private AudioClip m_AppearClip;
 
         public bool Summon => m_Summon;
         public float SummonInterval => m_SummonInterval;
@@ -206,5 +210,7 @@ namespace ZombiCar.Enemies
         public AudioClip AttackClip => m_AttackClip;
         public AudioClip DeathClip => m_DeathClip;
         public AudioClip SpecialClip => m_SpecialClip;
+        public AudioClip ChargeClip => m_ChargeClip;
+        public AudioClip AppearClip => m_AppearClip;
     }
 }

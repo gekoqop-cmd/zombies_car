@@ -1,0 +1,53 @@
+{
+ "name": "Hoodie",
+ "pieces": [
+  {
+   "sprite": "Hoodie_Gib_0",
+   "x": 1.0,
+   "y": 142.5,
+   "area": 1806
+  },
+  {
+   "sprite": "Hoodie_Gib_1",
+   "x": -41.0,
+   "y": 116.5,
+   "area": 1877
+  },
+  {
+   "sprite": "Hoodie_Gib_2",
+   "x": 11.5,
+   "y": 119.0,
+   "area": 1737
+  },
+  {
+   "sprite": "Hoodie_Gib_3",
+   "x": -68.0,
+   "y": 82.0,
+   "area": 2261
+  },
+  {
+   "sprite": "Hoodie_Gib_4",
+   "x": -21.5,
+   "y": 76.5,
+   "area": 1837
+  },
+  {
+   "sprite": "Hoodie_Gib_5",
+   "x": 22.0,
+   "y": 74.5,
+   "area": 1271
+  },
+  {
+   "sprite": "Hoodie_Gib_6",
+   "x": -7.5,
+   "y": 30.5,
+   "area": 1438
+  },
+  {
+   "sprite": "Hoodie_Gib_7",
+   "x": -63.0,
+   "y": 28.0,
+   "area": 1340
+  }
+ ]
+}

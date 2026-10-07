@@ -1607,6 +1607,7 @@ GameObject:
   - component: {fileID: 5975463537876929773}
   - component: {fileID: 3604589758038847277}
   - component: {fileID: 4782499727252567531}
+  - component: {fileID: 2077518404384176381}
   m_Layer: 5
   m_Name: Logo
   m_TagString: Untagged
@@ -1671,6 +1672,20 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2077518404384176381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 216978339540753464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df44335e1d0d3c14686b6d08211e666b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.UI.LocalizedImage
+  m_Russian: {fileID: 21300000, guid: 76fb7481de435c348821fbc181cfa375, type: 3}
+  m_English: {fileID: 21300000, guid: 4f63fe68a59b2f5419af84a053bb2f15, type: 3}
 --- !u!1 &222190712587153620
 GameObject:
   m_ObjectHideFlags: 0
@@ -21515,6 +21530,197 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!1 &3445812365864419632
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3734438843441958997}
+  - component: {fileID: 4203607082996795109}
+  m_Layer: 5
+  m_Name: LanguageSwitch
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &3734438843441958997
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3445812365864419632}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5621822665562124006}
+  - {fileID: 8388114665451907985}
+  m_Father: {fileID: 7156089996626117212}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 40, y: -36}
+  m_SizeDelta: {x: 252, y: 84}
+  m_Pivot: {x: 0, y: 1}
+--- !u!114 &4203607082996795109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3445812365864419632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0bf3387bc3dab8844abf49eee358f77e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.UI.LanguageSwitch
+  m_Russian: {fileID: 3009695771085267785}
+  m_English: {fileID: 2832506810920254379}
+  m_Selected: {r: 1.6, g: 1.25, b: 0.75, a: 1}
+  m_Normal: {r: 0.45, g: 0.45, b: 0.5, a: 0.75}
+--- !u!1 &3450209064598734738
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8388114665451907985}
+  - component: {fileID: 4185318561578233033}
+  - component: {fileID: 2769302103387120424}
+  - component: {fileID: 2832506810920254379}
+  - component: {fileID: 2465358047799110040}
+  m_Layer: 5
+  m_Name: English
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &8388114665451907985
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3450209064598734738}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1641455979392163693}
+  m_Father: {fileID: 3734438843441958997}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 1, y: 0.5}
+  m_AnchorMax: {x: 1, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 120, y: 84}
+  m_Pivot: {x: 1, y: 0.5}
+--- !u!222 &4185318561578233033
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3450209064598734738}
+  m_CullTransparentMesh: 1
+--- !u!114 &2769302103387120424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3450209064598734738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.16, g: 0.17, b: 0.2, a: 0.95}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: aba037ebabbe63b42b07825d30bab8bf, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &2832506810920254379
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3450209064598734738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 1.12, g: 1.12, b: 1.12, a: 1}
+    m_PressedColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 2769302103387120424}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &2465358047799110040
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3450209064598734738}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a17b9c10b4ecfae4bab8d0f62f6db587, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.UI.UIButtonFx
+  m_HoverScale: 1.06
+  m_PressScale: 0.94
+  m_Smoothing: 0.08
 --- !u!1 &3458751217987830487
 GameObject:
   m_ObjectHideFlags: 0
@@ -25990,6 +26196,143 @@ MonoBehaviour:
     rgba: 4294967295
   m_fontSize: 44
   m_fontSizeBase: 44
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 1
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 0
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656bu
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &4115211017323582684
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7737639569829027949}
+  - component: {fileID: 4556207717910281096}
+  - component: {fileID: 8293641715177574452}
+  m_Layer: 5
+  m_Name: Label
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &7737639569829027949
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4115211017323582684}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5621822665562124006}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 120, y: 84}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &4556207717910281096
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4115211017323582684}
+  m_CullTransparentMesh: 1
+--- !u!114 &8293641715177574452
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4115211017323582684}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: RU
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 25f09e55c14c31c49912cb492c37733c, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: e9444c3c65a5bc94597df308ba690b68, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 0.97, g: 0.95, b: 0.9, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: 0
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 38
+  m_fontSizeBase: 38
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -31253,6 +31596,143 @@ RectTransform:
   m_AnchoredPosition: {x: 270, y: 0}
   m_SizeDelta: {x: 360, y: 56}
   m_Pivot: {x: 0, y: 0.5}
+--- !u!1 &4902422714185549749
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1641455979392163693}
+  - component: {fileID: 3867586941683122042}
+  - component: {fileID: 3343847816850341449}
+  m_Layer: 5
+  m_Name: Label
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1641455979392163693
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4902422714185549749}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8388114665451907985}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 120, y: 84}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &3867586941683122042
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4902422714185549749}
+  m_CullTransparentMesh: 1
+--- !u!114 &3343847816850341449
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4902422714185549749}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 0
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: EN
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 25f09e55c14c31c49912cb492c37733c, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: e9444c3c65a5bc94597df308ba690b68, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 0.97, g: 0.95, b: 0.9, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: 0
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 38
+  m_fontSizeBase: 38
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 1
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 0
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656bu
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &4967969112707892858
 GameObject:
   m_ObjectHideFlags: 0
@@ -33387,7 +33867,6 @@ MonoBehaviour:
   m_ControlsSizeSlider: {fileID: 4836809997813765477}
   m_EditControlsButton: {fileID: 7364996807444150536}
   m_Window: {fileID: 2693466655930235923}
-  m_MobileSectionHeight: 220
   m_CloseButton: {fileID: 2848715096599610002}
   m_MenuButton: {fileID: 0}
   m_Coins: {fileID: 0}
@@ -36700,6 +37179,7 @@ RectTransform:
   - {fileID: 4471622441394211646}
   - {fileID: 5691627870703830699}
   - {fileID: 3355011548785027198}
+  - {fileID: 3734438843441958997}
   m_Father: {fileID: 3589258925837457100}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -47866,6 +48346,143 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &7317842263083291608
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5621822665562124006}
+  - component: {fileID: 3431166025552449578}
+  - component: {fileID: 6724240213146857290}
+  - component: {fileID: 3009695771085267785}
+  - component: {fileID: 4821326242062472196}
+  m_Layer: 5
+  m_Name: Russian
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &5621822665562124006
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7317842263083291608}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 7737639569829027949}
+  m_Father: {fileID: 3734438843441958997}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0.5}
+  m_AnchorMax: {x: 0, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 120, y: 84}
+  m_Pivot: {x: 0, y: 0.5}
+--- !u!222 &3431166025552449578
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7317842263083291608}
+  m_CullTransparentMesh: 1
+--- !u!114 &6724240213146857290
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7317842263083291608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
+  m_Material: {fileID: 0}
+  m_Color: {r: 0.16, g: 0.17, b: 0.2, a: 0.95}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: aba037ebabbe63b42b07825d30bab8bf, type: 3}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!114 &3009695771085267785
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7317842263083291608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 1.12, g: 1.12, b: 1.12, a: 1}
+    m_PressedColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 6724240213146857290}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4821326242062472196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7317842263083291608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a17b9c10b4ecfae4bab8d0f62f6db587, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.UI.UIButtonFx
+  m_HoverScale: 1.06
+  m_PressScale: 0.94
+  m_Smoothing: 0.08
 --- !u!1 &7321102919854670433
 GameObject:
   m_ObjectHideFlags: 0
@@ -52347,8 +52964,8 @@ MonoBehaviour:
     TouchCaption: 
     Accent: {r: 1, g: 0.8, b: 0.3, a: 1}
   - Title: "\u0423\u041F\u0420\u0410\u0412\u041B\u0415\u041D\u0418\u0415"
-    Text: "WASD \u2014 \u0438\u0434\u0442\u0438, \u043C\u044B\u0448\u044C \u2014 \u0446\u0435\u043B\u0438\u0442\u044C\u0441\u044F, \u043B\u0435\u0432\u0430\u044F \u043A\u043D\u043E\u043F\u043A\u0430 \u2014 \u0430\u0442\u0430\u043A\u0430.\n1 / 2 \u2014 \u0430\u0432\u0442\u043E\u043C\u0430\u0442 \u0438 \u0442\u043E\u043F\u043E\u0440, 3 \u2014 \u0430\u043F\u0442\u0435\u0447\u043A\u0430 \u0438\u0437 \u0437\u0430\u043F\u0430\u0441\u0430."
-    TouchText: "\u041B\u0435\u0432\u044B\u0439 \u0434\u0436\u043E\u0439\u0441\u0442\u0438\u043A \u2014 \u0438\u0434\u0442\u0438, \u043F\u0440\u0430\u0432\u044B\u0439 \u2014 \u0446\u0435\u043B\u0438\u0442\u044C\u0441\u044F \u0438 \u0441\u0442\u0440\u0435\u043B\u044F\u0442\u044C.\n\u041A\u043D\u043E\u043F\u043A\u0438 \u0440\u044F\u0434\u043E\u043C \u2014 \u0430\u0432\u0442\u043E\u043C\u0430\u0442, \u0442\u043E\u043F\u043E\u0440 \u0438 \u0430\u043F\u0442\u0435\u0447\u043A\u0430."
+    Text: "WASD: \u0438\u0434\u0442\u0438. \u041C\u044B\u0448\u044C: \u0446\u0435\u043B\u0438\u0442\u044C\u0441\u044F. \u041B\u0435\u0432\u0430\u044F \u043A\u043D\u043E\u043F\u043A\u0430: \u0430\u0442\u0430\u043A\u0430.\n1 / 2: \u0430\u0432\u0442\u043E\u043C\u0430\u0442 \u0438 \u0442\u043E\u043F\u043E\u0440, 3: \u0430\u043F\u0442\u0435\u0447\u043A\u0430 \u0438\u0437 \u0437\u0430\u043F\u0430\u0441\u0430."
+    TouchText: "\u041B\u0435\u0432\u044B\u0439 \u0434\u0436\u043E\u0439\u0441\u0442\u0438\u043A: \u0438\u0434\u0442\u0438. \u041F\u0440\u0430\u0432\u044B\u0439: \u0446\u0435\u043B\u0438\u0442\u044C\u0441\u044F \u0438 \u0441\u0442\u0440\u0435\u043B\u044F\u0442\u044C.\n\u041A\u043D\u043E\u043F\u043A\u0438 \u0440\u044F\u0434\u043E\u043C: \u0430\u0432\u0442\u043E\u043C\u0430\u0442, \u0442\u043E\u043F\u043E\u0440 \u0438 \u0430\u043F\u0442\u0435\u0447\u043A\u0430."
     Icon: {fileID: 21300000, guid: a54cc1d7d811b9646a27c919a59160ad, type: 3}
     Icon2: {fileID: 21300000, guid: 7d9e062ec04bdd34d893df120af6a804, type: 3}
     TouchIcon: {fileID: 21300000, guid: 1af597eac785d5243aba301e8797fd2c, type: 3}
@@ -52356,8 +52973,8 @@ MonoBehaviour:
     TouchCaption: "\u0414\u0416\u041E\u0419\u0421\u0422\u0418\u041A\u0418 \xB7 \u041A\u041D\u041E\u041F\u041A\u0418"
     Accent: {r: 0.45, g: 0.78, b: 1, a: 1}
   - Title: "\u041E\u0420\u0423\u0416\u0418\u0415"
-    Text: "\u041F\u0430\u0442\u0440\u043E\u043D\u044B \u043D\u0430 \u043E\u0440\u0443\u0436\u0438\u0435 \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u044E\u0442\u0441\u044F \u2014 \u043F\u043E\u043F\u043E\u043B\u043D\u044F\u0439 \u0438\u0445 \u0443 \u043C\u0430\u0448\u0438\u043D\u044B \u043C\u0435\u0436\u0434\u0443 \u0432\u043E\u043B\u043D\u0430\u043C\u0438.\n\u0422\u043E\u043F\u043E\u0440 \u2014 \u043E\u043D \u0442\u043E\u043F\u043E\u0440, \u0438 \u043E\u043D \u0441 \u0442\u043E\u0431\u043E\u0439 \u0432\u0441\u0435\u0433\u0434\u0430 :)"
-    TouchText: 
+    Text: "\u041F\u0430\u0442\u0440\u043E\u043D\u044B \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u044E\u0442\u0441\u044F, \u043F\u043E\u043F\u043E\u043B\u043D\u044F\u0439 \u0438\u0445 \u0443 \u043C\u0430\u0448\u0438\u043D\u044B \u043C\u0435\u0436\u0434\u0443 \u0432\u043E\u043B\u043D\u0430\u043C\u0438.\n\u0422\u043E\u043F\u043E\u0440: \u043A\u043B\u0438\u043A \u0434\u043B\u044F \u0431\u044B\u0441\u0442\u0440\u043E\u0433\u043E \u0443\u0434\u0430\u0440\u0430, \u0437\u0430\u0436\u043C\u0438 \u0438 \u043E\u0442\u043F\u0443\u0441\u0442\u0438 \u0434\u043B\u044F \u043C\u043E\u0449\u043D\u043E\u0433\u043E."
+    TouchText: "\u041F\u0430\u0442\u0440\u043E\u043D\u044B \u0437\u0430\u043A\u0430\u043D\u0447\u0438\u0432\u0430\u044E\u0442\u0441\u044F, \u043F\u043E\u043F\u043E\u043B\u043D\u044F\u0439 \u0438\u0445 \u0443 \u043C\u0430\u0448\u0438\u043D\u044B \u043C\u0435\u0436\u0434\u0443 \u0432\u043E\u043B\u043D\u0430\u043C\u0438.\n\u0422\u043E\u043F\u043E\u0440: \u0442\u0430\u043F \u0434\u043B\u044F \u0431\u044B\u0441\u0442\u0440\u043E\u0433\u043E \u0443\u0434\u0430\u0440\u0430, \u0437\u0430\u0436\u043C\u0438 \u0434\u0436\u043E\u0439\u0441\u0442\u0438\u043A \u0438 \u043E\u0442\u043F\u0443\u0441\u0442\u0438 \u0434\u043B\u044F \u043C\u043E\u0449\u043D\u043E\u0433\u043E."
     Icon: {fileID: 21300000, guid: 7d9e062ec04bdd34d893df120af6a804, type: 3}
     Icon2: {fileID: 21300000, guid: be8dc4f62e94b584c8af65eadbe72545, type: 3}
     TouchIcon: {fileID: 0}
@@ -52365,7 +52982,7 @@ MonoBehaviour:
     TouchCaption: 
     Accent: {r: 0.93, g: 0.47, b: 0.13, a: 1}
   - Title: "\u041C\u0410\u0428\u0418\u041D\u0410 \u0418 \u041C\u0410\u0421\u0422\u0415\u0420\u0421\u041A\u0410\u042F"
-    Text: "\u0417\u0430\u0449\u0438\u0449\u0430\u0439 \u043C\u0430\u0448\u0438\u043D\u0443: \u0437\u043E\u043C\u0431\u0438 \u0438\u0434\u0443\u0442 \u0438 \u043A \u043D\u0435\u0439. \u041C\u0435\u0436\u0434\u0443 \u0432\u043E\u043B\u043D\u0430\u043C\u0438 \u2014 \u043C\u0430\u0441\u0442\u0435\u0440\u0441\u043A\u0430\u044F\n\u0438 \u043F\u0430\u0442\u0440\u043E\u043D\u044B \u0443 \u043C\u0430\u0448\u0438\u043D\u044B. \u0413\u043E\u0442\u043E\u0432 \u0440\u0430\u043D\u044C\u0448\u0435? E \u2014 \u043F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u043F\u0435\u0440\u0435\u0440\u044B\u0432."
+    Text: "\u0417\u0430\u0449\u0438\u0449\u0430\u0439 \u043C\u0430\u0448\u0438\u043D\u0443: \u0437\u043E\u043C\u0431\u0438 \u0438\u0434\u0443\u0442 \u0438 \u043A \u043D\u0435\u0439. \u041C\u0435\u0436\u0434\u0443 \u0432\u043E\u043B\u043D\u0430\u043C\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0430 \u043C\u0430\u0441\u0442\u0435\u0440\u0441\u043A\u0430\u044F\n\u0438 \u043F\u0430\u0442\u0440\u043E\u043D\u044B \u0443 \u043C\u0430\u0448\u0438\u043D\u044B. \u0413\u043E\u0442\u043E\u0432 \u0440\u0430\u043D\u044C\u0448\u0435? \u0416\u043C\u0438 E, \u0447\u0442\u043E\u0431\u044B \u043F\u0440\u043E\u043F\u0443\u0441\u0442\u0438\u0442\u044C \u043F\u0435\u0440\u0435\u0440\u044B\u0432."
     TouchText: 
     Icon: {fileID: 21300000, guid: a2cb2863dd287e24286fbaf71b555510, type: 3}
     Icon2: {fileID: 21300000, guid: 76df019849dda0d4c8cc7e31ee85f5d2, type: 3}
@@ -52374,16 +52991,16 @@ MonoBehaviour:
     TouchCaption: 
     Accent: {r: 0.55, g: 0.9, b: 0.45, a: 1}
   - Title: "\u0423\u0420\u041E\u0412\u041D\u0418 \u0418 \u041A\u0410\u0420\u0422\u041E\u0427\u041A\u0418"
-    Text: "\u0417\u0430 \u043E\u043F\u044B\u0442 \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0448\u044C \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u0435. \xAB\u041D\u041E\u0412\u041E\u0415\xBB \u2014 \u0442\u0430\u043A\u0443\u044E \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443\n\u0442\u044B \u0435\u0449\u0451 \u043D\u0435 \u0431\u0440\u0430\u043B. \u0412\u0437\u044F\u0442\u044B\u0435 \u0432\u0438\u0434\u043D\u044B \u0441\u043B\u0435\u0432\u0430."
+    Text: "\u0417\u0430 \u043E\u043F\u044B\u0442 \u0432\u044B\u0431\u0438\u0440\u0430\u0435\u0448\u044C \u0443\u043B\u0443\u0447\u0448\u0435\u043D\u0438\u0435. \xAB\u041D\u041E\u0412\u041E\u0415\xBB \u0437\u043D\u0430\u0447\u0438\u0442, \u0447\u0442\u043E \u0442\u0430\u043A\u0443\u044E \u043A\u0430\u0440\u0442\u043E\u0447\u043A\u0443\n\u0442\u044B \u0435\u0449\u0451 \u043D\u0435 \u0431\u0440\u0430\u043B. \u0412\u0437\u044F\u0442\u044B\u0435 \u0432\u0438\u0434\u043D\u044B \u0441\u043B\u0435\u0432\u0430."
     TouchText: 
     Icon: {fileID: 21300000, guid: 9bbe122f035bfa34eafc64771f65c430, type: 3}
     Icon2: {fileID: 21300000, guid: 38aa64c4c74521f4198fc8d24e8c6616, type: 3}
     TouchIcon: {fileID: 0}
-    Caption: "\xAB\u041D\u041E\u0412\u041E\u0415\xBB \u2014 \u0415\u0429\u0401 \u041D\u0415 \u0411\u0420\u0410\u041B"
+    Caption: "\xAB\u041D\u041E\u0412\u041E\u0415\xBB: \u0415\u0429\u0401 \u041D\u0415 \u0411\u0420\u0410\u041B"
     TouchCaption: 
     Accent: {r: 0.62, g: 0.5, b: 1, a: 1}
   - Title: "\u0411\u041E\u0421\u0421\u042B \u0418 \u041D\u0410\u0413\u0420\u0410\u0414\u0410"
-    Text: "\u0411\u043E\u0441\u0441\u044B \u043F\u0440\u0438\u0445\u043E\u0434\u044F\u0442 \u043D\u0430 10, 20 \u0438 30 \u0432\u043E\u043B\u043D\u0435 \u2014 \u043C\u0435\u0442\u043A\u0438 \u043D\u0430 \u043F\u043E\u043B\u043E\u0441\u0435 \u0441\u0432\u0435\u0440\u0445\u0443.\n\u0417\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 \u2014 \u043C\u043E\u043D\u0435\u0442\u044B \u043D\u0430 \u043A\u0435\u0439\u0441\u044B \u0438 \u0441\u043A\u0438\u043D\u044B."
+    Text: "\u0411\u043E\u0441\u0441\u044B \u043F\u0440\u0438\u0445\u043E\u0434\u044F\u0442 \u043D\u0430 10, 20 \u0438 30 \u0432\u043E\u043B\u043D\u0435, \u0438\u0445 \u043C\u0435\u0442\u043A\u0438 \u043D\u0430 \u043F\u043E\u043B\u043E\u0441\u0435 \u0441\u0432\u0435\u0440\u0445\u0443.\n\u0417\u0430 \u043F\u043E\u0431\u0435\u0434\u0443 \u0434\u0430\u044E\u0442 \u043C\u043E\u043D\u0435\u0442\u044B \u043D\u0430 \u043A\u0435\u0439\u0441\u044B \u0438 \u0441\u043A\u0438\u043D\u044B."
     TouchText: 
     Icon: {fileID: 21300000, guid: 880655a07fd24ae4093c015365baf677, type: 3}
     Icon2: {fileID: 21300000, guid: 14541d99132200c4ca88985f4c6ada2a, type: 3}

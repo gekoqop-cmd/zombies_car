@@ -1,0 +1,68 @@
+{
+ "name": "Hoodie",
+ "standingHeightPx": 170,
+ "pixelScale": 1.3492063492063493,
+ "strikeMoment": 0.469,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Hoodie_Idle_00",
+    "Hoodie_Idle_01",
+    "Hoodie_Idle_02",
+    "Hoodie_Idle_03"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Hoodie_Move_00",
+    "Hoodie_Move_01",
+    "Hoodie_Move_02",
+    "Hoodie_Move_03",
+    "Hoodie_Move_04",
+    "Hoodie_Move_05",
+    "Hoodie_Move_06",
+    "Hoodie_Move_07",
+    "Hoodie_Move_08",
+    "Hoodie_Move_09",
+    "Hoodie_Move_10",
+    "Hoodie_Move_11",
+    "Hoodie_Move_12",
+    "Hoodie_Move_13",
+    "Hoodie_Move_14",
+    "Hoodie_Move_15"
+   ],
+   "fps": 12.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Hoodie_Attack_00",
+    "Hoodie_Attack_01",
+    "Hoodie_Attack_02",
+    "Hoodie_Attack_03",
+    "Hoodie_Attack_04",
+    "Hoodie_Attack_05",
+    "Hoodie_Attack_06",
+    "Hoodie_Attack_07",
+    "Hoodie_Attack_08",
+    "Hoodie_Attack_09",
+    "Hoodie_Attack_10",
+    "Hoodie_Attack_11",
+    "Hoodie_Attack_12",
+    "Hoodie_Attack_13",
+    "Hoodie_Attack_14",
+    "Hoodie_Attack_15"
+   ],
+   "fps": 17.0,
+   "loop": false,
+   "strike": 0.469
+  }
+ ]
+}

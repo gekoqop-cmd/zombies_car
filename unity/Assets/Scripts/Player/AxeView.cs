@@ -54,7 +54,8 @@ namespace ZombiCar.Player
             float windup = m_Melee.Config.Windup;
             bool swinging = swing < windup + m_StrikeTime + m_RecoverTime;
             bool visible = m_Melee.Active || swinging;
-            m_Axe.enabled = visible;
+            // The body's own axe frames (standing, swinging, charging) carry the axe: this one only while running.
+            m_Axe.enabled = visible && !m_Melee.ViewDrawsAxe;
             if (!visible)
             {
                 m_Slash.enabled = false;

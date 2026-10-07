@@ -85,7 +85,9 @@ MonoBehaviour:
   m_SlamKnockback: 6
   m_VoicePitch: 1.1
   m_AuraColor: {r: 0.5, g: 1, b: 0.3, a: 0.55}
-  m_RoarClip: {fileID: 8300000, guid: 5f617671647449f459d250b49361c601, type: 3}
+  m_RoarClip: {fileID: 8300000, guid: 769c74e9dc056464c8f2cd0faa94595e, type: 3}
   m_AttackClip: {fileID: 8300000, guid: 70adaa5fbff4f0940aefdf9b5b7e418f, type: 3}
   m_DeathClip: {fileID: 8300000, guid: 0a2420611cd3a154782d99ee786720cd, type: 3}
-  m_SpecialClip: {fileID: 8300000, guid: f7bcb069ee6b07a438cb6af14753bc32, type: 3}
+  m_SpecialClip: {fileID: 8300000, guid: 602d02dd86a52a54da4ef288e81a828b, type: 3}
+  m_ChargeClip: {fileID: 0}
+  m_AppearClip: {fileID: 0}

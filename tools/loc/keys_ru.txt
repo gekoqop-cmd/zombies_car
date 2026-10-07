@@ -1,0 +1,341 @@
+  (ЛУЧШЕЕ {0})	UI/GameOverScreen.cs
+  <color=#{0}>БОНУС В ЗАБЕГЕ: {1}</color>	UI/CasesScreen.cs
+  РЕКОРД!	UI/GameOverScreen.cs
++{0} к запасу патронов (вместимость)	Data/CarUpgrades.asset
++{0} к запасу патронов,\nсразу пополняется	Data/PerkPool.asset
++{0} к максимуму здоровья\nи лечение на {1}	Data/PerkPool.asset
++{0} к пробитию зомби	Data/Cosmetics.asset
++{0} к прочности машины (и ремонт)	Data/CarUpgrades.asset
++{0} патронов в магазине	Data/PerkPool.asset
++{0} — ЗАБЕРИ В МЕНЮ «ДОСТИЖЕНИЯ»	UI/AchievementToast.cs
++{0}% к дальности удара топором	Data/Cosmetics.asset
++{0}% к скорострельности	Data/Cosmetics.asset
++{0}% к урону пуль	Data/Cosmetics.asset
++{0}% шанс\nдвойного урона	Data/PerkPool.asset
+<size={0}%>ШАНСЫ ВЫПАДЕНИЯ:</size>	UI/CasesScreen.cs
+E / ESC: ЗАКРЫТЬ	Prefabs/UI/HUD.prefab
+WASD · МЫШЬ · {0} / {1} / {2}	Prefabs/UI/HUD.prefab
+WASD — ДВИЖЕНИЕ	Prefabs/UI/HUD.prefab
+WASD: идти. Мышь: целиться. Левая кнопка: атака.\n{0} / {1}: автомат и топор, {2}: аптечка из запаса.	Prefabs/UI/HUD.prefab
+{0}  •  ВОЛНА {1} ИЗ {2}\n	UI/DifficultyScreen.cs
+{0} ВОЛН  •  {1} БОССА	Prefabs/UI/HUD.prefab
+{0} ВОЛН  •  {1} БОССА  •  {2}	UI/VictoryFinaleView.cs
+{0} ВОЛН · {1} БОССА	Prefabs/UI/HUD.prefab
+{0} ФАЗА	Prefabs/UI/HUD.prefab
+«НОВОЕ»: ЕЩЁ НЕ БРАЛ	Prefabs/UI/HUD.prefab
+АВТОМАТ · ТОПОР	Prefabs/UI/HUD.prefab
+АПТЕЧКА	Data/CarUpgrades.asset
+БАРАХОЛЬЩИК	Data/PerkPool.asset
+БЕЗ СОХРАНЕНИЙ	Prefabs/UI/MainMenu.prefab
+БЕЗУМЕЦ!	Core/Achievements.cs
+БЕЛЫЕ	Data/Cosmetics.asset
+БЕСПЛАТНЫЕ КЕЙСЫ: {0} — ВЫБЕРИ ЛЮБОЙ!	UI/CasesScreen.cs
+БЕСПЛАТНЫЙ КЕЙС — ВЫБЕРИ ЛЮБОЙ!	UI/CasesScreen.cs
+БОЛЬШЕ ЗОМБИ, БОЛЬШЕ НАГРАДЫ	Core/Difficulty.cs
+БОЛЬШОЙ МАГАЗИН	Data/PerkPool.asset
+БОНУС ЗА СЕГОДНЯ ПОЛУЧЕН. ЗАХОДИ ЗАВТРА!	UI/DailyBonusPanel.cs
+БОНУС: ???	UI/ItemTile.cs
+БОСС	Prefabs/UI/HUD.prefab
+БОСС  •  ВОЛНА {0}	UI/BossIntroView.cs
+БОСС!	UI/WaveBanner.cs
+БОССОВ ЗА ЗАБЕГ	Prefabs/UI/MainMenu.prefab
+БОССЫ	Prefabs/UI/HUD.prefab
+БОССЫ И НАГРАДА	Prefabs/UI/HUD.prefab
+БРОНЕБОЙНЫЕ ПУЛИ	Data/PerkPool.asset
+БРОНЯ	Data/CarUpgrades.asset
+БЫСТРЫЕ РУКИ	Data/PerkPool.asset
+Боссы приходят на {0}, {1} и {2} волне, их метки на полосе сверху.\nЗа победу дают монеты на кейсы и скины.	Prefabs/UI/HUD.prefab
+Бьёт дугой перед собой\nи отбрасывает. Не стой рядом.	Prefabs/UI/HUD.prefab
+Бьёт о землю, по кругу идёт волна.\nДержи дистанцию.	Prefabs/UI/HUD.prefab
+В БОЙ!	Prefabs/UI/HUD.prefab
+В ЗАПАСЕ: {0}/{1}	UI/WorkshopScreen.cs
+В МЕНЮ	Prefabs/UI/HUD.prefab
+В РАЗРАБОТКЕ :)	UI/SkinsPanel.cs
+В ЭТОМ РЕЖИМЕ НЕТ СОХРАНЕНИЙ:\nВСЕ {0} ВОЛН ЗА ОДИН РАЗ.\nВЫ УВЕРЕНЫ?	Prefabs/UI/MainMenu.prefab
+В инвентарь (до {0}), лечит полностью: клавиша {1}	Data/CarUpgrades.asset
+ВАМПИРИЗМ	Data/PerkPool.asset
+ВКЛ	UI/SettingsPanel.cs
+ВОЛН	UI/GameOverScreen.cs
+ВОЛНА	UI/GameOverScreen.cs
+ВОЛНА {0}	UI/HudController.cs
+ВОЛНА ПРОЙДЕНА!	UI/WaveBanner.cs
+ВОЛНЫ	UI/GameOverScreen.cs
+ВОЛНЫ {0} · {1} · {2}	Prefabs/UI/HUD.prefab
+ВОСКРЕСНУТЬ	Prefabs/UI/HUD.prefab
+ВРЕМЯ	Prefabs/UI/HUD.prefab
+ВСЕ БОССЫ ПОВЕРЖЕНЫ!	UI/GameOverScreen.cs
+ВСЕ ВОЛНЫ ОТБИТЫ, ГОРОД СПАСЁН!	UI/GameOverScreen.cs
+ВЫБЕРИ СЛОЖНОСТЬ	Prefabs/UI/MainMenu.prefab
+ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ»: ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА	Progression/TutorialDirector.cs
+ВЫБЕРИТЕ УЛУЧШЕНИЕ	UI/LevelUpScreen.cs
+ВЫБОР КАРТЫ	Prefabs/UI/MainMenu.prefab
+ВЫБРАН	Prefabs/UI/MainMenu.prefab
+ВЫВОДОК	Prefabs/UI/HUD.prefab
+ВЫЖИВШИЙ	Prefabs/UI/MainMenu.prefab
+ВЫКЛ	UI/SettingsPanel.cs
+ВЫСОКОЕ	Prefabs/UI/HUD.prefab
+Взрывы бочек: радиус +{0}%,\nурон +{1}%	Data/PerkPool.asset
+Все {0} мин вокруг машины	Data/CarUpgrades.asset
+ГОРОД	UI/MapCard.cs
+ГОРОД  •  ДЕНЬ	Prefabs/UI/MainMenu.prefab
+ГОРОД СПАСЁН!	Prefabs/UI/HUD.prefab
+ГОТОВО	Prefabs/UI/HUD.prefab
+ГРАФИТ	Data/Cosmetics.asset
+ДА	Prefabs/UI/MainMenu.prefab
+ДАЛЕЕ	UI/TutorialCardsView.cs
+ДАЛЬНОБОЙ	Data/PerkPool.asset
+ДЕНЬ	Prefabs/UI/MainMenu.prefab
+ДЕНЬ {0}	UI/DailyBonusPanel.cs
+ДЕТАЛИ	Prefabs/UI/HUD.prefab
+ДЖОЙСТИКИ	Prefabs/UI/HUD.prefab
+ДЖОЙСТИКИ · КНОПКИ	Prefabs/UI/HUD.prefab
+ДО БОССА: {0} {1}	UI/GameOverScreen.cs
+ДО БОССА: {0} ВОЛНЫ	Prefabs/UI/HUD.prefab
+ДОСТИЖЕНИЕ ПОЛУЧЕНО!	Prefabs/UI/HUD.prefab
+ДОСТИЖЕНИЯ	Prefabs/UI/MainMenu.prefab
+ДОШЁЛ ДО ВОЛНЫ {0} ИЗ {1}	UI/GameOverScreen.cs
+Дальность стрельбы +{0}%	Data/PerkPool.asset
+Дальность удара\nтопором +{0}%	Data/PerkPool.asset
+ЕЖЕДНЕВНЫЕ БОНУСЫ	Prefabs/UI/MainMenu.prefab
+ЕСТЬ СОХРАНЕНИЕ	Prefabs/UI/MainMenu.prefab
+ЕСТЬ СОХРАНЕНИЯ	Prefabs/UI/MainMenu.prefab
+ЖАТВА	Prefabs/UI/HUD.prefab
+ЖИВУЧЕСТЬ	Data/PerkPool.asset
+ЖНЕЦ	Data/Zombies/Zombie_Boss3.asset
+ЗАБЕГОВ	Prefabs/UI/MainMenu.prefab
+ЗАБРАТЬ	UI/DailyBonusPanel.cs
+ЗАВТРА	UI/DailyBonusPanel.cs
+ЗАГРУЗКА…	UI/LeaderboardPanel.cs
+ЗАКРЫТЬ	Prefabs/UI/HUD.prefab
+ЗАНОВО	UI/GameOverScreen.cs
+ЗАПАСЛИВЫЙ	Data/PerkPool.asset
+ЗАЩИЩАЙ МАШИНУ	Prefabs/UI/HUD.prefab
+ЗДОРОВЬЕ	Prefabs/UI/HUD.prefab
+ЗЕЛЁНЫЕ	Data/Cosmetics.asset
+ЗЕМЛЕТРЯСЕНИЕ	Prefabs/UI/HUD.prefab
+ЗОЛОТАЯ ЛИХОРАДКА	Data/PerkPool.asset
+ЗОЛОТО	Data/Cosmetics.asset
+ЗОЛОТЫЕ	Data/Cosmetics.asset
+ЗОМБИ	Prefabs/UI/HUD.prefab
+ЗОМБИ ЗА ЗАБЕГ	Prefabs/UI/MainMenu.prefab
+ЗОМБИ ИДУТ!	UI/WaveBanner.cs
+ЗОМБИ СИЛЬНЕЕ	Prefabs/UI/MainMenu.prefab
+ЗОМБИ СЛАБЕЕ	Prefabs/UI/MainMenu.prefab
+ЗОМБИ! ТЯНИ ПРАВЫЙ ДЖОЙСТИК, ЧТОБЫ ЦЕЛИТЬСЯ И СТРЕЛЯТЬ	Progression/TutorialDirector.cs
+ЗОМБИ! ЦЕЛЬСЯ МЫШЬЮ, СТРЕЛЯЙ ЛЕВОЙ КНОПКОЙ	Progression/TutorialDirector.cs
+За опыт выбираешь улучшение. «НОВОЕ» значит, что такую карточку\nты ещё не брал. Взятые видны слева.	Prefabs/UI/HUD.prefab
+Защищай машину: зомби идут и к ней. Между волнами открыта мастерская\nи патроны у машины. Готов раньше? Жми E, чтобы пропустить перерыв.	Prefabs/UI/HUD.prefab
+Земля горит по линиям.\nУходи с линий, пока горят.	Prefabs/UI/HUD.prefab
+Зовёт зомби вокруг себя.\nСначала руби мелочь.	Prefabs/UI/HUD.prefab
+Зомби, бьющий машину, получает +{0} урона	Data/CarUpgrades.asset
+ИГРА ОКОНЧЕНА	UI/GameOverScreen.cs
+ИГРАТЬ	Prefabs/UI/MainMenu.prefab
+ИГРАТЬ!	UI/TutorialCardsView.cs
+ИГРОК	UI/LeaderboardPanel.cs
+ИСПОЛЬЗОВАНО	UI/GameOverScreen.cs
+ИТОГО	Prefabs/UI/HUD.prefab
+Идёт к машине. Подойдёшь близко, и он переключится на тебя!	Prefabs/UI/HUD.prefab
+К КЕЙСАМ	Prefabs/UI/HUD.prefab
+КАК РАБОТАЮТ СОХРАНЕНИЯ?	Prefabs/UI/MainMenu.prefab
+КАЧЕСТВО ГРАФИКИ	Prefabs/UI/HUD.prefab
+КЕЙС	UI/DailyBonusPanel.cs
+КЕЙС ТОПОРОВ	Data/Cosmetics.asset
+КЕЙС ЭФФЕКТОВ ПУЛЬ	Data/Cosmetics.asset
+КЕЙСЫ	Prefabs/UI/MainMenu.prefab
+КИСЛОТА	Prefabs/UI/HUD.prefab
+КИСЛОТНЫЙ ДОЖДЬ	Prefabs/UI/HUD.prefab
+КОБАЛЬТ	Data/Cosmetics.asset
+КОСА	Prefabs/UI/HUD.prefab
+КРОВЬ	Data/Cosmetics.asset
+КРУПНЫЙ КАЛИБР	Data/PerkPool.asset
+КУПЛЕНО: {0}	UI/WorkshopRowView.cs
+Каждое убийство\nлечит {0} здоровья	Data/PerkPool.asset
+Капли падают вокруг тебя.\nУходи из кругов.	Prefabs/UI/HUD.prefab
+ЛЁГКИЕ НОГИ	Data/PerkPool.asset
+ЛЁГКИЙ	Core/Difficulty.cs
+ЛЁГКИЙ  •  ВОЛНА {0} ИЗ {1}	Prefabs/UI/MainMenu.prefab
+ЛЁД	Data/Cosmetics.asset
+ЛЕГЕНДАРНАЯ • СРАЗУ МАКС.	UI/PerkCardView.cs
+ЛЕГЕНДАРНОЕ	Core/CosmeticCatalog.cs
+ЛЕГЕНДАРНЫЙ КЕЙС	UI/DailyBonusPanel.cs
+ЛЕГЕНДАРНЫЙ СКИН ДАЁТ БОНУС:\n<size={0}%>{1}</size>	UI/CasesScreen.cs
+ЛЕГЕНДАРНЫЙ СКИН ДАЁТ БОНУС:\n???	Prefabs/UI/MainMenu.prefab
+ЛИДЕРЫ	Prefabs/UI/MainMenu.prefab
+ЛУЧШАЯ ВОЛНА	Prefabs/UI/MainMenu.prefab
+ЛУЧШЕЕ ВРЕМЯ	Prefabs/UI/MainMenu.prefab
+Левый джойстик: идти. Правый: целиться и стрелять.\nКнопки рядом: автомат, топор и аптечка.	Prefabs/UI/HUD.prefab
+МАСТЕРСКАЯ	Prefabs/UI/HUD.prefab
+МАСТЕРСКАЯ ОТКРОЕТСЯ ПОСЛЕ ВОЛНЫ	Progression/WorkshopZone.cs
+МАСТЕРСКАЯ ОТКРЫТА! НАЖМИ E У ГАРАЖА И УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ	Progression/TutorialDirector.cs
+МАСТЕРСКАЯ ОТКРЫТА! ПОДОЙДИ К ГАРАЖУ И УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ	Progression/TutorialDirector.cs
+МАСТЕРСКАЯ: ПРОКАЧКА МАШИНЫ	Progression/WorkshopZone.cs
+МАТКА	Data/Zombies/Zombie_Boss1.asset
+МАШИНА И МАСТЕРСКАЯ	Prefabs/UI/HUD.prefab
+МАШИНА УНИЧТОЖЕНА	UI/GameOverScreen.cs
+МАШИНУ АТАКУЮТ!	Prefabs/UI/HUD.prefab
+МЕНЬШЕ ЗОМБИ, МЕНЬШЕ НАГРАДА	Core/Difficulty.cs
+МИНЫ	Data/CarUpgrades.asset
+МОНЕТЫ	Prefabs/UI/HUD.prefab
+МОНЕТЫ ДАЮТСЯ В КОНЦЕ КАЖДОГО ЗАБЕГА	Prefabs/UI/MainMenu.prefab
+МОНЕТЫ ЗА ВОЛНЫ	Prefabs/UI/HUD.prefab
+МОНЕТЫ ЗА ЗОМБИ	Prefabs/UI/HUD.prefab
+МУЗЫКА	Prefabs/UI/HUD.prefab
+Машина получает на {0}% меньше урона	Data/CarUpgrades.asset
+Металлолома +{0}%	Data/PerkPool.asset
+НАГРАДА ЗА ПОБЕДУ	Prefabs/UI/HUD.prefab
+НАДЕТЬ	Prefabs/UI/MainMenu.prefab
+НАЖМИТЕ	Prefabs/UI/HUD.prefab
+НАЖМИТЕ НА СКИН, ЧТОБЫ НАДЕТЬ	Prefabs/UI/MainMenu.prefab
+НАЗАД	Prefabs/UI/HUD.prefab
+НАЗВАНИЕ	Prefabs/UI/HUD.prefab
+НАСТРОЙКИ	Prefabs/UI/HUD.prefab
+НЕ НУЖНО	UI/WorkshopRowView.cs
+НЕ УДАЛОСЬ ЗАГРУЗИТЬ ТАБЛИЦУ	UI/LeaderboardPanel.cs
+НЕОН	Data/Cosmetics.asset
+НИЗКОЕ	Prefabs/UI/HUD.prefab
+НОВОЕ	UI/PerkCardView.cs
+НОВЫЙ	Prefabs/UI/MainMenu.prefab
+НОВЫЙ СКИН В КОЛЛЕКЦИИ!	UI/CasesScreen.cs
+НОВЫЙ УРОВЕНЬ!	UI/LevelUpScreen.cs
+НОЧЬ	Prefabs/UI/MainMenu.prefab
+НУ ЛАДНО...	UI/BreakSkipView.cs
+ОБУЧЕНИЕ	Prefabs/UI/HUD.prefab
+ОБУЧЕНИЕ {0}/{1}	UI/TutorialView.cs
+ОБЫЧНОЕ	Core/CosmeticCatalog.cs
+ОБЫЧНОЕ {0}%	Prefabs/UI/MainMenu.prefab
+ОБЫЧНЫЕ	Data/Cosmetics.asset
+ОБЫЧНЫЕ ЗОМБИ	Prefabs/UI/MainMenu.prefab
+ОГНЕННЫЕ	Data/Cosmetics.asset
+ОГНЕННЫЕ ТРЕЩИНЫ	Prefabs/UI/HUD.prefab
+ОК	Prefabs/UI/MainMenu.prefab
+ОЛИВА	Data/Cosmetics.asset
+ОРУЖЕЙНЫЙ КЕЙС	Data/Cosmetics.asset
+ОРУЖЕЙНЫЙ ЯЩИК	Data/CarUpgrades.asset
+ОРУЖИЕ	Prefabs/UI/HUD.prefab
+ОСТАЛОСЬ: {0}	UI/WorkshopRowView.cs
+ОСТАТОК ДЕТАЛЕЙ {0} →	UI/GameOverScreen.cs
+ОСТРЫЙ ТОПОР	Data/PerkPool.asset
+ОТКРЫТЬ	Prefabs/UI/MainMenu.prefab
+Описание	Prefabs/UI/HUD.prefab
+Опыта +{0}%	Data/PerkPool.asset
+ПАТРОНЫ	Prefabs/UI/HUD.prefab
+ПАТРОНЫ КОНЧИЛИСЬ! БЕЙ ТОПОРОМ, ПАТРОНЫ У МАШИНЫ	Progression/TutorialDirector.cs
+ПАТРОНЫ КОНЧИЛИСЬ! ТОПОР НА КЛАВИШЕ {0}, ПАТРОНЫ У МАШИНЫ (E)	Progression/TutorialDirector.cs
+ПАТРОНЫ КОНЧИЛИСЬ: ТОПОР	UI/WeaponSlotsView.cs
+ПАТРОНЫ У МАШИНЫ — ПОСЛЕ СЛЕДУЮЩЕЙ ВОЛНЫ	Car/CarResupply.cs
+ПАТРОНЫ У МАШИНЫ — ТОЛЬКО МЕЖДУ ВОЛНАМИ	Car/CarResupply.cs
+ПАТРОНЫ — У МАШИНЫ, ПРОКАЧКА — В МАСТЕРСКОЙ	UI/WaveBanner.cs
+ПЕРЕЗАРЯДКА	Prefabs/UI/HUD.prefab
+ПЕРЕРЫВ	UI/HudController.cs
+ПЕРЕТАЩИТЕ ДЖОЙСТИКИ И КНОПКИ	Prefabs/UI/HUD.prefab
+ПЕРСОНАЖИ	Prefabs/UI/MainMenu.prefab
+ПЕСОК	Data/Cosmetics.asset
+ПИРОТЕХНИК	Data/PerkPool.asset
+ПЛАЗМА	Data/Cosmetics.asset
+ПОБЕД	Prefabs/UI/MainMenu.prefab
+ПОБЕДА!	UI/GameOverScreen.cs
+ПОДСКАЗКА	UI/TutorialView.cs
+ПОКА НИКТО НЕ ПРОШЁЛ ВСЕ {0} ВОЛН\nНА СЛОЖНОСТИ «{1}».\nСТАНЬ ПЕРВЫМ!	UI/LeaderboardPanel.cs
+ПОЛУЧЕНО	Prefabs/UI/MainMenu.prefab
+ПОМЕНЯТЬ	Prefabs/UI/HUD.prefab
+ПОНЯТНО	Prefabs/UI/MainMenu.prefab
+ПОПОЛНИ ПАТРОНЫ У МАШИНЫ :)	UI/BreakSkipView.cs
+ПОПОЛНИТЬ ПАТРОНЫ	Car/CarResupply.cs
+ПОСЛЕДНЯЯ ВОЛНА!	UI/WaveBanner.cs
+ПРОГРЕСС СОХРАНЁН	Prefabs/UI/HUD.prefab
+ПРОГРЕСС СОХРАНЁН • ДАЛЬШЕ ВОЛНЫ {0}–{1}	UI/StageClearScreen.cs
+ПРОДОЛЖИТЬ	Prefabs/UI/HUD.prefab
+ПРОЙДЕНО	Prefabs/UI/MainMenu.prefab
+ПРОКАЧКА МАШИНЫ ЗА МЕТАЛЛОЛОМ	Prefabs/UI/HUD.prefab
+ПРОПУСТИТЬ	Prefabs/UI/HUD.prefab
+ПРОПУСТИТЬ ПЕРЕРЫВ	Prefabs/UI/HUD.prefab
+ПРОПУСТИТЬ ПЕРЕРЫВ  •  {0} С	UI/BreakSkipView.cs
+ПРОЧНОСТЬ {0} / {1}	Prefabs/UI/HUD.prefab
+ПРОЧНОСТЬ {0} / {1}    БРОНЯ {2}%    	UI/WorkshopScreen.cs
+Патроны заканчиваются, пополняй их у машины между волнами.\nТопор: клик для быстрого удара, зажми и отпусти для мощного.	Prefabs/UI/HUD.prefab
+Патроны заканчиваются, пополняй их у машины между волнами.\nТопор: тап для быстрого удара, зажми джойстик и отпусти для мощного.	Prefabs/UI/HUD.prefab
+Перезарядка быстрее на {0}%	Data/PerkPool.asset
+Плюётся кислотой, остаются лужи.\nНе стой в зелёном.	Prefabs/UI/HUD.prefab
+Полностью восстанавливает прочность машины	Data/CarUpgrades.asset
+Продержись {0} волн и убей {1} боссов.	Prefabs/UI/HUD.prefab
+Пройди все {0} волн	Prefabs/UI/MainMenu.prefab
+Пройди все {0} волн на сложности «ХАРДКОР»	Core/Achievements.cs
+Прокачано до максимума	UI/WorkshopRowView.cs
+Прокачка, карточки и детали сохранены	UI/DifficultyScreen.cs
+Пуля пробивает\nещё одного зомби	Data/PerkPool.asset
+РАСПОЛОЖЕНИЕ	Prefabs/UI/HUD.prefab
+РАСХОДНИКИ (МЕЖДУ ВОЛНАМИ)	Prefabs/UI/HUD.prefab
+РЕДКОЕ	Core/CosmeticCatalog.cs
+РЕЖИМ: {0}	UI/ModeBanner.cs
+РЕЖИМ: СРЕДНИЙ	Prefabs/UI/HUD.prefab
+РЕКОРДЫ	Prefabs/UI/MainMenu.prefab
+РЕМОНТ МАШИНЫ	Data/CarUpgrades.asset
+РЖАВЧИНА	Data/Cosmetics.asset
+РОЙ	Prefabs/UI/HUD.prefab
+РЫВОК	Prefabs/UI/HUD.prefab
+Раз в {0} с бьёт током зомби рядом: +{1} урона	Data/CarUpgrades.asset
+Рисует линию и несётся по ней.\nОтойди, потом он оглушён. Бей!	Prefabs/UI/HUD.prefab
+С ВОЛНЫ {0}	UI/GameOverScreen.cs
+С НАЧАЛА	Prefabs/UI/MainMenu.prefab
+СБРОС	Prefabs/UI/HUD.prefab
+СЕГОДНЯ — ДЕНЬ {0}	UI/DailyBonusPanel.cs
+СЕРИЯ {0}	UI/StreakView.cs
+СКИН	Prefabs/UI/MainMenu.prefab
+СКИНЫ	Prefabs/UI/MainMenu.prefab
+СКОРО БУДЕТ	Prefabs/UI/MainMenu.prefab
+СКОРОСТРЕЛ	Data/PerkPool.asset
+СМЕКАЛКА	Data/PerkPool.asset
+СОХРАНЕНИЕ: ВОЛНА {0}	UI/DifficultyScreen.cs
+СОХРАНЕНИЯ	Prefabs/UI/MainMenu.prefab
+СОХРАНИТЬ	Prefabs/UI/HUD.prefab
+СРЕДНЕЕ	Prefabs/UI/HUD.prefab
+СРЕДНИЙ	Core/Difficulty.cs
+СТАЛЬ	Data/Cosmetics.asset
+СТАНДАРТ	Data/Cosmetics.asset
+Скорострельность +{0}%	Data/PerkPool.asset
+Скорость бега +{0}%	Data/PerkPool.asset
+Со злости зовёт чаще,\nвместе с гончими.	Prefabs/UI/HUD.prefab
+Ставит метку и прыгает к тебе.\nБеги от метки!	Prefabs/UI/HUD.prefab
+ТАБЛИЦА ДОСТУПНА В ЯНДЕКС ИГРАХ\nПОСЛЕ ВХОДА В АККАУНТ	UI/LeaderboardPanel.cs
+ТАБЛИЦА ЛИДЕРОВ	Prefabs/UI/HUD.prefab
+ТАРАН	Data/Zombies/Zombie_Boss2.asset
+ТОПОР	Prefabs/UI/MainMenu.prefab
+ТОПОР! КЛИКНИ ДЛЯ БЫСТРОГО УДАРА. ЗАЖМИ И ОТПУСТИ ДЛЯ МОЩНОГО	Progression/TutorialDirector.cs
+ТОПОР! ТАПНИ ДЛЯ БЫСТРОГО УДАРА. ЗАЖМИ ДЖОЙСТИК, НАВЕДИ И ОТПУСТИ ДЛЯ МОЩНОГО	Progression/TutorialDirector.cs
+ТОЧНО?)	Prefabs/UI/MainMenu.prefab
+ТОЧНЫЙ ГЛАЗ	Data/PerkPool.asset
+ТРЯСКА И ВИБРАЦИЯ	Prefabs/UI/HUD.prefab
+ТЫ БУДЕШЬ БЕЗ ПАТРОНОВ?	UI/BreakSkipView.cs
+ТЫ ДОБРАЛСЯ ДО БОССА!	UI/GameOverScreen.cs
+ТЫ ПОГИБ	UI/GameOverScreen.cs
+УБИТО ЗОМБИ	Prefabs/UI/HUD.prefab
+УЖЕ ЕСТЬ: +{0} МОНЕТ	UI/CasesScreen.cs
+УЛУЧШЕНИЯ МАШИНЫ	Prefabs/UI/HUD.prefab
+УЛЬТРА	Prefabs/UI/HUD.prefab
+УПРАВЛЕНИЕ	Prefabs/UI/HUD.prefab
+УРОВЕНЬ	Prefabs/UI/HUD.prefab
+УРОВЕНЬ {0}	UI/HudController.cs
+УРОВНИ И КАРТОЧКИ	Prefabs/UI/HUD.prefab
+УСИЛЕННЫЙ КОРПУС	Data/CarUpgrades.asset
+Урон оружия +{0}%	Data/PerkPool.asset
+Урон оружия +{0}%\nи скорострельность +{1}%	Data/PerkPool.asset
+Урон топора +{0}%	Data/PerkPool.asset
+ФЕРМА	Prefabs/UI/MainMenu.prefab
+ФИОЛЕТОВЫЕ	Data/Cosmetics.asset
+ХАРДКОР	Core/Difficulty.cs
+ЦЕЛЬ	Prefabs/UI/HUD.prefab
+ЧЁРНЫЕ	Data/Cosmetics.asset
+ЧЁРНЫЕ ПУЛИ	UI/DailyBonusPanel.cs
+ЧЕСТНЫЙ БОЙ	Core/Difficulty.cs
+ШИПЫ	Data/CarUpgrades.asset
+ШИПЫ {0}    РАЗРЯД {1}	UI/WorkshopScreen.cs
+ШИРОКИЙ ЗАМАХ	Data/PerkPool.asset
+ЭКСКЛЮЗИВ: ЕГО НЕТ В КЕЙСАХ!	UI/CasesScreen.cs
+ЭЛЕКТРОРАЗРЯД	Data/CarUpgrades.asset
+ЭПИЧЕСКОЕ	Core/CosmeticCatalog.cs
+ЭТАП {0} ИЗ {1} ПРОЙДЕН!	UI/StageClearScreen.cs
+ЭФФЕКТ ПУЛЬ	Prefabs/UI/MainMenu.prefab
+ЭФФЕКТЫ	Prefabs/UI/HUD.prefab
+ЯД	Data/Cosmetics.asset
+ЯДОВИТЫЕ	Data/Cosmetics.asset
+• На <color=#{0}CE{1}B>ЛЁГКОМ</color> и <color=#FFA{2}>СРЕДНЕМ</color> игра сохраняется <b>сама</b> — нажимать ничего не надо.\n• Сохранение — после босса {3}-й и {4}-й волны: появится «ЭТАП ПРОЙДЕН!».\n• Сохраняются прокачка, карточки и детали.\n• Проиграл или вышел? Выбери ту же сложность и жми «ПРОДОЛЖИТЬ» — игра пойдёт с {5}-й или {6}-й волны.\n• На <color=#FF{7}A{8}A>ХАРДКОРЕ</color> сохранений нет: все {9} волн за один раз.	Prefabs/UI/MainMenu.prefab

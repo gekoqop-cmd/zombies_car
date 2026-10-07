@@ -51,6 +51,9 @@ namespace ZombiCar.EditorTools
         /// The comic explosion prefab (<see cref="ComicExplosion"/>): billboarded flash, burst and lettering, ground ring
         /// and scorch, star and smoke-puff particles, an orange flash light. Sizes are for a 4.5 m blast at scale 1.
         /// </summary>
+        [MenuItem("Tools/Setup/Build Explosion")]
+        public static void BuildExplosionMenu() => BuildExplosion();
+
         public static ComicExplosion BuildExplosion()
         {
             EditorPaths.EnsureFolder(EditorPaths.c_Prefabs + "/FX");
@@ -130,6 +133,9 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(fx, ("m_Flash", flash), ("m_Burst", burst), ("m_Text", text), ("m_Ring", ring), ("m_Scorch", scorch),
                 ("m_Stars", stars), ("m_Clouds", clouds), ("m_Light", light));
             CharacterBuilder.SetProps(fx, ("m_TextMaterials", lettering.Cast<Object>().ToArray()));
+            string[] english = { "FX_Boom_Boom", "FX_Boom_Bang", "FX_Boom_Kaboom" };
+            CharacterBuilder.SetProps(fx, ("m_TextMaterialsEnglish",
+                english.Select(w => (Object)Material("M_" + w, w, Color.white, false)).ToArray()));
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(root, c_ExplosionPrefab);
             Object.DestroyImmediate(root);
             return prefab.GetComponent<ComicExplosion>();

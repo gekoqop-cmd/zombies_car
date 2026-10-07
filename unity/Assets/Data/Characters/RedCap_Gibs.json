@@ -1,0 +1,53 @@
+{
+ "name": "RedCap",
+ "pieces": [
+  {
+   "sprite": "RedCap_Gib_0",
+   "x": -13.5,
+   "y": 141.0,
+   "area": 2216
+  },
+  {
+   "sprite": "RedCap_Gib_1",
+   "x": 20.5,
+   "y": 145.5,
+   "area": 1589
+  },
+  {
+   "sprite": "RedCap_Gib_2",
+   "x": -41.0,
+   "y": 104.0,
+   "area": 1993
+  },
+  {
+   "sprite": "RedCap_Gib_3",
+   "x": 16.0,
+   "y": 82.5,
+   "area": 2009
+  },
+  {
+   "sprite": "RedCap_Gib_4",
+   "x": -66.5,
+   "y": 75.5,
+   "area": 1606
+  },
+  {
+   "sprite": "RedCap_Gib_5",
+   "x": -33.5,
+   "y": 66.0,
+   "area": 1844
+  },
+  {
+   "sprite": "RedCap_Gib_6",
+   "x": -5.5,
+   "y": 26.5,
+   "area": 1238
+  },
+  {
+   "sprite": "RedCap_Gib_7",
+   "x": -63.0,
+   "y": 24.5,
+   "area": 1088
+  }
+ ]
+}

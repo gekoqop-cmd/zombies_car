@@ -13,7 +13,7 @@ namespace ZombiCar.Core
     /// <item>game_api_pause / resume — pause the game and the sound while the platform asks;</item>
     /// <item>fullscreen ads at logical breaks (<see cref="ShowFullscreenAd"/>), with the game paused and muted meanwhile;</item>
     /// <item>the player's language (<see cref="Language"/>);</item>
-    /// <item>the "best_time" leaderboard: a victory's time sent, the top and the player's line read;</item>
+    /// <item>the best-time leaderboards (one per difficulty, DifficultyRules.Leaderboard): a victory's time sent, the top and the player's line read;</item>
     /// <item>cloud saves: the player's progress (<see cref="MetaProgress"/>) read at start and merged with this device's,
     /// then every saved change sent a moment later (and at once when the tab is hidden).</item>
     /// </list>
@@ -54,7 +54,7 @@ namespace ZombiCar.Core
         /// victory, sorted ascending (fewer seconds = better). Only victories are sent. It is Normal's table; Easy and
         /// Hardcore have their own (<see cref="DifficultyRules.Leaderboard"/>).
         /// </summary>
-        public const string c_BestTimeLeaderboard = "best_time";
+        public const string c_BestTimeLeaderboard = "bestTimeNormal";
 
         // ---------------------------------------------------------------- leaderboard
         /// <summary>One line of the leaderboard.</summary>
@@ -370,7 +370,10 @@ namespace ZombiCar.Core
         {
             IsAvailable = true;
             if (!string.IsNullOrEmpty(language))
+            {
                 Language = language;
+                Loc.SetPlatformLanguage(language);         // unless the player picked a language in the menu
+            }
             Debug.Log($"[YandexSdk] ready, language {Language}");
             Report();
             YaCloudLoad();

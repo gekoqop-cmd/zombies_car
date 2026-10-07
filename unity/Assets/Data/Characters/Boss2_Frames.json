@@ -1,0 +1,168 @@
+{
+ "name": "Boss2",
+ "standingHeightPx": 240,
+ "pixelScale": 1.4545454545454546,
+ "strikeMoment": 0.367,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Boss2_Idle_00",
+    "Boss2_Idle_01",
+    "Boss2_Idle_02",
+    "Boss2_Idle_03",
+    "Boss2_Idle_04",
+    "Boss2_Idle_05",
+    "Boss2_Idle_06"
+   ],
+   "fps": 6.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Boss2_Move_00",
+    "Boss2_Move_01",
+    "Boss2_Move_02",
+    "Boss2_Move_03",
+    "Boss2_Move_04",
+    "Boss2_Move_05",
+    "Boss2_Move_06",
+    "Boss2_Move_07",
+    "Boss2_Move_08",
+    "Boss2_Move_09"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Boss2_Attack_00",
+    "Boss2_Attack_01",
+    "Boss2_Attack_02",
+    "Boss2_Attack_03",
+    "Boss2_Attack_04",
+    "Boss2_Attack_05",
+    "Boss2_Attack_06",
+    "Boss2_Attack_07",
+    "Boss2_Attack_08",
+    "Boss2_Attack_09",
+    "Boss2_Attack_10",
+    "Boss2_Attack_11",
+    "Boss2_Attack_12",
+    "Boss2_Attack_13",
+    "Boss2_Attack_14"
+   ],
+   "fps": 16.0,
+   "loop": false,
+   "strike": 0.367
+  },
+  {
+   "name": "ChargeWindup",
+   "frames": [
+    "Boss2_ChargeWindup_00",
+    "Boss2_ChargeWindup_01",
+    "Boss2_ChargeWindup_02",
+    "Boss2_ChargeWindup_03",
+    "Boss2_ChargeWindup_04",
+    "Boss2_ChargeWindup_05",
+    "Boss2_ChargeWindup_06",
+    "Boss2_ChargeWindup_07",
+    "Boss2_ChargeWindup_08",
+    "Boss2_ChargeWindup_09",
+    "Boss2_ChargeWindup_10",
+    "Boss2_ChargeWindup_11",
+    "Boss2_ChargeWindup_12",
+    "Boss2_ChargeWindup_13",
+    "Boss2_ChargeWindup_14"
+   ],
+   "fps": 11.0,
+   "loop": false,
+   "strike": 0.967
+  },
+  {
+   "name": "Charge",
+   "frames": [
+    "Boss2_Charge_00",
+    "Boss2_Charge_01",
+    "Boss2_Charge_02",
+    "Boss2_Charge_03",
+    "Boss2_Charge_04",
+    "Boss2_Charge_05",
+    "Boss2_Charge_06"
+   ],
+   "fps": 16.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Stun",
+   "frames": [
+    "Boss2_Stun_00",
+    "Boss2_Stun_01",
+    "Boss2_Stun_02",
+    "Boss2_Stun_03",
+    "Boss2_Stun_04",
+    "Boss2_Stun_05",
+    "Boss2_Stun_06"
+   ],
+   "fps": 6.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Spit",
+   "frames": [
+    "Boss2_Spit_00",
+    "Boss2_Spit_01",
+    "Boss2_Spit_02",
+    "Boss2_Spit_03",
+    "Boss2_Spit_04",
+    "Boss2_Spit_05",
+    "Boss2_Spit_06",
+    "Boss2_Spit_07",
+    "Boss2_Spit_08",
+    "Boss2_Spit_09",
+    "Boss2_Spit_10",
+    "Boss2_Spit_11",
+    "Boss2_Spit_12",
+    "Boss2_Spit_13",
+    "Boss2_Spit_14",
+    "Boss2_Spit_15",
+    "Boss2_Spit_16",
+    "Boss2_Spit_17",
+    "Boss2_Spit_18",
+    "Boss2_Spit_19",
+    "Boss2_Spit_20",
+    "Boss2_Spit_21",
+    "Boss2_Spit_22",
+    "Boss2_Spit_23",
+    "Boss2_Spit_24"
+   ],
+   "fps": 14.0,
+   "loop": false,
+   "strike": 0.42
+  },
+  {
+   "name": "Dead",
+   "frames": [
+    "Boss2_Dead_00",
+    "Boss2_Dead_01",
+    "Boss2_Dead_02",
+    "Boss2_Dead_03",
+    "Boss2_Dead_04",
+    "Boss2_Dead_05",
+    "Boss2_Dead_06",
+    "Boss2_Dead_07",
+    "Boss2_Dead_08",
+    "Boss2_Dead_09"
+   ],
+   "fps": 10.0,
+   "loop": false,
+   "strike": -1
+  }
+ ]
+}

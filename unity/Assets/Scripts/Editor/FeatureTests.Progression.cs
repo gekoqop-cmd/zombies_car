@@ -36,6 +36,8 @@ namespace ZombiCar.EditorTools
             Register("difficulty", DifficultyAndCheckpoints);
             Register("mobileaim", MobileAim);
             Register("feel", Feel);
+            Register("storeshot", StoreShot);
+            Register("menushot", MenuShot);
         }
 
         // ================================================================== 1. workshop, levels, cards

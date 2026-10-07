@@ -532,32 +532,33 @@ namespace ZombiCar.EditorTools
             {
                 Title = "УПРАВЛЕНИЕ", Icon = "UI_Icon_Speed", Icon2 = "UI_Icon_Rifle", TouchIcon = "UI_StickRing",
                 Caption = "WASD · МЫШЬ · 1 / 2 / 3", TouchCaption = "ДЖОЙСТИКИ · КНОПКИ",
-                Text = "WASD — идти, мышь — целиться, левая кнопка — атака.\n1 / 2 — автомат и топор, 3 — аптечка из запаса.",
-                TouchText = "Левый джойстик — идти, правый — целиться и стрелять.\nКнопки рядом — автомат, топор и аптечка.",
+                Text = "WASD: идти. Мышь: целиться. Левая кнопка: атака.\n1 / 2: автомат и топор, 3: аптечка из запаса.",
+                TouchText = "Левый джойстик: идти. Правый: целиться и стрелять.\nКнопки рядом: автомат, топор и аптечка.",
                 Accent = new Color(0.45f, 0.78f, 1f, 1f),
             },
             new TutorialCard
             {
                 Title = "ОРУЖИЕ", Icon = "UI_Icon_Rifle", Icon2 = "UI_Icon_Axe", Caption = "АВТОМАТ · ТОПОР",
-                Text = "Патроны на оружие заканчиваются — пополняй их у машины между волнами.\nТопор — он топор, и он с тобой всегда :)",
+                Text = "Патроны заканчиваются, пополняй их у машины между волнами.\nТопор: клик для быстрого удара, зажми и отпусти для мощного.",
+                TouchText = "Патроны заканчиваются, пополняй их у машины между волнами.\nТопор: тап для быстрого удара, зажми джойстик и отпусти для мощного.",
                 Accent = new Color(0.93f, 0.47f, 0.13f, 1f),
             },
             new TutorialCard
             {
                 Title = "МАШИНА И МАСТЕРСКАЯ", Icon = "UI_IconCar", Icon2 = "UI_Icon_Repair", Caption = "ЗАЩИЩАЙ МАШИНУ",
-                Text = "Защищай машину: зомби идут и к ней. Между волнами — мастерская\nи патроны у машины. Готов раньше? E — пропустить перерыв.",
+                Text = "Защищай машину: зомби идут и к ней. Между волнами открыта мастерская\nи патроны у машины. Готов раньше? Жми E, чтобы пропустить перерыв.",
                 Accent = new Color(0.55f, 0.9f, 0.45f, 1f),
             },
             new TutorialCard
             {
-                Title = "УРОВНИ И КАРТОЧКИ", Icon = "UI_Icon_Xp", Icon2 = "UI_Icon_Damage", Caption = "«НОВОЕ» — ЕЩЁ НЕ БРАЛ",
-                Text = "За опыт выбираешь улучшение. «НОВОЕ» — такую карточку\nты ещё не брал. Взятые видны слева.",
+                Title = "УРОВНИ И КАРТОЧКИ", Icon = "UI_Icon_Xp", Icon2 = "UI_Icon_Damage", Caption = "«НОВОЕ»: ЕЩЁ НЕ БРАЛ",
+                Text = "За опыт выбираешь улучшение. «НОВОЕ» значит, что такую карточку\nты ещё не брал. Взятые видны слева.",
                 Accent = new Color(0.62f, 0.5f, 1f, 1f),
             },
             new TutorialCard
             {
                 Title = "БОССЫ И НАГРАДА", Icon = "UI_Icon_Boss", Icon2 = "UI_Icon_Scrap", Caption = "ВОЛНЫ 10 · 20 · 30",
-                Text = "Боссы приходят на 10, 20 и 30 волне — метки на полосе сверху.\nЗа победу — монеты на кейсы и скины.",
+                Text = "Боссы приходят на 10, 20 и 30 волне, их метки на полосе сверху.\nЗа победу дают монеты на кейсы и скины.",
                 Accent = new Color(1f, 0.35f, 0.3f, 1f),
             },
         };
@@ -971,7 +972,7 @@ namespace ZombiCar.EditorTools
         private struct BossMove
         {
             public string Title, Text, Fx;
-            public int Pose;
+            public string Pose;                  // frame of the boss's video clips, e.g. "Summon_09" (Boss1_Summon_09)
             public Color FxColor;
             public bool SecondPhase;
         }
@@ -987,7 +988,7 @@ namespace ZombiCar.EditorTools
         private static readonly Color s_PurpleFx = new Color(0.8f, 0.55f, 1f, 0.9f);
         private static readonly Color s_FireFx = new Color(1f, 0.55f, 0.15f, 0.95f);
 
-        // Poses: 0 idle, 6 wind-up, 7 blow (the painted sheets' frame order).
+        // Poses: a frame of the boss's own clip of the move (its strike frame mostly; tools/characters/zombie_mp4).
         private static readonly BossIntro[] s_BossIntros =
         {
             new BossIntro
@@ -995,11 +996,11 @@ namespace ZombiCar.EditorTools
                 Name = "МАТКА", Sheet = "Boss1", Accent = new Color(0.55f, 0.95f, 0.35f, 1f),
                 Moves = new[]
                 {
-                    new BossMove { Title = "ВЫВОДОК", Pose = 6, Fx = "FX_Aura", FxColor = s_AcidFx,
+                    new BossMove { Title = "ВЫВОДОК", Pose = "Summon_09", Fx = "FX_Aura", FxColor = s_AcidFx,
                         Text = "Зовёт зомби вокруг себя.\nСначала руби мелочь." },
-                    new BossMove { Title = "КИСЛОТА", Pose = 7, Fx = "FX_AcidSplat", FxColor = s_AcidFx,
+                    new BossMove { Title = "КИСЛОТА", Pose = "Attack_10", Fx = "FX_AcidSplat", FxColor = s_AcidFx,
                         Text = "Плюётся кислотой, остаются лужи.\nНе стой в зелёном." },
-                    new BossMove { Title = "РОЙ", Pose = 0, Fx = "FX_ComicBurst", FxColor = s_AcidFx, SecondPhase = true,
+                    new BossMove { Title = "РОЙ", Pose = "Summon_06", Fx = "FX_ComicBurst", FxColor = s_AcidFx, SecondPhase = true,
                         Text = "Со злости зовёт чаще,\nвместе с гончими." },
                 },
             },
@@ -1008,12 +1009,12 @@ namespace ZombiCar.EditorTools
                 Name = "ТАРАН", Sheet = "Boss2", Accent = new Color(0.8f, 0.5f, 1f, 1f),
                 Moves = new[]
                 {
-                    new BossMove { Title = "РЫВОК", Pose = 7, Fx = "FX_ChargeLine", FxColor = s_PurpleFx,
-                        Text = "Рисует линию и несётся по ней.\nОтойди — потом он оглушён, бей!" },
-                    new BossMove { Title = "КИСЛОТНЫЙ ДОЖДЬ", Pose = 6, Fx = "FX_AcidBall", FxColor = s_AcidFx,
+                    new BossMove { Title = "РЫВОК", Pose = "Charge_03", Fx = "FX_ChargeLine", FxColor = s_PurpleFx,
+                        Text = "Рисует линию и несётся по ней.\nОтойди, потом он оглушён. Бей!" },
+                    new BossMove { Title = "КИСЛОТНЫЙ ДОЖДЬ", Pose = "Spit_10", Fx = "FX_AcidBall", FxColor = s_AcidFx,
                         Text = "Капли падают вокруг тебя.\nУходи из кругов." },
-                    new BossMove { Title = "ЗЕМЛЕТРЯСЕНИЕ", Pose = 7, Fx = "FX_ShockRing", FxColor = s_PurpleFx, SecondPhase = true,
-                        Text = "Бьёт о землю — волна вокруг.\nДержи дистанцию." },
+                    new BossMove { Title = "ЗЕМЛЕТРЯСЕНИЕ", Pose = "Attack_05", Fx = "FX_ShockRing", FxColor = s_PurpleFx, SecondPhase = true,
+                        Text = "Бьёт о землю, по кругу идёт волна.\nДержи дистанцию." },
                 },
             },
             new BossIntro
@@ -1021,11 +1022,11 @@ namespace ZombiCar.EditorTools
                 Name = "ЖНЕЦ", Sheet = "Boss3", Accent = new Color(1f, 0.55f, 0.2f, 1f),
                 Moves = new[]
                 {
-                    new BossMove { Title = "КОСА", Pose = 7, Fx = "FX_Slash", FxColor = s_FireFx,
+                    new BossMove { Title = "КОСА", Pose = "Attack_07", Fx = "FX_Slash", FxColor = s_FireFx,
                         Text = "Бьёт дугой перед собой\nи отбрасывает. Не стой рядом." },
-                    new BossMove { Title = "ОГНЕННЫЕ ТРЕЩИНЫ", Pose = 6, Fx = "FX_Scorch", FxColor = s_FireFx,
+                    new BossMove { Title = "ОГНЕННЫЕ ТРЕЩИНЫ", Pose = "Cracks_09", Fx = "FX_Scorch", FxColor = s_FireFx,
                         Text = "Земля горит по линиям.\nУходи с линий, пока горят." },
-                    new BossMove { Title = "ЖАТВА", Pose = 0, Fx = "FX_TargetRing", FxColor = s_FireFx, SecondPhase = true,
+                    new BossMove { Title = "ЖАТВА", Pose = "Appear_08", Fx = "FX_TargetRing", FxColor = s_FireFx, SecondPhase = true,
                         Text = "Ставит метку и прыгает к тебе.\nБеги от метки!" },
                 },
             },
@@ -1057,7 +1058,7 @@ namespace ZombiCar.EditorTools
             TextMeshProUGUI name = OutlinedLabel("Name", head, top, top, new Vector2(0f, -56f), new Vector2(1400f, 116f), "МАТКА",
                 110f, TextAlignmentOptions.Center, Color.white, outline);
             OutlinedLabel("Targets", head, top, top, new Vector2(0f, -176f), new Vector2(1400f, 44f),
-                "Идёт к машине. Подойдёшь близко — переключится на тебя!", 30f, TextAlignmentOptions.Center, s_TitleColor, outline);
+                "Идёт к машине. Подойдёшь близко, и он переключится на тебя!", 30f, TextAlignmentOptions.Center, s_TitleColor, outline);
 
             var cards = new BossIntroView.Card[c_BossMoveCount];
             for (int i = 0; i < c_BossMoveCount; i++)
@@ -1086,6 +1087,36 @@ namespace ZombiCar.EditorTools
                 c.FindPropertyRelative("Text").objectReferenceValue = cards[i].Text;
                 c.FindPropertyRelative("PhaseBadge").objectReferenceValue = cards[i].PhaseBadge;
             }
+            WriteBossIntros(so);
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        /// <summary>
+        /// Rewrites the boss entries (names, colours, moves, their pictures) of the HUD prefab's boss intro in place, the
+        /// rest of the HUD untouched (after new boss frames).
+        /// </summary>
+        [MenuItem("Tools/Setup/Update Boss Intro Cards")]
+        public static void UpdateBossIntroCards()
+        {
+            string path = $"{EditorPaths.c_PrefabsUi}/HUD.prefab";
+            GameObject root = PrefabUtility.LoadPrefabContents(path);
+            try
+            {
+                BossIntroView view = root.GetComponentInChildren<BossIntroView>(true);
+                var so = new SerializedObject(view);
+                WriteBossIntros(so);
+                so.ApplyModifiedPropertiesWithoutUndo();
+                PrefabUtility.SaveAsPrefabAsset(root, path);
+            }
+            finally
+            {
+                PrefabUtility.UnloadPrefabContents(root);
+            }
+            Debug.Log("[SceneBuilder] Boss intro cards updated.");
+        }
+
+        private static void WriteBossIntros(SerializedObject so)
+        {
             SerializedProperty list = so.FindProperty("m_Bosses");
             list.arraySize = s_BossIntros.Length;
             for (int i = 0; i < s_BossIntros.Length; i++)
@@ -1102,14 +1133,15 @@ namespace ZombiCar.EditorTools
                     SerializedProperty a = moves.GetArrayElementAtIndex(m);
                     a.FindPropertyRelative("Title").stringValue = move.Title;
                     a.FindPropertyRelative("Text").stringValue = move.Text;
-                    a.FindPropertyRelative("Pose").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Sprite>(
-                        $"{EditorPaths.c_CharacterTextures}/{b.Sheet}/{b.Sheet}_{move.Pose}.png");
+                    var pose = AssetDatabase.LoadAssetAtPath<Sprite>($"{EditorPaths.c_CharacterTextures}/{b.Sheet}/{b.Sheet}_{move.Pose}.png");
+                    if (pose == null)
+                        Debug.LogError($"[SceneBuilder] Boss intro: no frame {b.Sheet}_{move.Pose}");
+                    a.FindPropertyRelative("Pose").objectReferenceValue = pose;
                     a.FindPropertyRelative("Fx").objectReferenceValue = AssetDatabase.LoadAssetAtPath<Texture2D>($"Assets/Art/VFX/{move.Fx}.png");
                     a.FindPropertyRelative("FxColor").colorValue = move.FxColor;
                     a.FindPropertyRelative("SecondPhase").boolValue = move.SecondPhase;
                 }
             }
-            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>One ability card: accent frame, dark plate, the picture window (effect behind the boss's pose), name, text.</summary>

@@ -1,0 +1,129 @@
+{
+ "name": "Boss1",
+ "standingHeightPx": 240,
+ "pixelScale": 1.4545454545454546,
+ "strikeMoment": 0.525,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Boss1_Idle_00",
+    "Boss1_Idle_01",
+    "Boss1_Idle_02",
+    "Boss1_Idle_03",
+    "Boss1_Idle_04",
+    "Boss1_Idle_05",
+    "Boss1_Idle_06",
+    "Boss1_Idle_07",
+    "Boss1_Idle_08",
+    "Boss1_Idle_09"
+   ],
+   "fps": 6.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Boss1_Move_00",
+    "Boss1_Move_01",
+    "Boss1_Move_02",
+    "Boss1_Move_03",
+    "Boss1_Move_04",
+    "Boss1_Move_05",
+    "Boss1_Move_06",
+    "Boss1_Move_07",
+    "Boss1_Move_08",
+    "Boss1_Move_09",
+    "Boss1_Move_10",
+    "Boss1_Move_11",
+    "Boss1_Move_12",
+    "Boss1_Move_13",
+    "Boss1_Move_14",
+    "Boss1_Move_15",
+    "Boss1_Move_16"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Boss1_Attack_00",
+    "Boss1_Attack_01",
+    "Boss1_Attack_02",
+    "Boss1_Attack_03",
+    "Boss1_Attack_04",
+    "Boss1_Attack_05",
+    "Boss1_Attack_06",
+    "Boss1_Attack_07",
+    "Boss1_Attack_08",
+    "Boss1_Attack_09",
+    "Boss1_Attack_10",
+    "Boss1_Attack_11",
+    "Boss1_Attack_12",
+    "Boss1_Attack_13",
+    "Boss1_Attack_14",
+    "Boss1_Attack_15",
+    "Boss1_Attack_16",
+    "Boss1_Attack_17",
+    "Boss1_Attack_18",
+    "Boss1_Attack_19"
+   ],
+   "fps": 16.0,
+   "loop": false,
+   "strike": 0.525
+  },
+  {
+   "name": "Summon",
+   "frames": [
+    "Boss1_Summon_00",
+    "Boss1_Summon_01",
+    "Boss1_Summon_02",
+    "Boss1_Summon_03",
+    "Boss1_Summon_04",
+    "Boss1_Summon_05",
+    "Boss1_Summon_06",
+    "Boss1_Summon_07",
+    "Boss1_Summon_08",
+    "Boss1_Summon_09",
+    "Boss1_Summon_10",
+    "Boss1_Summon_11",
+    "Boss1_Summon_12",
+    "Boss1_Summon_13",
+    "Boss1_Summon_14",
+    "Boss1_Summon_15",
+    "Boss1_Summon_16",
+    "Boss1_Summon_17",
+    "Boss1_Summon_18"
+   ],
+   "fps": 14.0,
+   "loop": false,
+   "strike": 0.5
+  },
+  {
+   "name": "Dead",
+   "frames": [
+    "Boss1_Dead_00",
+    "Boss1_Dead_01",
+    "Boss1_Dead_02",
+    "Boss1_Dead_03",
+    "Boss1_Dead_04",
+    "Boss1_Dead_05",
+    "Boss1_Dead_06",
+    "Boss1_Dead_07",
+    "Boss1_Dead_08",
+    "Boss1_Dead_09",
+    "Boss1_Dead_10",
+    "Boss1_Dead_11",
+    "Boss1_Dead_12",
+    "Boss1_Dead_13",
+    "Boss1_Dead_14"
+   ],
+   "fps": 9.0,
+   "loop": false,
+   "strike": -1
+  }
+ ]
+}

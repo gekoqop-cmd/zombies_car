@@ -17,7 +17,7 @@ namespace ZombiCar.Progression
     /// the player falling) the game pauses behind the screen.
     /// The last boss's death is the victory finale: slow motion, a huge explosion where it fell, every zombie on the
     /// map drops, more blasts around (the HUD adds "ГОРОД СПАСЁН!", the fireworks and the fanfare); the best time is
-    /// saved for the menu and the run's time is sent to the Yandex "best_time" leaderboard
+    /// saved for the menu and the run's time is sent to the difficulty's Yandex best-time leaderboard
     /// (<see cref="YandexSdk.SubmitTimeScore"/>). A defeat can be taken back once per run (<see cref="RunState.Revive"/> after a rewarded
     /// ad): the player and the car are back up, the zombies around them are blown away and the waves go on.
     /// </summary>

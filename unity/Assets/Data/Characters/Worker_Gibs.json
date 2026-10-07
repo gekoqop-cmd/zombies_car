@@ -1,0 +1,53 @@
+{
+ "name": "Worker",
+ "pieces": [
+  {
+   "sprite": "Worker_Gib_0",
+   "x": -10.5,
+   "y": 144.5,
+   "area": 1814
+  },
+  {
+   "sprite": "Worker_Gib_1",
+   "x": 12.0,
+   "y": 139.0,
+   "area": 1425
+  },
+  {
+   "sprite": "Worker_Gib_2",
+   "x": -54.5,
+   "y": 100.0,
+   "area": 1596
+  },
+  {
+   "sprite": "Worker_Gib_3",
+   "x": -14.0,
+   "y": 87.0,
+   "area": 2196
+  },
+  {
+   "sprite": "Worker_Gib_4",
+   "x": 26.5,
+   "y": 82.5,
+   "area": 1343
+  },
+  {
+   "sprite": "Worker_Gib_5",
+   "x": -60.0,
+   "y": 66.5,
+   "area": 1836
+  },
+  {
+   "sprite": "Worker_Gib_6",
+   "x": 1.0,
+   "y": 32.0,
+   "area": 1702
+  },
+  {
+   "sprite": "Worker_Gib_7",
+   "x": -60.5,
+   "y": 24.0,
+   "area": 1247
+  }
+ ]
+}

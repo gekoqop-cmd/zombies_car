@@ -63,7 +63,7 @@ namespace ZombiCar.EditorTools
                 Check(switcher.Current == WeaponSlot.Axe && s_Weapon.Holstered && melee.Active && state.Current == WeaponSlot.Axe,
                     "switch: the axe in hand, the gun put away");
                 Check(switchSound, "weapon switch sound");
-                Check(blade.enabled, "the axe is drawn in the hand");
+                Check(blade.enabled != melee.ViewDrawsAxe, $"the axe is drawn in the hand ({(melee.ViewDrawsAxe ? "painted axe stance" : "carried axe")})");
                 Vector3 p = s_Player.position;
                 front = new[]
                 {
@@ -105,25 +105,34 @@ namespace ZombiCar.EditorTools
                         swingChecked = true;
                         Check(swingSound, "swing sound");
                         int damage = melee.Damage;
-                        bool allHit = front.Select((z, i) => !z.IsAlive || frontBefore[i] - z.Health == damage).All(b => b)
-                                      && front.Any(z => !z.IsAlive);
-                        Check(allHit && landed >= 3, $"one blow hit the {landed} zombies in the arc in front ({damage} damage)");
+                        bool allHit = front.Select((z, i) => !z.IsAlive || frontBefore[i] - z.Health == damage).All(b => b);
+                        Check(allHit && landed >= 3, $"one quick swing hit the {landed} zombies in the arc in front ({damage} damage)");
                         Check(behind.IsAlive && behind.Health == behindBefore, "the zombie behind the player was not hit");
                         Check(hitSound, "axe hit sound");
-                        s_Bot.FireHeld = true;                             // held attack: swing after swing
+                        s_Bot.FireHeld = true;                             // held attack: the axe goes up and stays
                     }
                 });
-            At(8.0f, () =>
+            At(7.0f, () =>
             {
-                Check(front.All(z => !z.IsAlive), "holding attack keeps swinging: the zombies in front are chopped down");
+                Check(melee.IsCharging && melee.Charge >= 1f, $"attack held: the axe is up and fully charged ({melee.Charge:F2})");
+                Check(front.Any(z => z.IsAlive), "no blow while the axe is held up");
+                Shot("6_Axe_Charged");
+                s_Bot.FireHeld = false;                            // let go: the charged blow
+            });
+            At(7.6f, () =>
+            {
+                Check(front.All(z => !z.IsAlive), $"the charged blow ({melee.ChargedDamage} damage) chops down the zombies in front");
+                Check(melee.ChargedDamage >= melee.Damage * 3, $"charged {melee.ChargedDamage} vs quick {melee.Damage}");
                 Check(fired == 0, "the gun stays silent while the axe is in hand");
                 Vector3 aim = behind.transform.position - s_Player.position;
                 aim.y = 0f;
                 s_Bot.AimDirection = aim.normalized;
+                s_Bot.FireHeld = true;
             });
+            At(9.0f, () => s_Bot.FireHeld = false);
             At(10.0f, () =>
             {
-                Check(!behind.IsAlive, "turned around: the last zombie is chopped down too");
+                Check(!behind.IsAlive, "turned around: the last zombie is chopped down too (charged)");
                 s_Bot.FireHeld = false;
                 barrel = ExplosiveProp.All.First(b => b.IsAlive);
                 barrel.transform.position = s_Player.position + Vector3.right * 1.3f;
@@ -168,7 +177,33 @@ namespace ZombiCar.EditorTools
                 Check(melee.Range > range + 0.1f && melee.Damage > damage, $"axe cards: reach {range:F1} -> {melee.Range:F1} m, " +
                     $"damage {damage} -> {melee.Damage}");
             });
-            At(12.3f, Finish);
+            // Running with the axe (its own painted run, no separate axe), then the held charge loops (not frozen).
+            At(12.4f, () =>
+            {
+                switcher.Switch(WeaponSlot.Axe);
+                s_Bot.AimActive = false;
+                s_Bot.Move = Vector2.left;
+            });
+            At(12.9f, () =>
+            {
+                Check(melee.ViewDrawsAxe && !blade.enabled, "running with the axe: the painted axe run, no separate axe");
+                Shot("6_Axe_Run");
+                s_Bot.Move = Vector2.zero;
+                s_Bot.FireHeld = true;
+            });
+            Sprite heldA = null;
+            At(14.0f, () => heldA = s_Player.GetComponentInChildren<PlayerView>().GetComponentsInChildren<SpriteRenderer>()
+                .First(r => r.name == "Body").sprite);
+            At(14.45f, () =>
+            {
+                Sprite heldB = s_Player.GetComponentInChildren<PlayerView>().GetComponentsInChildren<SpriteRenderer>()
+                    .First(r => r.name == "Body").sprite;
+                Check(melee.IsCharging && heldA != null && heldA != heldB, $"the held axe is alive (loops: {heldA?.name} -> {heldB?.name})");
+                Shot("6_Axe_Held");
+                s_Bot.FireHeld = false;
+                s_Bot.AimActive = true;
+            });
+            At(14.9f, Finish);
         }
     }
 }

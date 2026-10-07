@@ -196,7 +196,7 @@ namespace ZombiCar.UI
         private void Go(Step step)
         {
             if (step != m_Step && (step == Step.Resume || step == Step.Warn || step == Step.Sure || step == Step.Help))
-                AudioManager.PlaySfx(step == Step.Sure ? Sound.BossRoar : Sound.UiOpen);
+                AudioManager.PlaySfx(Sound.UiOpen);
             m_Step = step;
             m_StepAt = Time.unscaledTime;
             Apply(false);

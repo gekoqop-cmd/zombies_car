@@ -68,6 +68,9 @@ namespace ZombiCar.Characters
         private float m_DeadSince = float.NegativeInfinity;
         private float m_Rising;                      // 0..1 while coming out of the ground
         private int m_LastStep = -1;
+        private bool m_HasQueued;                    // a clip that follows the current one when it ends
+        private CharacterAnim m_Queued;
+        private float m_QueuedSpeed = 1f;
 
         public CharacterSprites Sprites => m_Sprites;
         public CharacterAnim Anim => m_Anim;
@@ -96,6 +99,7 @@ namespace ZombiCar.Characters
         /// <summary>Switches to <paramref name="anim"/> (kept running when it is already playing, unless restarted).</summary>
         public void Play(CharacterAnim anim, float speed = 1f, bool restart = false)
         {
+            m_HasQueued = false;
             m_PlaybackSpeed = speed;
             if (!restart && anim == m_Anim && m_Clip != null)
                 return;
@@ -105,6 +109,32 @@ namespace ZombiCar.Characters
             m_Clip = m_Sprites != null ? m_Sprites.Get(anim) : null;
             m_ClipTime = 0f;
             ApplyFrame();
+        }
+
+        /// <summary>
+        /// Plays <paramref name="next"/> (from its start) once the current clip has ended: a wind-up into the charge, a
+        /// rise into the blow. A loop never ends, so the queued clip waits for the next <see cref="Play"/> instead.
+        /// </summary>
+        public void Queue(CharacterAnim next, float speed = 1f)
+        {
+            m_HasQueued = true;
+            m_Queued = next;
+            m_QueuedSpeed = speed;
+        }
+
+        /// <summary>The clip <paramref name="anim"/> resolves to for this character (its stand-in when it has none).</summary>
+        public CharacterSprites.Clip ClipOf(CharacterAnim anim) => m_Sprites != null ? m_Sprites.Get(anim) : null;
+
+        /// <summary>
+        /// Playback speed at which the blow of <paramref name="anim"/> (its strike frame, else its end) lands after
+        /// <paramref name="seconds"/>: abilities time their clips to their wind-ups.
+        /// </summary>
+        public float SpeedToStrike(CharacterAnim anim, float seconds)
+        {
+            CharacterSprites.Clip clip = ClipOf(anim);
+            if (clip == null || seconds <= 0.01f)
+                return 1f;
+            return Mathf.Clamp(clip.StrikeTime / seconds, 0.25f, 4f);
         }
 
         /// <summary>Faces right for positive, left for negative screen-x movement; keeps the facing near zero.</summary>
@@ -153,6 +183,7 @@ namespace ZombiCar.Characters
             m_Rising = 0f;
             ScaleMultiplier = 1f;
             TintMultiplier = Color.white;
+            m_HasQueued = false;
             Play(CharacterAnim.Idle, 1f, true);
             ApplyPose();
         }
@@ -160,6 +191,8 @@ namespace ZombiCar.Characters
         private void LateUpdate()
         {
             m_ClipTime += Time.deltaTime * m_PlaybackSpeed;
+            if (m_HasQueued && IsFinished)
+                Play(m_Queued, m_QueuedSpeed, true);
             ApplyFrame();
             ApplyPose();
         }

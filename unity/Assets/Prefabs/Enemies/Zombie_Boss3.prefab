@@ -165,7 +165,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1.101561, y: 1.7137246, z: 1}
+  m_LocalScale: {x: 1.4214526, y: 2.2113876, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2730320908468849173}
@@ -219,12 +219,12 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: 69015c8966005d946bdbf819d48eec91, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7babac280d8c1874fbc9ae540c102844, type: 3}
   m_Color: {r: 1, g: 0.93, b: 0.85, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 3.62, y: 4.19}
+  m_Size: {x: 1.92, y: 2.48}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -243,20 +243,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Characters.SpriteAnimator
   m_Sprites: {fileID: 11400000, guid: 3fbe5401195a68e40916f93ea0a08eaa, type: 2}
-  m_Scale: {x: 1.101561, y: 1.7137246}
+  m_Scale: {x: 1.4214526, y: 2.2113876}
   m_Tint: {r: 1, g: 0.93, b: 0.85, a: 1}
   m_StepBounce: 0.03
-  m_StepSway: 1.5
+  m_StepSway: 0.6
   m_Procedural: 1
   m_Breath: 0.025
   m_BreathRate: 0.35
   m_StepSquash: 0.05
-  m_WalkLean: 2
-  m_AttackLean: 5
-  m_AttackLunge: 0.3
+  m_WalkLean: 0.8
+  m_AttackLean: 2
+  m_AttackLunge: 0.08
   m_HitLean: 3
   m_HitTime: 0.28
-  m_DeathThud: 0.2
+  m_DeathThud: 0.06
   m_RiseWobble: 4
   m_StepShake: 0.07
 --- !u!1 &2448442179761113067
@@ -377,7 +377,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.08, z: 0}
-  m_LocalScale: {x: 5.75, y: 1, z: 2.76}
+  m_LocalScale: {x: 4.25, y: 1, z: 2.0400002}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2730320908468849173}
@@ -490,10 +490,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.4
-  m_Height: 4.5
+  m_Radius: 1.25
+  m_Height: 3.5
   m_Direction: 1
-  m_Center: {x: 0, y: 2, z: 0}
+  m_Center: {x: 0, y: 1.5, z: 0}
 --- !u!1 &7951772353373165259
 GameObject:
   m_ObjectHideFlags: 0
@@ -645,10 +645,10 @@ CapsuleCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 1.15
-  m_Height: 4
+  m_Radius: 1
+  m_Height: 3
   m_Direction: 1
-  m_Center: {x: 0, y: 2, z: 0}
+  m_Center: {x: 0, y: 1.5, z: 0}
 --- !u!54 &7060595988695746475
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -694,7 +694,7 @@ NavMeshAgent:
   m_AutoTraverseOffMeshLink: 1
   m_AutoBraking: 1
   m_AutoRepath: 1
-  m_Height: 4
+  m_Height: 3
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 1
@@ -712,9 +712,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ZombiCar.Enemies.ZombieController
   m_Animator: {fileID: 284239944612758767}
   m_Shadow: {fileID: 573090961626063076}
-  m_StrikeMoment: 0.5
+  m_StrikeMoment: 0.469
   m_ShotHitbox: {fileID: 8286178645182275803}
-  m_VisualHeight: 7.180506
+  m_VisualHeight: 5.4842415
+  m_Gibs: {fileID: 0}
 --- !u!114 &6569810828300546183
 MonoBehaviour:
   m_ObjectHideFlags: 0

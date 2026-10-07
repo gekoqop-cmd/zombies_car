@@ -10,14 +10,14 @@ namespace ZombiCar.Progression
     /// The tutorial of the first run. First the intro cards (the HUD's <c>TutorialCardsView</c>: goal, controls,
     /// weapons, the car, level-up cards, bosses; the game waits while they are open), then live hints on the HUD at the
     /// moment they matter: the first zombie, the gun running dry, the workshop opening after the first wave, the first
-    /// level-up card. Every live hint shows once and goes as soon as the player did it (or after a few seconds). The
+    /// level-up card, the axe first in hand (quick swing and the charged blow). Every live hint shows once and goes as soon as the player did it (or after a few seconds). The
     /// cards are seen once per device (<see cref="MetaProgress.TutorialDone"/>) and the live hints only in the run that
     /// showed them; the settings' "Обучение" button replays both. Texts follow the device (keyboard and mouse or touch
     /// controls).
     /// </summary>
     public sealed class TutorialDirector : MonoBehaviour
     {
-        private enum Live { FirstZombie, NoAmmo, Workshop, FirstCard, Count }
+        private enum Live { FirstZombie, NoAmmo, Workshop, FirstCard, Axe, Count }
 
         private struct Hint
         {
@@ -28,14 +28,16 @@ namespace ZombiCar.Progression
 
         private static readonly Hint[] s_Hints =
         {
-            new Hint { Desktop = "ЗОМБИ! ЦЕЛЬСЯ МЫШЬЮ, ЛЕВАЯ КНОПКА — ОГОНЬ",
-                Touch = "ЗОМБИ! ТЯНИ ПРАВЫЙ ДЖОЙСТИК — ПРИЦЕЛ И ОГОНЬ", Timeout = 7f },
-            new Hint { Desktop = "ПАТРОНЫ КОНЧИЛИСЬ! ТОПОР — КЛАВИША 2. ПАТРОНЫ — У МАШИНЫ (E)",
-                Touch = "ПАТРОНЫ КОНЧИЛИСЬ! БЕЙ ТОПОРОМ. ПАТРОНЫ — У МАШИНЫ", Timeout = 8f },
-            new Hint { Desktop = "МАСТЕРСКАЯ ОТКРЫТА! У ГАРАЖА НАЖМИ E — УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ",
-                Touch = "МАСТЕРСКАЯ ОТКРЫТА! ПОДОЙДИ К ГАРАЖУ — УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ", Timeout = 9f },
-            new Hint { Desktop = "ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ» — ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА",
-                Touch = "ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ» — ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА", Timeout = 0f },
+            new Hint { Desktop = "ЗОМБИ! ЦЕЛЬСЯ МЫШЬЮ, СТРЕЛЯЙ ЛЕВОЙ КНОПКОЙ",
+                Touch = "ЗОМБИ! ТЯНИ ПРАВЫЙ ДЖОЙСТИК, ЧТОБЫ ЦЕЛИТЬСЯ И СТРЕЛЯТЬ", Timeout = 7f },
+            new Hint { Desktop = "ПАТРОНЫ КОНЧИЛИСЬ! ТОПОР НА КЛАВИШЕ 2, ПАТРОНЫ У МАШИНЫ (E)",
+                Touch = "ПАТРОНЫ КОНЧИЛИСЬ! БЕЙ ТОПОРОМ, ПАТРОНЫ У МАШИНЫ", Timeout = 8f },
+            new Hint { Desktop = "МАСТЕРСКАЯ ОТКРЫТА! НАЖМИ E У ГАРАЖА И УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ",
+                Touch = "МАСТЕРСКАЯ ОТКРЫТА! ПОДОЙДИ К ГАРАЖУ И УЛУЧШИ МАШИНУ ЗА МЕТАЛЛОЛОМ", Timeout = 9f },
+            new Hint { Desktop = "ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ»: ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА",
+                Touch = "ВЫБЕРИ УЛУЧШЕНИЕ. «НОВОЕ»: ЕЩЁ НЕ БРАЛ, ВЗЯТЫЕ ВИДНЫ СЛЕВА", Timeout = 0f },
+            new Hint { Desktop = "ТОПОР! КЛИКНИ ДЛЯ БЫСТРОГО УДАРА. ЗАЖМИ И ОТПУСТИ ДЛЯ МОЩНОГО",
+                Touch = "ТОПОР! ТАПНИ ДЛЯ БЫСТРОГО УДАРА. ЗАЖМИ ДЖОЙСТИК, НАВЕДИ И ОТПУСТИ ДЛЯ МОЩНОГО", Timeout = 10f },
         };
 
         [SerializeField] private TutorialState m_State;
@@ -53,6 +55,7 @@ namespace ZombiCar.Progression
         private float m_Time;
         private float m_DoneAt = -1f;
         private bool m_WaveCleared;
+        private PlayerMelee m_Melee;
 
         /// <summary>The tutorial runs in this map: the cards are open or live hints are still to come (tests).</summary>
         public bool Running => m_State != null && (m_State.CardsOpen || m_Live);
@@ -147,12 +150,16 @@ namespace ZombiCar.Progression
                 Begin(Live.FirstZombie);
             else if (!Shown(Live.Workshop) && m_WaveCleared && m_Waves != null && !m_Waves.IsWaveRunning)
                 Begin(Live.Workshop);
+            else if (!Shown(Live.Axe) && Melee != null && Melee.Active)
+                Begin(Live.Axe);
             else if (m_Shown == (1 << (int)Live.Count) - 1)
             {
                 MetaProgress.LiveHintsDone = true;
                 m_Live = false;
             }
         }
+
+        private PlayerMelee Melee => m_Melee != null ? m_Melee : m_Input != null ? m_Melee = m_Input.GetComponent<PlayerMelee>() : null;
 
         private bool Shown(Live hint) => (m_Shown & (1 << (int)hint)) != 0;
 
@@ -193,6 +200,9 @@ namespace ZombiCar.Progression
                     return m_Waves == null || m_Waves.IsWaveRunning || (m_Run != null && m_Run.WorkshopOpen);
                 case Live.FirstCard:
                     return !GamePause.Has(GamePause.Reason.LevelUp);
+                case Live.Axe:
+                    // Done once the player held the axe up to the full charge.
+                    return Melee == null || (Melee.IsCharging && Melee.Charge >= 1f);
                 default:
                     return true;
             }

@@ -51,7 +51,9 @@ namespace ZombiCar.EditorTools
             {
                 s_Director.enabled = false;
                 Teleport(new Vector3(-2f, 0f, -6f));
-                zombie = s_Spawner.SpawnAt(Zombie("Walker"), new Vector3(2f, 0f, -6f));
+                // Every zombie is drawn from video takes now: the frames carry the sway and the lunge, the procedural
+                // motion only adds a touch on top (the thresholds below), the hit recoil and the rise in full.
+                zombie = s_Spawner.SpawnAt(Zombie("Worker"), new Vector3(2f, 0f, -6f));
                 sprite = zombie.Animator.transform;
             });
             for (float t = 1.05f; t < 1.9f; t += 0.03f)
@@ -102,11 +104,11 @@ namespace ZombiCar.EditorTools
                 foreach (KeyValuePair<string, (float min, float max)> s in stretch)
                     Debug.Log($"[FeatureTests] motion {s.Key}: height x{s.Value.min:F3}..x{s.Value.max:F3}, " +
                               $"lean {lean[s.Key].min:F1}..{lean[s.Key].max:F1} deg");
-                Check(stretch.ContainsKey("walk") && stretch["walk"].max - stretch["walk"].min > 0.05f, "walking squashes and stretches");
-                Check(lean.ContainsKey("walk") && Mathf.Max(Mathf.Abs(lean["walk"].min), Mathf.Abs(lean["walk"].max)) > 5f,
-                    "walking leans forward (on top of the sway)");
+                Check(stretch.ContainsKey("walk") && stretch["walk"].max - stretch["walk"].min > 0.025f, "walking squashes and stretches a little");
+                Check(lean.ContainsKey("walk") && Mathf.Max(Mathf.Abs(lean["walk"].min), Mathf.Abs(lean["walk"].max)) > 1.5f,
+                    "walking leans forward a little (on top of the painted walk)");
                 Check(stretch.ContainsKey("Idle") || stretch.ContainsKey("walk"), "breathing / walking sampled");
-                Check(lean.ContainsKey("attack") && lean["attack"].max - lean["attack"].min > 10f, "the attack winds up and lunges");
+                Check(lean.ContainsKey("attack") && lean["attack"].max - lean["attack"].min > 4f, "the attack winds up and lunges (on top of the painted blow)");
                 Check(lean.ContainsKey("hit") && lean["hit"].max - lean["hit"].min > 4f, "a hit makes it recoil");
                 Check(stretch.ContainsKey("dead") && stretch["dead"].min < 0.95f, "the body thuds when it falls");
                 Check(lean.ContainsKey("rise") && lean["rise"].max - lean["rise"].min > 4f, "rising from the ground wobbles");

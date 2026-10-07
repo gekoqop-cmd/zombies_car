@@ -4996,6 +4996,10 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 326d7ab4c60b1514184d2eea3f7eace6, type: 2}
   - {fileID: 2100000, guid: 4c78d756bb6c28f44a7f85dde7c3b389, type: 2}
   - {fileID: 2100000, guid: 44cdd23e1dd85e24d8b2041690c363a6, type: 2}
+  m_TextMaterialsEnglish:
+  - {fileID: 2100000, guid: 9dc536212aafdeb439091211dbf74d7c, type: 2}
+  - {fileID: 2100000, guid: 73cb5a3e27f66984abcbc1a1a259a8ad, type: 2}
+  - {fileID: 2100000, guid: 8975358001e8af74884825d2db31f10f, type: 2}
   m_Ring: {fileID: 7368458601500115241}
   m_Scorch: {fileID: 8816447984318171539}
   m_Stars: {fileID: 425240564199809966}

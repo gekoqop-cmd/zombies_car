@@ -69,6 +69,8 @@ namespace ZombiCar.EditorTools
             (Sound.SupplyMines, new[] { "Sup_Mines" }, 0.65f, 0f, 0.1f),
             (Sound.SupplyRepair, new[] { "Sup_Repair" }, 0.85f, 0f, 0.1f),
             (Sound.LegendaryDrop, new[] { "Legendary_Drop" }, 0.95f, 0f, 1f),
+            (Sound.ZombieSplat, new[] { "Zombie_Splat1", "Zombie_Splat2", "Zombie_Splat3" }, 0.75f, 0.1f, 0.05f),
+            (Sound.BossStun, new[] { "Boss_Stun" }, 0.9f, 0.04f, 0.5f),
         };
 
         [MenuItem("Tools/Build Audio Mixer")]

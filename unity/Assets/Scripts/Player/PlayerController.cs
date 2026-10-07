@@ -1,4 +1,5 @@
 using UnityEngine;
+using ZombiCar.Core;
 using ZombiCar.Progression;
 
 namespace ZombiCar.Player
@@ -20,6 +21,8 @@ namespace ZombiCar.Player
         [SerializeField] private PlayerInteractor m_Interactor;
         [SerializeField] private PlayerHealth m_Health;
         [SerializeField] private RunState m_Run;
+        [Tooltip("The axe: slower while it is held up for the charged blow.")]
+        [SerializeField, OptionalReference] private PlayerMelee m_Melee;
 
         private CharacterController m_Controller;
         private IPlayerInput m_Input;
@@ -82,7 +85,8 @@ namespace ZombiCar.Player
             forward.y = 0f;
             forward = forward.sqrMagnitude > c_MinLookSqr ? forward.normalized : Vector3.forward;
             var right = new Vector3(forward.z, 0f, -forward.x);
-            float speed = m_Config.MoveSpeed * (m_Run != null ? m_Run.Modifiers.Multiplier(StatEffect.MoveSpeed) : 1f);
+            float speed = m_Config.MoveSpeed * (m_Run != null ? m_Run.Modifiers.Multiplier(StatEffect.MoveSpeed) : 1f)
+                * (m_Melee != null ? m_Melee.MoveMultiplier : 1f);
             return (right * move.x + forward * move.y) * speed;
         }
     }

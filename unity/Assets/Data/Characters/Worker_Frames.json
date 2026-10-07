@@ -1,0 +1,78 @@
+{
+ "name": "Worker",
+ "standingHeightPx": 176,
+ "pixelScale": 1.3134328358208955,
+ "strikeMoment": 0.472,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Worker_Idle_00",
+    "Worker_Idle_01",
+    "Worker_Idle_02",
+    "Worker_Idle_03"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Worker_Move_00",
+    "Worker_Move_01",
+    "Worker_Move_02",
+    "Worker_Move_03",
+    "Worker_Move_04",
+    "Worker_Move_05",
+    "Worker_Move_06",
+    "Worker_Move_07",
+    "Worker_Move_08",
+    "Worker_Move_09",
+    "Worker_Move_10",
+    "Worker_Move_11",
+    "Worker_Move_12",
+    "Worker_Move_13",
+    "Worker_Move_14",
+    "Worker_Move_15",
+    "Worker_Move_16",
+    "Worker_Move_17",
+    "Worker_Move_18",
+    "Worker_Move_19",
+    "Worker_Move_20",
+    "Worker_Move_21",
+    "Worker_Move_22",
+    "Worker_Move_23"
+   ],
+   "fps": 12.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Worker_Attack_00",
+    "Worker_Attack_01",
+    "Worker_Attack_02",
+    "Worker_Attack_03",
+    "Worker_Attack_04",
+    "Worker_Attack_05",
+    "Worker_Attack_06",
+    "Worker_Attack_07",
+    "Worker_Attack_08",
+    "Worker_Attack_09",
+    "Worker_Attack_10",
+    "Worker_Attack_11",
+    "Worker_Attack_12",
+    "Worker_Attack_13",
+    "Worker_Attack_14",
+    "Worker_Attack_15",
+    "Worker_Attack_16",
+    "Worker_Attack_17"
+   ],
+   "fps": 17.0,
+   "loop": false,
+   "strike": 0.472
+  }
+ ]
+}

@@ -134,6 +134,15 @@ namespace ZombiCar.EditorTools
                 BuildAtlas("GunGray_" + clip.name, clip.frames.Select(f => Frame(GunName(f))).ToArray());
                 clips[clip.name] = BuildClip(clip, sprites);
             }
+            // The painted axe clips and their blade overlays.
+            if (File.Exists(c_AxeMeta))
+            {
+                foreach (AxeClipMeta clip in JsonUtility.FromJson<AxeFramesMeta>(File.ReadAllText(c_AxeMeta)).clips)
+                {
+                    BuildAtlas("Axe_" + clip.name, clip.frames.Select(Frame).ToArray());
+                    BuildAtlas("AxeBlade_" + clip.name, clip.frames.Select(f => Frame("PlayerAxeBlade_" + f.Substring("PlayerAxe_".Length))).ToArray());
+                }
+            }
             BuildAtlas("MuzzleFlash", Enumerable.Range(0, c_FlashFrames).Select(i => Frame($"Player_MuzzleFlash_{i}"))
                 .Append(Frame("Player_MuzzleGlow")).Append(Frame("Player_MuzzleSmoke")).ToArray());
             BuildController(clips);
@@ -148,9 +157,16 @@ namespace ZombiCar.EditorTools
                       $"barrel height {barrelHeight:F2} m.");
         }
 
-        private static void BuildAtlas(string name, Sprite[] sprites)
+        private static void BuildAtlas(string name, Sprite[] sprites) => BuildAtlasAt($"{c_Atlases}/Player_{name}.spriteatlasv2", sprites);
+
+        /// <summary>
+        /// A sprite atlas of <paramref name="sprites"/> at <paramref name="path"/> (.spriteatlasv2), packed for the build:
+        /// tight, no rotation, mip maps, crunched DXT on WebGL (a fraction of the download of separate textures).
+        /// </summary>
+        public static void BuildAtlasAt(string path, Sprite[] sprites)
         {
-            string path = $"{c_Atlases}/Player_{name}.spriteatlasv2";
+            EditorPaths.EnsureFolder(Path.GetDirectoryName(path).Replace('\\', '/'));
+            EditorSettings.spritePackerMode = SpritePackerMode.SpriteAtlasV2Build;
             var atlas = new SpriteAtlasAsset();
             atlas.Add(sprites.Cast<Object>().ToArray());
             SpriteAtlasAsset.Save(atlas, path);
@@ -405,6 +421,7 @@ namespace ZombiCar.EditorTools
                 ("m_GunFrames", frameNames.Select(f => (Object)Frame(GunName(f))).ToArray()),
                 ("m_GunOverlay", overlay), ("m_Cosmetics", CosmeticsBuilder.Catalog));
             BuildAxe(view, bodyGo.transform, melee);
+            WireAxeFrames(playerView);
 
             WeaponConfig config = DataAssetsBuilder.Load<WeaponConfig>(DataAssetsBuilder.c_WeaponConfig);
             PrefabBuilder.Wire(weapon, ("m_Muzzle", muzzle));
@@ -413,6 +430,54 @@ namespace ZombiCar.EditorTools
             PrefabBuilder.Wire(health, ("m_Stats", DataAssetsBuilder.Load<PlayerStats>(DataAssetsBuilder.c_PlayerStats)), ("m_View", playerView),
                 ("m_Run", DataAssetsBuilder.Load<ZombiCar.Progression.RunState>(DataAssetsBuilder.c_RunState)));
             return health;
+        }
+
+        // The player with the axe in hand, painted (tools/characters/zombie_mp4/process.py: PlayerAxe_<Clip>_NN and the
+        // blade overlays PlayerAxeBlade_<Clip>_NN, same height as the body frames).
+        [Serializable]
+        private sealed class AxeClipMeta
+        {
+            public string name;
+            public string[] frames;
+            public float fps;
+            public float strike = -1f;
+        }
+
+        [Serializable]
+        private sealed class AxeFramesMeta
+        {
+            public AxeClipMeta[] clips;
+        }
+
+        private const string c_AxeMeta = EditorPaths.c_DataCharacters + "/PlayerAxe_Frames.json";
+
+        private static void WireAxeFrames(PlayerView view)
+        {
+            if (!File.Exists(c_AxeMeta))
+            {
+                Debug.LogWarning($"[PlayerBuilder] {c_AxeMeta} missing: the axe stays the separate AxeView only");
+                return;
+            }
+            var meta = JsonUtility.FromJson<AxeFramesMeta>(File.ReadAllText(c_AxeMeta));
+            var so = new SerializedObject(view);
+            foreach (AxeClipMeta clip in meta.clips)
+            {
+                SerializedProperty p = so.FindProperty("m_Axe" + clip.name);
+                if (p == null)
+                    throw new InvalidOperationException($"[PlayerBuilder] PlayerView has no m_Axe{clip.name}");
+                SerializedProperty frames = p.FindPropertyRelative("Frames");
+                SerializedProperty blades = p.FindPropertyRelative("Blades");
+                frames.arraySize = blades.arraySize = clip.frames.Length;
+                for (int i = 0; i < clip.frames.Length; i++)
+                {
+                    frames.GetArrayElementAtIndex(i).objectReferenceValue = Frame(clip.frames[i]);
+                    blades.GetArrayElementAtIndex(i).objectReferenceValue =
+                        AssetDatabase.LoadAssetAtPath<Sprite>($"{c_Frames}/PlayerAxeBlade_{clip.frames[i].Substring("PlayerAxe_".Length)}.png");
+                }
+                p.FindPropertyRelative("Fps").floatValue = clip.fps;
+                p.FindPropertyRelative("Strike").floatValue = clip.strike >= 0f ? clip.strike : 0.5f;
+            }
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>

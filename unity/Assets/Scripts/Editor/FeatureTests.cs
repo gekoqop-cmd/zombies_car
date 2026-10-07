@@ -225,6 +225,11 @@ namespace ZombiCar.EditorTools
             Application.logMessageReceived += CountErrors;
             s_Scenario = SessionState.GetString(c_ScenarioKey, "progression");
             s_CheckpointsBefore = MetaProgress.AllCheckpoints().ToArray();     // put back when the scenario ends
+            Core.SettingsService.SetShakeEnabled(true);                       // the scenarios expect the default feel
+            // -featureLang en|ru: the scenario in that language (not saved as the player's choice).
+            string lang = Argument("-featureLang");
+            if (!string.IsNullOrEmpty(lang))
+                Loc.SetForSession(lang == "en" ? GameLanguage.English : GameLanguage.Russian);
             Rebind();
 
             s_Steps.Clear();

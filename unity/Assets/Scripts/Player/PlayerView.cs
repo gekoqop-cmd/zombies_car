@@ -89,6 +89,32 @@ namespace ZombiCar.Player
         [SerializeField] private SpriteRenderer m_GunOverlay;
         [SerializeField] private CosmeticCatalog m_Cosmetics;
 
+        /// <summary>One painted axe clip (tools/characters/zombie_mp4: PlayerAxe_*) with its blade overlays.</summary>
+        [System.Serializable]
+        public sealed class AxeClip
+        {
+            public Sprite[] Frames = System.Array.Empty<Sprite>();
+            [Tooltip("The blade alone in lifted greys, per frame: tinted by the axe skin over the body.")]
+            public Sprite[] Blades = System.Array.Empty<Sprite>();
+            [Min(0.1f)] public float Fps = 12f;
+            [Tooltip("Share of the clip where the blow lands.")]
+            public float Strike = 0.5f;
+
+            public bool Valid => Frames != null && Frames.Length > 0;
+            public float Duration => Frames.Length / Fps;
+        }
+
+        [Header("Axe in hand (painted frames)")]
+        [SerializeField] private AxeClip m_AxeIdle = new AxeClip();
+        [Tooltip("Running with the axe (played at the run's speed, like the gun's run).")]
+        [SerializeField] private AxeClip m_AxeRun = new AxeClip();
+        [SerializeField] private AxeClip m_AxeSwingA = new AxeClip();
+        [SerializeField] private AxeClip m_AxeSwingB = new AxeClip();
+        [Tooltip("Charging: the axe goes up, then the Hold loop (breathing, blinking) until the release.")]
+        [SerializeField] private AxeClip m_AxeRaise = new AxeClip();
+        [SerializeField] private AxeClip m_AxeHold = new AxeClip();
+        [SerializeField] private AxeClip m_AxeSlam = new AxeClip();
+
         private IPlayerInput m_Input;
         private int m_Facing = 1;
         private float m_FlashStart = float.NegativeInfinity;
@@ -107,6 +133,8 @@ namespace ZombiCar.Player
         private readonly System.Collections.Generic.Dictionary<Sprite, int> m_FrameIndex =
             new System.Collections.Generic.Dictionary<Sprite, int>();
         private CosmeticItem m_GunSkin;
+        private CosmeticItem m_AxeSkin;
+        private float m_AxeRunTime;
 
         private void Awake()
         {
@@ -125,6 +153,9 @@ namespace ZombiCar.Player
                 m_GunSkin = m_Cosmetics.Equipped(CosmeticSlot.Gun);
                 if (m_GunSkin != null && m_GunSkin.IsDefault)
                     m_GunSkin = null;
+                m_AxeSkin = m_Cosmetics.Equipped(CosmeticSlot.Axe);
+                if (m_AxeSkin != null && m_AxeSkin.IsDefault)
+                    m_AxeSkin = null;
             }
             if (m_MuzzleFlash != null)
             {
@@ -317,9 +348,13 @@ namespace ZombiCar.Player
         /// </summary>
         private void UpdateRifle()
         {
+            bool axe = m_Melee != null && m_Melee.InHand;
+            if (m_Melee != null)
+                m_Melee.ViewDrawsAxe = axe && ShowAxeFrame();
+            if (m_Melee != null && m_Melee.ViewDrawsAxe)
+                return;
             if (!m_FrameIndex.TryGetValue(m_Body.sprite, out int i))
                 return;
-            bool axe = m_Melee != null && m_Melee.InHand;
             bool skinned = m_GunSkin != null && !axe;
             m_Body.sprite = axe || skinned ? m_NoGunFrames[i] : m_Frames[i];
             if (m_GunOverlay == null)
@@ -331,6 +366,84 @@ namespace ZombiCar.Player
             Color c = m_GunSkin.Color * m_Body.color;
             c.a = m_Body.color.a;
             m_GunOverlay.color = c;
+        }
+
+        /// <summary>
+        /// The painted axe frame for this moment: the axe going up and held while charging, the blow (timed so it lands
+        /// with the hit), the axe stance while standing. False while running (the run frames, the separate axe).
+        /// </summary>
+        private bool ShowAxeFrame()
+        {
+            AxeClip clip;
+            int frame;
+            if (m_Melee.IsCharging && m_AxeRaise.Valid)
+            {
+                float held = m_Melee.ChargeHeld;
+                if (held >= m_AxeRaise.Duration && m_AxeHold.Valid)
+                {
+                    clip = m_AxeHold;
+                    frame = Mathf.FloorToInt((held - m_AxeRaise.Duration) * clip.Fps) % clip.Frames.Length;
+                }
+                else
+                {
+                    clip = m_AxeRaise;
+                    frame = Mathf.Min(Mathf.FloorToInt(held * clip.Fps), clip.Frames.Length - 1);
+                }
+            }
+            else
+            {
+                clip = m_Melee.CurrentBlow switch
+                {
+                    PlayerMelee.Blow.SwingA => m_AxeSwingA,
+                    PlayerMelee.Blow.SwingB => m_AxeSwingB,
+                    _ => m_AxeSlam,
+                };
+                frame = -1;
+                if (clip.Valid)
+                {
+                    // Played at the speed that lands its strike frame on the hit.
+                    float speed = Mathf.Clamp(clip.Strike * clip.Duration / Mathf.Max(0.02f, m_Melee.CurrentWindup), 0.5f, 3f);
+                    int f = Mathf.FloorToInt(m_Melee.SwingTime * speed * clip.Fps);
+                    if (f < clip.Frames.Length)
+                        frame = f;
+                }
+                if (frame < 0)
+                {
+                    if (!m_Melee.Active)
+                        return false;
+                    if (m_Speed > m_RunThreshold)
+                    {
+                        if (!m_AxeRun.Valid)
+                            return false;
+                        // The run cycle advances with the distance covered (the gun's run does it through the Animator).
+                        clip = m_AxeRun;
+                        float rate = m_Config != null ? m_Config.RunAnimationSpeed(m_Speed) : 1f;
+                        m_AxeRunTime += Time.deltaTime * rate;
+                        frame = Mathf.FloorToInt(m_AxeRunTime * clip.Fps) % clip.Frames.Length;
+                    }
+                    else
+                    {
+                        if (!m_AxeIdle.Valid)
+                            return false;
+                        clip = m_AxeIdle;
+                        frame = Mathf.FloorToInt(Time.time * clip.Fps) % clip.Frames.Length;
+                    }
+                }
+            }
+            m_Body.sprite = clip.Frames[frame];
+            if (m_GunOverlay != null)
+            {
+                Sprite blade = m_AxeSkin != null && frame < clip.Blades.Length ? clip.Blades[frame] : null;
+                m_GunOverlay.enabled = blade != null;
+                if (blade != null)
+                {
+                    m_GunOverlay.sprite = blade;
+                    Color c = m_AxeSkin.Color * m_Body.color;
+                    c.a = m_Body.color.a;
+                    m_GunOverlay.color = c;
+                }
+            }
+            return true;
         }
 
         private void UpdateMuzzleEffects()

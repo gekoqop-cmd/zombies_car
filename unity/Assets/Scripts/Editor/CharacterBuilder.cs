@@ -78,6 +78,49 @@ namespace ZombiCar.EditorTools
             public (string field, object value)[] Abilities = Array.Empty<(string, object)>();
         }
 
+        // Characters re-drawn from green-screen videos (tools/characters/zombie_mp4/process.py): clips, the strike moment
+        // and the pixel scale against the old sheet in Data/Characters/<Name>_Frames.json; the death chunks of every
+        // regular zombie in <Name>_Gibs.json.
+        [Serializable]
+        private sealed class VideoFrames
+        {
+            public float pixelScale = 1f;
+            public float strikeMoment = 0.5f;
+            public VideoClip[] clips;
+        }
+
+        [Serializable]
+        private sealed class VideoClip
+        {
+            public string name;
+            public string[] frames;
+            public float fps;
+            public bool loop;
+            public float strike = -1f;                               // share of the clip where its blow lands
+        }
+
+        [Serializable]
+        private sealed class GibList
+        {
+            public Gib[] pieces;
+        }
+
+        [Serializable]
+        private sealed class Gib
+        {
+            public string sprite;
+            public float x;                                          // px from the feet, facing right
+            public float y;
+        }
+
+        private static T Json<T>(string path) where T : class
+        {
+            var text = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+            return text != null ? JsonUtility.FromJson<T>(text.text) : null;
+        }
+
+        private static VideoFrames Video(string name) => Json<VideoFrames>($"{EditorPaths.c_DataCharacters}/{name}_Frames.json");
+
         /// <summary>Numeric frame indices shared by one character's clips (characters.png, one sheet per character).</summary>
         private static string[] Idx(params int[] indices) => Array.ConvertAll(indices, i => i.ToString());
 
@@ -141,7 +184,7 @@ namespace ZombiCar.EditorTools
             {
                 Look = new Look
                 {
-                    Name = "Brute", Size = 1.35f, Shadow = new Vector2(2f, 0.95f),
+                    Name = "Brute", Size = 1.05f, Shadow = new Vector2(2f, 0.95f),
                     Clips = new[]
                     {
                         (CharacterAnim.Idle, Idx(0, 1), 1.6f, true),
@@ -151,7 +194,7 @@ namespace ZombiCar.EditorTools
                         (CharacterAnim.Dead, Idx(5, 6), 4f, false),
                     },
                 },
-                AgentRadius = 0.75f, ColliderRadius = 0.75f, ColliderHeight = 2.6f,
+                AgentRadius = 0.6f, ColliderRadius = 0.6f, ColliderHeight = 2.1f,
                 Health = 250, Speed = 0.95f, SpeedVariation = 0.05f, Damage = 20, AttackInterval = 2f, AttackRange = 0.8f,
                 Aggro = 3f, Stagger = 0f, Knockback = 0f, Xp = 40, Reward = 30, FromWave = 5, Weight = 0.5f,
             },
@@ -191,7 +234,7 @@ namespace ZombiCar.EditorTools
         private static (CharacterAnim, string[], float, bool)[] BossClips(string boss) =>
             BossSheetImporter.FrameCount(boss) == 9 ? FullSheetClips() : SheetClips();
 
-        // Bosses of waves 10 / 20 / 30: painted sheets (referens/bosses/boss<N>_sheet.png, BossSheetImporter) or, until a
+        // Bosses of waves 10 / 20 / 30 (Size: about 1.5x a zombie on screen, so the fight still has room around them): painted sheets (referens/bosses/boss<N>_sheet.png, BossSheetImporter) or, until a
         // boss has one, recoloured 2x upscaled brute / worker frames (tools/characters/boss_frames.py).
         private static readonly ZombieSpec[] s_Bosses =
         {
@@ -199,8 +242,8 @@ namespace ZombiCar.EditorTools
             {
                 // Brood mother: slow, goes for the car, hides behind her brood. 1 brood (summon), 2 acid puddles,
                 // 3 second phase "swarm": summons more often, with hounds among them.
-                Look = new Look { Name = "Boss1", Size = 1.9f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BossClips("Boss1") },
-                AgentRadius = 1f, ColliderRadius = 1f, ColliderHeight = 3.4f,
+                Look = new Look { Name = "Boss1", Size = 1.4f, PixelScale = 2f, Shadow = new Vector2(2.1f, 1f), Clips = BossClips("Boss1") },
+                AgentRadius = 1f, ColliderRadius = 0.9f, ColliderHeight = 2.6f,
                 Health = 1600, Speed = 0.85f, SpeedVariation = 0.02f, Damage = 25, AttackInterval = 2.2f, AttackRange = 1f,
                 AttackAnimSpeed = 0.9f, Aggro = 7f, Stagger = 0f, Knockback = 0f, Xp = 300, Reward = 150,
                 DisplayName = "МАТКА",
@@ -225,8 +268,8 @@ namespace ZombiCar.EditorTools
             {
                 // Ram: goes for the car, turns on the player who comes close. 1 charge (dazed after it), 2 acid rain (a dozen globs around the player,
                 // two dozen in the second phase), 3 second phase "quake": the ground slam.
-                Look = new Look { Name = "Boss2", Size = 2.1f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = BossClips("Boss2") },
-                AgentRadius = 0.9f, ColliderRadius = 0.85f, ColliderHeight = 3.6f,
+                Look = new Look { Name = "Boss2", Size = 1.55f, PixelScale = 2f, Shadow = new Vector2(1.6f, 0.8f), Clips = BossClips("Boss2") },
+                AgentRadius = 0.9f, ColliderRadius = 0.8f, ColliderHeight = 2.8f,
                 Health = 3200, Speed = 1.2f, SpeedVariation = 0.02f, Damage = 30, AttackInterval = 1.6f, AttackRange = 1f,
                 Aggro = 9f, Stagger = 0f, Knockback = 0f, Xp = 600, Reward = 350,
                 DisplayName = "ТАРАН",
@@ -252,8 +295,8 @@ namespace ZombiCar.EditorTools
             {
                 // The reaper (final): cuts and burns. 1 scythe sweep, 2 fire cracks, 3 second phase "reap": teleports to
                 // the player (a mark first) and cuts at once.
-                Look = new Look { Name = "Boss3", Size = 2.3f, PixelScale = 2f, Shadow = new Vector2(2.5f, 1.2f), Clips = BossClips("Boss3") },
-                AgentRadius = 1.15f, ColliderRadius = 1.15f, ColliderHeight = 4f,
+                Look = new Look { Name = "Boss3", Size = 1.7f, PixelScale = 2f, Shadow = new Vector2(2.5f, 1.2f), Clips = BossClips("Boss3") },
+                AgentRadius = 1.15f, ColliderRadius = 1f, ColliderHeight = 3f,
                 Health = 6500, Speed = 1.1f, SpeedVariation = 0.02f, Damage = 40, AttackInterval = 1.8f, AttackRange = 1.2f,
                 AttackAnimSpeed = 0.9f, Aggro = 8f, Stagger = 0f, Knockback = 0f,
                 Xp = 1000, Reward = 1000,
@@ -331,20 +374,53 @@ namespace ZombiCar.EditorTools
                 AssetDatabase.CreateAsset(asset, path);
             }
             var clips = new List<CharacterSprites.Clip>();
-            foreach ((CharacterAnim anim, string[] frames, float fps, bool loop) in look.Clips)
-                clips.Add(new CharacterSprites.Clip(anim, Array.ConvertAll(frames, f => Frame(look.Name, f)), fps, loop));
+            VideoFrames video = Video(look.Name);
+            if (video != null)
+            {
+                // Idle, Move, Attack (bosses: their abilities and death too) from the takes. No hit take: the hit is
+                // the idle pose with the flash and recoil; a regular zombie has no death take either, it bursts into
+                // pieces when it dies (ZombieGibs).
+                Sprite[] idle = null;
+                bool dead = false;
+                foreach (VideoClip c in video.clips)
+                {
+                    var anim = (CharacterAnim)Enum.Parse(typeof(CharacterAnim), c.name);
+                    Sprite[] frames = Array.ConvertAll(c.frames, f => Frame(look.Name, f.Substring(look.Name.Length + 1)));
+                    clips.Add(new CharacterSprites.Clip(anim, frames, c.fps, c.loop, c.strike));
+                    if (anim == CharacterAnim.Idle)
+                        idle = frames;
+                    dead |= anim == CharacterAnim.Dead;
+                }
+                if (idle == null)
+                    throw new InvalidOperationException($"[CharacterBuilder] {look.Name}_Frames.json has no Idle clip");
+                clips.Add(new CharacterSprites.Clip(CharacterAnim.Hit, new[] { idle[0] }, 1f, true));
+                if (!dead)
+                    clips.Add(new CharacterSprites.Clip(CharacterAnim.Dead, new[] { idle[0] }, 1f, false));
+            }
+            else
+            {
+                foreach ((CharacterAnim anim, string[] frames, float fps, bool loop) in look.Clips)
+                    clips.Add(new CharacterSprites.Clip(anim, Array.ConvertAll(frames, f => Frame(look.Name, f)), fps, loop));
+            }
             asset.EditorSetClips(clips.ToArray());
             EditorUtility.SetDirty(asset);
+            // Video-drawn characters have many big frames: one crunched atlas per clip.
+            if (video != null)
+            {
+                string atlases = $"{EditorPaths.c_CharacterTextures}/{look.Name}/Atlases";
+                foreach (CharacterSprites.Clip clip in clips.Where(c => c.Anim != CharacterAnim.Hit && c.Frames.Length > 1))
+                    PlayerBuilder.BuildAtlasAt($"{atlases}/{look.Name}_{clip.Anim}.spriteatlasv2", clip.Frames);
+            }
             return asset;
         }
 
         // ------------------------------------------------------------------ zombie visuals
         private static float SpriteScale(Look look)
         {
-            float scale = ViewScale * look.Size / look.PixelScale;
+            float scale = ViewScale * look.Size / (Video(look.Name)?.pixelScale ?? look.PixelScale);
             // A painted boss sheet may be drawn at any resolution: its idle pose is shown as tall as the reference
             // boss frames (c_BossIdlePx at PixelScale 2), so a sharper or smaller sheet keeps the boss's size.
-            if (look.Name.StartsWith("Boss"))
+            if (look.Name.StartsWith("Boss") && Video(look.Name) == null)
             {
                 float idle = Frame(look.Name, "0").rect.height;
                 if (idle > 1f)
@@ -390,10 +466,17 @@ namespace ZombiCar.EditorTools
             // stomp that shakes the screen on every foot fall, a small lean (their painted poses already swing), barely
             // flinching when hit, a big thud when they fall.
             SetProps(animator, ("m_Sprites", sprites), ("m_Scale", scale2), ("m_Tint", s_SpriteTint), ("m_Procedural", true));
+            // Video takes already sway, lean and lunge: only a touch of it on top.
+            if (Video(look.Name) != null)
+                SetProps(animator, ("m_StepBounce", 0.015f), ("m_StepSway", 1f), ("m_StepSquash", 0.02f), ("m_WalkLean", 1.5f),
+                    ("m_Breath", 0.01f), ("m_AttackLean", 4f), ("m_AttackLunge", 0.06f));
             if (look.Name.StartsWith("Boss"))
                 SetProps(animator, ("m_Breath", 0.025f), ("m_BreathRate", 0.35f), ("m_StepBounce", 0.03f), ("m_StepSway", 1.5f),
                     ("m_StepSquash", 0.05f), ("m_WalkLean", 2f), ("m_AttackLean", 5f), ("m_AttackLunge", 0.3f),
                     ("m_HitLean", 3f), ("m_DeathThud", 0.2f), ("m_RiseWobble", 4f), ("m_StepShake", 0.07f));
+            if (look.Name.StartsWith("Boss") && Video(look.Name) != null)
+                SetProps(animator, ("m_StepSway", 0.6f), ("m_WalkLean", 0.8f), ("m_AttackLean", 2f), ("m_AttackLunge", 0.08f),
+                    ("m_DeathThud", 0.06f));
             visualHeight = idle.rect.height / ArtImportPostprocessor.c_CharacterPixelsPerUnit * scale2.y;
 
             var shadowGo = new GameObject("Shadow");
@@ -450,9 +533,14 @@ namespace ZombiCar.EditorTools
             agent.obstacleAvoidanceType = ObstacleAvoidanceType.LowQualityObstacleAvoidance;
             agent.enabled = false;                         // enabled on spawn, once placed on the NavMesh
 
-            SpriteAnimator animator = BuildView(root, spec.Look, sprites, false, out _, out Transform shadow, out float height);
+            SpriteAnimator animator = BuildView(root, spec.Look, sprites, false, out Transform view, out Transform shadow, out float height);
             var zombie = root.AddComponent<ZombieController>();
             SetProps(zombie, ("m_Animator", animator), ("m_Shadow", shadow), ("m_VisualHeight", height), ("m_ShotHitbox", hitbox));
+            VideoFrames video = Video(spec.Look.Name);
+            if (video != null)
+                SetProps(zombie, ("m_StrikeMoment", video.strikeMoment));
+            if (spec.Boss == null)
+                SetProps(zombie, ("m_Gibs", BuildGibs(root, view, spec.Look, animator.Scale)));
             SetLayerRecursively(root, Layers.c_EnemyIndex);
             if (spec.Boss != null)
                 BuildBossParts(root, zombie, spec, minions, glob, height);
@@ -477,6 +565,29 @@ namespace ZombiCar.EditorTools
             so.FindProperty("m_DisplayName").stringValue = spec.DisplayName ?? string.Empty;
             so.ApplyModifiedPropertiesWithoutUndo();
             return config;
+        }
+
+        /// <summary>The death chunks (Data/Characters/&lt;Name&gt;_Gibs.json) and the blood materials; null without chunks.</summary>
+        private static ZombieGibs BuildGibs(GameObject root, Transform view, Look look, Vector2 scale)
+        {
+            GibList list = Json<GibList>($"{EditorPaths.c_DataCharacters}/{look.Name}_Gibs.json");
+            if (list?.pieces == null || list.pieces.Length == 0)
+                return null;
+            var gibs = root.AddComponent<ZombieGibs>();
+            Sprite[] pieces = Array.ConvertAll(list.pieces, p => Frame(look.Name, p.sprite.Substring(look.Name.Length + 1)));
+            PlayerBuilder.BuildAtlasAt($"{EditorPaths.c_CharacterTextures}/{look.Name}/Atlases/{look.Name}_Gibs.spriteatlasv2", pieces);
+            SetProps(gibs, ("m_View", view), ("m_Pieces", pieces), ("m_Scale", scale), ("m_Tint", s_SpriteTint), ("m_Size", look.Size),
+                ("m_SpriteMaterial", AssetDatabase.LoadAssetAtPath<Material>(c_SpriteMaterial)),
+                ("m_DropMaterial", FxBuilder.Material("M_FX_BloodDrop", "FX_BloodDrop", Color.white, false)),
+                ("m_SplatMaterial", FxBuilder.Material("M_FX_BloodSplat", "FX_BloodSplat", Color.white, false)));
+            var so = new SerializedObject(gibs);
+            SerializedProperty offsets = so.FindProperty("m_Offsets");
+            offsets.arraySize = list.pieces.Length;
+            float ppu = ArtImportPostprocessor.c_CharacterPixelsPerUnit;
+            for (int i = 0; i < list.pieces.Length; i++)
+                offsets.GetArrayElementAtIndex(i).vector2Value = new Vector2(list.pieces[i].x / ppu * scale.x, list.pieces[i].y / ppu * scale.y);
+            so.ApplyModifiedPropertiesWithoutUndo();
+            return gibs;
         }
 
         // ------------------------------------------------------------------ bosses
@@ -510,6 +621,16 @@ namespace ZombiCar.EditorTools
             int bossNumber = spec.Look.Name[spec.Look.Name.Length - 1] - '0';
             SetProps(abilities, ("m_RoarClip", BossVoiceSynth.Clip(bossNumber, "Roar")), ("m_AttackClip", BossVoiceSynth.Clip(bossNumber, "Attack")),
                 ("m_DeathClip", BossVoiceSynth.Clip(bossNumber, "Death")), ("m_SpecialClip", BossVoiceSynth.Clip(bossNumber, "Special")));
+            // Sounds cut from the bosses' video takes (referens/newanim/bosses/animbos) replace the synthesised ones.
+            AudioClip Take(string sound) => AssetDatabase.LoadAssetAtPath<AudioClip>($"Assets/Audio/SFX/{spec.Look.Name}_{sound}.ogg");
+            AudioClip special = Take("Summon") ?? Take("Vanish");
+            if (special != null)
+                SetProps(abilities, ("m_SpecialClip", special));
+            SetProps(abilities, ("m_ChargeClip", Take("Charge")), ("m_AppearClip", Take("Appear")));
+            // The big layered roar of each boss (tools/audio/boss_roars.py) for its entrance and the enrage.
+            AudioClip roar = Take("BigRoar");
+            if (roar != null)
+                SetProps(abilities, ("m_RoarClip", roar));
             ZombieConfig[] Configs(string[] names) => (names ?? Array.Empty<string>())
                 .Select(n => minions?.FirstOrDefault(c => c != null && c.name == "Zombie_" + n)).Where(c => c != null).ToArray();
             SetProps(abilities, ("m_Minions", Configs(spec.Boss.Minions).Cast<Object>().ToArray()),

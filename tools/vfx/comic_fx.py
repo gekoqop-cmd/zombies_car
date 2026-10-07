@@ -9,7 +9,7 @@ Writes to unity/Assets/Art/VFX (alpha-blended VFX import rules):
   FX_AcidSplat.png   acid splash on the ground
   FX_Aura.png        soft glowing ring under a boss
   FX_ComicBurst.png  jagged comic explosion burst (yellow core, orange-red rim, ink outline)
-  FX_Boom_*.png      comic lettering: БАХ!, БУМ!, БАБАХ! (fat letters, hot gradient, thick ink, drop shadow)
+  FX_Boom_*.png      comic lettering: БАХ!, БУМ!, БАБАХ! and in English BOOM!, BANG!, KABOOM! (fat letters, hot gradient, thick ink, drop shadow)
   FX_Star.png        little star flying out of explosions
   FX_Cloud.png       cartoon smoke puff (grey-white, ink outline)
   FX_Scorch.png      dark scorch mark left on the ground
@@ -307,6 +307,9 @@ if __name__ == "__main__":
     lettering("БАХ!", "FX_Boom_Bah", -8)
     lettering("БУМ!", "FX_Boom_Bum", 6)
     lettering("БАБАХ!", "FX_Boom_Babah", -5)
+    lettering("BOOM!", "FX_Boom_Boom", 6)
+    lettering("BANG!", "FX_Boom_Bang", -8)
+    lettering("KABOOM!", "FX_Boom_Kaboom", -5)
     star()
     cloud()
     scorch()

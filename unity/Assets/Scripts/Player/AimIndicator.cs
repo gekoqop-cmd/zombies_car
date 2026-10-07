@@ -5,7 +5,7 @@ namespace ZombiCar.Player
 {
     /// <summary>
     /// Brawl Stars style aim line for the touch controls: a thin strip on the ground from the player along the aim
-    /// while the aim stick is held, as long as the weapon's range (the axe's reach with the axe in hand) and cut at the
+    /// only while the aim stick is held (not on a quick tap), as long as the weapon's range (the axe's reach with the axe in hand) and cut at the
     /// first wall / car / cover in the way.
     /// Hidden on desktop (the mouse cursor shows the aim there).
     /// </summary>
@@ -52,7 +52,8 @@ namespace ZombiCar.Player
 
         private void LateUpdate()
         {
-            bool visible = m_Input != null && m_Input.AimActive && m_Follow != null;
+            // Only while the stick is held: a quick tap shoots at its target on its own, without a line.
+            bool visible = m_Input != null && m_Input.AimActive && MobileControls.Aiming && m_Follow != null;
             m_Renderer.enabled = visible;
             if (!visible)
                 return;

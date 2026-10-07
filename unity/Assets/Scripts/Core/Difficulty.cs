@@ -52,14 +52,14 @@ namespace ZombiCar.Core
         };
 
         /// <summary>
-        /// The Yandex Games leaderboard of the difficulty (technical names in the developer console). Normal keeps the
-        /// old "best_time" table: the runs on it so far were played at what is now Normal.
+        /// The Yandex Games leaderboard of the difficulty: its technical name in the developer console, which takes only
+        /// Latin letters and digits ([a-zA-Z0-9], no "_").
         /// </summary>
         public static string Leaderboard(Difficulty d) => d switch
         {
-            Difficulty.Easy => "best_time_easy",
-            Difficulty.Hardcore => "best_time_hardcore",
-            _ => "best_time",
+            Difficulty.Easy => "bestTimeEasy",
+            Difficulty.Hardcore => "bestTimeHardcore",
+            _ => "bestTimeNormal",
         };
 
         public static Difficulty Clamp(int value) => (Difficulty)Mathf.Clamp(value, 0, Count - 1);

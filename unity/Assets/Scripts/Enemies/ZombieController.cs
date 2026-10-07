@@ -11,8 +11,9 @@ namespace ZombiCar.Enemies
 {
     /// <summary>
     /// One zombie: rises out of the ground at its spawn point, walks on the NavMesh to the car (or to the player once
-    /// the player is close; hunters always go for the player), hits in melee, staggers when shot, dies, then sinks back
-    /// into the ground and returns to the <see cref="ZombieSpawner"/> pool. The body is a 2D sprite driven by
+    /// the player is close; hunters always go for the player), hits in melee, staggers when shot and dies: a regular zombie
+    /// bursts into pieces (<see cref="ZombieGibs"/>), a boss falls and sinks back into the ground; then it returns to the
+    /// <see cref="ZombieSpawner"/> pool. The body is a 2D sprite driven by
     /// <see cref="SpriteAnimator"/>; the root never rotates. Bosses (<see cref="BossBrain"/>) take it over for their
     /// abilities through <see cref="BeginAction"/> / <see cref="EndAction"/> and scale its speed, damage and the damage
     /// it takes.
@@ -25,6 +26,8 @@ namespace ZombiCar.Enemies
         private const float c_CorpseTime = 2.5f;
         private const float c_SinkTime = 1f;
         private const float c_SinkDepth = 0.9f;
+        private const float c_GibsLieTime = 1.6f;          // burst zombies: the pieces lie this long, then fade
+        private const float c_GibsFadeTime = 0.6f;
         private const float c_MoveAnimMinSpeed = 0.15f;
         private const float c_StaggerImmunity = 0.5f;      // after a stagger, hits only flash for this long (no stun-lock)
         private const float c_StrikeReachSlack = 1.3f;     // the target may step back a little during the wind-up
@@ -42,6 +45,8 @@ namespace ZombiCar.Enemies
         [SerializeField] private Collider m_ShotHitbox;
         [Tooltip("Height of the sprite, metres: rising starts this deep under the ground.")]
         [SerializeField, Min(0.1f)] private float m_VisualHeight = 2.5f;
+        [Tooltip("Regular zombies burst into pieces when they die (bosses fall and sink instead).")]
+        [SerializeField, OptionalReference] private ZombieGibs m_Gibs;
 
         private NavMeshAgent m_Agent;
         private CapsuleCollider m_Collider;
@@ -60,6 +65,7 @@ namespace ZombiCar.Enemies
         private bool m_ChasingPlayer;
         private float m_BaseSpeed;
         private float m_SpeedScale = 1f;
+        private Vector3 m_LastHit;
 
         private static readonly List<ZombieController> s_Active = new List<ZombieController>();
 
@@ -148,6 +154,9 @@ namespace ZombiCar.Enemies
             SetShootable(false);                  // not shootable while still in the ground
 
             m_Animator.ResetState();
+            m_LastHit = Vector3.zero;
+            if (m_Gibs != null)
+                m_Gibs.Hide();
             if (owner.Car != null)
                 m_Animator.SetFacing(owner.Car.transform.position.x - position.x);
             m_Animator.SetLift(-m_VisualHeight);
@@ -209,6 +218,7 @@ namespace ZombiCar.Enemies
             if (m_State == State.Dead || m_State == State.Rising)
                 return;
             amount = Mathf.Max(1, Mathf.RoundToInt(amount * DamageTakenScale));
+            m_LastHit = direction;
             m_Health -= amount;
             m_Animator.Flash(s_HitFlash, c_HitFlashTime);
             m_Animator.Kick(direction);
@@ -260,6 +270,9 @@ namespace ZombiCar.Enemies
                     m_NextAttack = Time.time + m_Config.AttackInterval;
                     m_Animator.Play(CharacterAnim.Attack, m_Config.AttackAnimSpeed, true);
                     break;
+                case State.Busy:
+                    Stop();                       // an ability (a charge moves it itself; a stunned boss stays put)
+                    break;
                 case State.Staggered:
                     Stop();
                     m_StaggerAllowedAt = Time.time + m_Config.StaggerTime + c_StaggerImmunity;
@@ -269,6 +282,12 @@ namespace ZombiCar.Enemies
                     m_Agent.enabled = false;      // corpses are not in the crowd avoidance
                     SetShootable(false);
                     m_Animator.Play(CharacterAnim.Dead, 1f, true);
+                    if (m_Gibs != null)
+                    {
+                        m_Animator.SetAlpha(0f);
+                        m_Shadow.localScale = Vector3.zero;
+                        m_Gibs.Burst(m_LastHit, m_Animator.Facing);
+                    }
                     if (m_Silent)
                         m_Owner.NotifyRemoved(this);
                     else
@@ -356,6 +375,17 @@ namespace ZombiCar.Enemies
 
         private void UpdateDead()
         {
+            if (m_Gibs != null)
+            {
+                float fade = Mathf.Clamp01((m_StateTime - c_GibsLieTime) / c_GibsFadeTime);
+                m_Gibs.SetFade(1f - fade);
+                if (fade >= 1f)
+                {
+                    m_Gibs.Hide();
+                    m_Owner.Release(this);
+                }
+                return;
+            }
             if (m_StateTime < c_CorpseTime)
                 return;
             float t = Mathf.Clamp01((m_StateTime - c_CorpseTime) / c_SinkTime);

@@ -1,0 +1,78 @@
+{
+ "name": "Walker",
+ "standingHeightPx": 176,
+ "pixelScale": 1.3858267716535433,
+ "strikeMoment": 0.575,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Walker_Idle_00",
+    "Walker_Idle_01",
+    "Walker_Idle_02",
+    "Walker_Idle_03",
+    "Walker_Idle_04",
+    "Walker_Idle_05"
+   ],
+   "fps": 8.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Walker_Move_00",
+    "Walker_Move_01",
+    "Walker_Move_02",
+    "Walker_Move_03",
+    "Walker_Move_04",
+    "Walker_Move_05",
+    "Walker_Move_06",
+    "Walker_Move_07",
+    "Walker_Move_08",
+    "Walker_Move_09",
+    "Walker_Move_10",
+    "Walker_Move_11",
+    "Walker_Move_12",
+    "Walker_Move_13",
+    "Walker_Move_14",
+    "Walker_Move_15",
+    "Walker_Move_16",
+    "Walker_Move_17",
+    "Walker_Move_18",
+    "Walker_Move_19"
+   ],
+   "fps": 12.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Walker_Attack_00",
+    "Walker_Attack_01",
+    "Walker_Attack_02",
+    "Walker_Attack_03",
+    "Walker_Attack_04",
+    "Walker_Attack_05",
+    "Walker_Attack_06",
+    "Walker_Attack_07",
+    "Walker_Attack_08",
+    "Walker_Attack_09",
+    "Walker_Attack_10",
+    "Walker_Attack_11",
+    "Walker_Attack_12",
+    "Walker_Attack_13",
+    "Walker_Attack_14",
+    "Walker_Attack_15",
+    "Walker_Attack_16",
+    "Walker_Attack_17",
+    "Walker_Attack_18",
+    "Walker_Attack_19"
+   ],
+   "fps": 20.0,
+   "loop": false,
+   "strike": 0.575
+  }
+ ]
+}

@@ -1,0 +1,68 @@
+{
+ "name": "Brute",
+ "standingHeightPx": 210,
+ "pixelScale": 1.2650602409638554,
+ "strikeMoment": 0.395,
+ "clips": [
+  {
+   "name": "Idle",
+   "frames": [
+    "Brute_Idle_00",
+    "Brute_Idle_01",
+    "Brute_Idle_02"
+   ],
+   "fps": 6.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Move",
+   "frames": [
+    "Brute_Move_00",
+    "Brute_Move_01",
+    "Brute_Move_02",
+    "Brute_Move_03",
+    "Brute_Move_04",
+    "Brute_Move_05",
+    "Brute_Move_06",
+    "Brute_Move_07",
+    "Brute_Move_08",
+    "Brute_Move_09",
+    "Brute_Move_10",
+    "Brute_Move_11",
+    "Brute_Move_12",
+    "Brute_Move_13"
+   ],
+   "fps": 10.0,
+   "loop": true,
+   "strike": -1
+  },
+  {
+   "name": "Attack",
+   "frames": [
+    "Brute_Attack_00",
+    "Brute_Attack_01",
+    "Brute_Attack_02",
+    "Brute_Attack_03",
+    "Brute_Attack_04",
+    "Brute_Attack_05",
+    "Brute_Attack_06",
+    "Brute_Attack_07",
+    "Brute_Attack_08",
+    "Brute_Attack_09",
+    "Brute_Attack_10",
+    "Brute_Attack_11",
+    "Brute_Attack_12",
+    "Brute_Attack_13",
+    "Brute_Attack_14",
+    "Brute_Attack_15",
+    "Brute_Attack_16",
+    "Brute_Attack_17",
+    "Brute_Attack_18"
+   ],
+   "fps": 14.0,
+   "loop": false,
+   "strike": 0.395
+  }
+ ]
+}
