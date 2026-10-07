@@ -57,8 +57,8 @@ namespace ZombiCar.Core
         /// </summary>
         public static string Leaderboard(Difficulty d) => d switch
         {
-            Difficulty.Easy => "bestTimeEasy",
-            Difficulty.Hardcore => "bestTimeHardcore",
+            Difficulty.Easy => "TimeEasy",                   // as created in the console (bestTimeEasy was refused)
+            Difficulty.Hardcore => "timeHardcore",
             _ => "bestTimeNormal",
         };
 

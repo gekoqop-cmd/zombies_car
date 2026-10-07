@@ -78,8 +78,8 @@ namespace ZombiCar.EditorTools
             {
                 Check(!panel.IsOpen && !panel.gameObject.activeSelf, "the panel closes");
                 var entries = Enumerable.Range(1, 12).Select(i => new YandexSdk.LeaderboardEntry
-                    { rank = i, name = i == 3 ? "" : $"Игрок {i}", avatar = "", score = 900 + i * 47 }).ToList();
-                entries.Add(new YandexSdk.LeaderboardEntry { rank = 17, name = "Это я", avatar = "", score = 1850 });
+                    { rank = i, name = i == 3 ? "" : $"Игрок {i}", avatar = "", score = (900 + i * 47) * 1000 }).ToList();
+                entries.Add(new YandexSdk.LeaderboardEntry { rank = 17, name = "Это я", avatar = "", score = 1850 * 1000 });
                 YandexSdk.StubEntries = new YandexSdk.LeaderboardEntries { available = true, entries = entries.ToArray(), userRank = 17 };
                 panel.Open();
             });

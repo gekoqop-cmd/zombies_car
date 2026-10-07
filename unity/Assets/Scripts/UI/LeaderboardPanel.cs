@@ -164,7 +164,7 @@ namespace ZombiCar.UI
             row.Rank.SetText(e.rank.ToString());
             row.Rank.color = e.rank >= 1 && e.rank <= m_MedalColors.Length ? m_MedalColors[e.rank - 1] : Color.white;
             row.Name.SetText(string.IsNullOrEmpty(e.name) ? "ИГРОК" : e.name.ToUpperInvariant());
-            row.Time.SetText(MetaProgress.FormatTime(e.score));
+            row.Time.SetText(MetaProgress.FormatTime(e.score / 1000f));      // the board keeps milliseconds
             row.Plate.color = player ? m_PlayerColor : m_RowColor;
             row.Avatar.sprite = m_AvatarPlaceholder;
             if (!string.IsNullOrEmpty(e.avatar))

@@ -64,7 +64,7 @@ namespace ZombiCar.Core
             public int rank;
             public string name;
             public string avatar;
-            public int score;                                       // seconds
+            public int score;                                       // milliseconds (the boards are of the "time" type)
         }
 
         /// <summary>The top of the leaderboard and the player's own line (null when they are not on it).</summary>
@@ -202,7 +202,7 @@ namespace ZombiCar.Core
                 Debug.Log($"[YandexSdk] Leaderboard '{board}': {seconds} s not sent (no SDK).");
                 return;
             }
-            YaSubmitScore(board, seconds);
+            YaSubmitScore(board, seconds * 1000);                   // a "time" board counts milliseconds
         }
 
         /// <summary>
